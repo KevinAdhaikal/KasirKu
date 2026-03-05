@@ -5,6 +5,9 @@ import { rate_limit } from "./rate_limit/rate_limit";
 import { Database } from "bun:sqlite";
 
 export const global = {
+    // Date
+    date: new Date(),
+
     // user sessions
     user_sessions: new user_session(600, 60, 32),
 

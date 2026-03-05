@@ -69,6 +69,34 @@ export async function delete_method(req: Request, url: URL) {
 
             return new Response("", {status: 200});
         }
+        case "/pengeluaran": {
+            const user_info = global.user_sessions.get(token);
+            if (!token || !user_info) return new Response("Unauthorized", {status: 401});
+            
+            const db = global.database;
+            if (!db) return new Response("Internal Server Error", {status: 500});
+            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+            stmt.finalize();
+            if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+            if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+
+            const user_input = new URLSearchParams(await req.text());
+            
+            const id = Number(user_input.get("id"));
+
+            if (!id) return new Response("", {status: 400});
+
+            try {
+                db.run("DELETE FROM pembukuan WHERE id = ? AND tipe = 1", [id]);
+            } catch(e) {
+                console.log("An error occured in delete_method.ts at /pengeluaran:", e);
+                return new Response("Internal Server Error", {status: 500});
+            }
+
+            return new Response("", {status: 200});
+        }
         case "/user": { // delete user (administrator permission only)
             const user_info = global.user_sessions.get(token);
             if (!token || !user_info) return new Response("Unauthorized", {status: 401});

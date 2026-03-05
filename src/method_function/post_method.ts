@@ -1,6 +1,6 @@
 import { global } from "../global";
 import * as Bun from "bun";
-import { bigint_safe, bigint_to_buffer, bigint_to_uint8array, get_password_hash_only } from "../utils/utils";
+import { bigint_safe, bigint_to_buffer, bigint_to_uint8array, buffer_to_bigint, get_password_hash_only } from "../utils/utils";
 
 // server-side
 export async function post_method(req: Request, url: URL) {
@@ -137,22 +137,23 @@ export async function post_method(req: Request, url: URL) {
 
             if (!total_harga || !Array.isArray(items)) return new Response("Bad Request", {status: 400});
             const now = Date.now();
+            const date_now = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
 
             try {
                 db.transaction(() => {
-                    stmt = db.prepare("INSERT INTO penjualan (total, created_ms, modified_ms) VALUES (?, ?, ?)");
-                    const last_row = stmt.run(bigint_to_buffer(total_harga), now, now).lastInsertRowid;
+                    stmt = db.prepare("INSERT INTO penjualan (total, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?)");
+                    const last_row = stmt.run(bigint_to_buffer(total_harga), date_now, now, now).lastInsertRowid;
                     stmt.finalize();
 
-                    stmt = db.prepare("INSERT INTO pembukuan (tipe, jumlah_uang, referensi_id, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?)");
-                    stmt.run(0, bigint_to_buffer(total_harga), last_row, now, now);
+                    stmt = db.prepare("INSERT INTO pembukuan (tipe, jumlah_uang, referensi_id, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)");
+                    stmt.run(0, bigint_to_buffer(total_harga), last_row, date_now, now, now);
                     stmt.finalize();
                     
-                    stmt = db.prepare("INSERT INTO penjualan_item (penjualan_id, barang_id, jumlah, harga_barang, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)");
+                    stmt = db.prepare("INSERT INTO penjualan_item (penjualan_id, barang_id, jumlah, harga_barang, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?)");
                     const stmt2 = db.prepare("UPDATE barang SET stok_barang = CASE WHEN stok_barang - ? < 0 THEN 0 ELSE stok_barang - ? END WHERE id = ?");
 
                     items.forEach(e => {
-                        stmt.run(last_row, e.id, e.jumlah_barang, e.harga_barang, now, now);
+                        stmt.run(last_row, e.id, e.jumlah_barang, e.harga_barang, date_now, now, now);
                         stmt2.run(e.jumlah_barang, e.jumlah_barang, e.id);
                     });
 
@@ -164,6 +165,43 @@ export async function post_method(req: Request, url: URL) {
                 return new Response("Internal Server Error", {status: 500});
             }
             return new Response("", {status: 200});
+        }
+        case "/pengeluaran": {
+            const user_info = global.user_sessions.get(token);
+            if (!token || !user_info) return new Response("Unauthorized", {status: 401});
+
+            const db = global.database;
+            if (!db) return new Response("Internal Server Error", {status: 500});
+            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+            stmt.finalize();
+            if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+            if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+
+            const user_input = new URLSearchParams(await req.text());
+
+            const deskripsi = <string>user_input.get("deskripsi");
+            const nominal = bigint_safe(user_input.get("nominal"));
+
+            if (!deskripsi || !nominal) return new Response("Bad Reuqest", {status: 400});
+
+            const now = Date.now();
+            const date_now = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
+
+            try {
+                db.run("INSERT INTO pembukuan (tipe, deskripsi, jumlah_uang, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)", [
+                    1,
+                    deskripsi,
+                    bigint_to_buffer(nominal),
+                    date_now,
+                    now,
+                    now
+                ])
+            } catch(e) {
+                console.log("Unexpected error in post_method.ts at /pengeluaran:", e);
+                return new Response("Internal Server Error", {status: 500});
+            }
         }
         case "/user": { // add user (administrator permission only)
             const user_info = global.user_sessions.get(token);

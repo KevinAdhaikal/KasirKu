@@ -124,6 +124,7 @@ async function prepare() {
             `CREATE TABLE IF NOT EXISTS penjualan (
                 id INTEGER PRIMARY KEY,
                 total BLOB, -- gw bikin BLOB karena BIGINT
+                tanggal_key INTEGER,
                 created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 modified_ms INTEGER -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
             )`
@@ -137,6 +138,7 @@ async function prepare() {
                 barang_id INTEGER NOT NULL,
                 jumlah INTEGER,
                 harga_barang BLOB, -- gw bikin BLOB karena BIGINT
+                tanggal_key INTEGER,
                 created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 modified_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 FOREIGN KEY (penjualan_id) REFERENCES penjualan(id)
@@ -151,6 +153,7 @@ async function prepare() {
                 deskripsi TEXT DEFAULT NULL,
                 jumlah_uang BLOB, -- gw bikin BLOB karena BIGINT
                 referensi_id INTEGER,
+                tanggal_key INTEGER,
                 created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 modified_ms INTEGER -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
             )`

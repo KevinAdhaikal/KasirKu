@@ -156,6 +156,48 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
 
                 return new Response(JSON.stringify(res), {status: 200});
             }
+            case "penjualan": {
+                const db = global.database;
+                if (!db) return new Response("Internal Server Error", {status: 500});
+                let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+                const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+                stmt.finalize();
+                if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+                if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+
+                const user_input = url.searchParams;
+                const tanggal_key = Number(user_input.get("tanggal_key"));
+
+                if (isNaN(tanggal_key)) return new Response("Bad Request", {status: 400});
+
+                stmt = db.prepare("SELECT * FROM penjualan WHERE tanggal_key = ?");
+                const res = stmt.get(tanggal_key);
+                stmt.finalize();
+
+                return new Response(JSON.stringify(res), {status: 200});
+            }
+            case "pengeluaran": {
+                const db = global.database;
+                if (!db) return new Response("Internal Server Error", {status: 500});
+                let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+                const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+                stmt.finalize();
+                if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+                if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+
+                const user_input = url.searchParams;
+                const tanggal_key = Number(user_input.get("tanggal_key"));
+
+                if (isNaN(tanggal_key)) return new Response("Bad Request", {status: 400});
+
+                stmt = db.prepare("SELECT * FROM pembukuan WHERE tanggal_key = ? AND type = 1");
+                const res = stmt.get(tanggal_key);
+                stmt.finalize();
+
+                return new Response(JSON.stringify(res), {status: 200});
+            }
             case "profile": { // get your current user information
                 const db = global.database;
                 if (!db) return new Response("Internal Server Error", {status: 500});
