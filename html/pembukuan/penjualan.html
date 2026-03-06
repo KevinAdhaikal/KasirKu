@@ -15,6 +15,13 @@
   <!-- Select2 -->
   <link rel="stylesheet" href="/plugins/select2/css/select2.min.css" init-page-css>
   <link rel="stylesheet" href="/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css" init-page-css>
+  <!-- DataTables -->
+  <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" init-page-css>
+  <link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" init-page-css>
+  <link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css" init-page-css>
+  <!-- VanillaJS Date Picker -->
+  <link rel="stylesheet" href="/plugins/vanillajs-datepicker/css/datepicker.min.css" init-page-css>
+  <link rel="stylesheet" href="/plugins/vanillajs-datepicker/css/datepicker-bs4.min.css" init-page-css>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css" init-page-css>
   <!-- Sweetalert2 -->
@@ -210,12 +217,22 @@
           <div class="col">
             <div class="card card-primary">
 							<div class="card-body">
-                <table id="penjualan_table" class="table table-bordered table-hover display nowrap">
+                <label class="col-form-label">Tanggal Penjualan (YYYY/MM/DD)</label>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">
+                      <i class="far fa-calendar-alt"></i>
+                    </span>
+                  </div>
+                  <input type="text" class="form-control float-right" id="tanggal_penjualan" onkeydown="return false">
+                </div>
+                <hr>
+                <table id="penjualan_table" class="table table-bordered table-striped table-hover display nowrap">
                   <thead>
-                    <th>Role Name</th>
-                    <th>Created At</th>
-                    <th>Modified At</th>
-                    <th>Action</th>
+                    <th></th>
+                    <th>Jam</th>
+                    <th>Total Barang</th>
+                    <th>Total Harga</th>
                   </thead>
                   <tbody>
                   </tbody>
@@ -252,15 +269,30 @@
 <!-- AdminLTE App -->
 <script src="/dist/js/adminlte.min.js"></script>
 
+<!-- DataTables & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js" data-init-page-script></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js" data-init-page-script></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js" data-init-page-script></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js" data-init-page-script></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js" data-init-page-script></script>
+<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js" data-init-page-script></script>
+<script src="/plugins/pdfmake/pdfmake.min.js" data-init-page-script></script>
+<script src="/plugins/pdfmake/vfs_fonts.js" data-init-page-script></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js" data-init-page-script></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js" data-init-page-script></script>
 <!-- Sweetalert2 -->
 <script src="/plugins/sweetalert2/sweetalert2.all.min.js" data-init-page-script></script>
 <!-- Bootstrap 4 -->
 <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js" data-init-page-script></script>
+<!-- VanillaJS Date Picker -->
+<script src="/plugins/vanillajs-datepicker/js/datepicker-full.min.js" data-init-page-script></script>
 
 <!-- Init -->
 <script src="/dist/js/init.js"></script>
 
 <!-- Login & Logout -->
 <script src="/dist/js/login.js"></script>
+
+<script src="/dist/js/pembukuan/penjualan.js" data-page-script></script>
 </body>
 </html>

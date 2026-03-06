@@ -172,7 +172,28 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
                 if (isNaN(tanggal_key)) return new Response("Bad Request", {status: 400});
 
                 stmt = db.prepare("SELECT * FROM penjualan WHERE tanggal_key = ?");
-                const res = stmt.get(tanggal_key);
+                const res = stmt.all(tanggal_key);
+                stmt.finalize();
+
+                return new Response(JSON.stringify(res), {status: 200});
+            }
+            case "penjualan_item": {
+                const db = global.database;
+                if (!db) return new Response("Internal Server Error", {status: 500});
+                let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+                const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+                stmt.finalize();
+                if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+                if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+
+                const user_input = url.searchParams;
+                const penjualan_id = Number(user_input.get("penjualan_id"));
+
+                if (isNaN(penjualan_id)) return new Response("Bad Request", {status: 400});
+
+                stmt = db.prepare("SELECT pi.jumlah, pi.harga_barang, pi.tanggal_key, pi.created_ms, pi.modified_ms, b.nama_barang FROM penjualan_item pi JOIN barang b ON b.id = pi.barang_id WHERE pi.penjualan_id = ?");
+                const res = stmt.all(penjualan_id);
                 stmt.finalize();
 
                 return new Response(JSON.stringify(res), {status: 200});

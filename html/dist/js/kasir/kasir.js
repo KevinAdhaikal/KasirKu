@@ -70,8 +70,7 @@ async function masuk_ke_pembukuan() {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            items: [...global.current_items],
-            total: global.current_total.harga_barang.toString()
+            items: [...global.current_items]
         }, (_, v) =>  typeof v === "bigint" ? v.toString() : v)
     });
 

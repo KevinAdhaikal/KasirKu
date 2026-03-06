@@ -123,7 +123,8 @@ async function prepare() {
         db.run(
             `CREATE TABLE IF NOT EXISTS penjualan (
                 id INTEGER PRIMARY KEY,
-                total BLOB, -- gw bikin BLOB karena BIGINT
+                total_barang INT,
+                total_harga BLOB, -- gw bikin BLOB karena BIGINT
                 tanggal_key INTEGER,
                 created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 modified_ms INTEGER -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
@@ -141,7 +142,8 @@ async function prepare() {
                 tanggal_key INTEGER,
                 created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 modified_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-                FOREIGN KEY (penjualan_id) REFERENCES penjualan(id)
+                FOREIGN KEY (penjualan_id) REFERENCES penjualan(id),
+                FOREIGN KEY (barang_id) REFERENCES barang(id)
             )`
         );
 

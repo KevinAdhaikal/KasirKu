@@ -126,7 +126,6 @@ export async function post_method(req: Request, url: URL) {
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.KASIR))) return new Response("0", {status: 403});
 
             const user_data = await req.json();
-            const total_harga = bigint_safe(user_data.total);
             const items = user_data.items as [{
                 id: number,
                 nama_barang: string,
@@ -135,14 +134,24 @@ export async function post_method(req: Request, url: URL) {
                 harga_jual: string
             }];
 
-            if (!total_harga || !Array.isArray(items)) return new Response("Bad Request", {status: 400});
+            if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
             const now = Date.now();
             const date_now = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
 
+            let total_barang = 0;
+            let total_harga = 0n;
+
+            items.forEach(data => {
+                total_barang += data.jumlah_barang;
+                const to_bigint = bigint_safe(data.harga_barang);
+                if (!to_bigint) return new Response("Bad Request", {status: 400});
+                total_harga += to_bigint;
+            });
+            
             try {
                 db.transaction(() => {
-                    stmt = db.prepare("INSERT INTO penjualan (total, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?)");
-                    const last_row = stmt.run(bigint_to_buffer(total_harga), date_now, now, now).lastInsertRowid;
+                    stmt = db.prepare("INSERT INTO penjualan (total_barang, total_harga, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?)");
+                    const last_row = stmt.run(total_barang, bigint_to_buffer(total_harga), date_now, now, now).lastInsertRowid;
                     stmt.finalize();
 
                     stmt = db.prepare("INSERT INTO pembukuan (tipe, jumlah_uang, referensi_id, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)");
@@ -153,7 +162,7 @@ export async function post_method(req: Request, url: URL) {
                     const stmt2 = db.prepare("UPDATE barang SET stok_barang = CASE WHEN stok_barang - ? < 0 THEN 0 ELSE stok_barang - ? END WHERE id = ?");
 
                     items.forEach(e => {
-                        stmt.run(last_row, e.id, e.jumlah_barang, e.harga_barang, date_now, now, now);
+                        stmt.run(last_row, e.id, e.jumlah_barang, bigint_to_buffer(bigint_safe(e.harga_barang)), date_now, now, now);
                         stmt2.run(e.jumlah_barang, e.jumlah_barang, e.id);
                     });
 
