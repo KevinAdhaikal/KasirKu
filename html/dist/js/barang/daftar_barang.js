@@ -14,6 +14,7 @@ global.element = {
     }),
     modal_daftar_barang: $("#modal_daftar_barang"),
     daftar_barang_table: $("#daftar_barang_table").DataTable({
+        rowId: 6,
         columns: [
             {
                 data: 0,
@@ -50,6 +51,57 @@ global.deinit = function() {
     global.element.harga_modal.removeEventListener("input", harga_modal_event);
     global.element.harga_jual.removeEventListener("input", harga_jual_event);
     global.element.persen_jual.removeEventListener("input", persen_jual_event);
+}
+
+global.add_sse_handler(sse_handler);
+
+async function sse_handler(e) {
+    if (e.type === 2) {
+        switch(e.code) {    
+            case "TAMBAH_BARANG": {
+                const data = await fetch_barang_id(e.data.id);
+                global.element.daftar_barang_table.row.add([
+                    data.nama_barang,
+                    format_thousand_separator.format(data.stok_barang),
+                    data.nama_kategori,
+                    "Rp" + money_format_bigint(ao_to_bigint(data.harga_jual)),
+                    data.barcode_barang ?? "Tidak Ada",
+                    `<center>
+                    <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
+                    <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
+                    </center>`,
+                    data.id
+                ]);
+                global.element.daftar_barang_table.draw();
+                break;
+            }
+            case "UPDATE_BARANG": {
+                const data = await fetch_barang_id(e.data.id);
+                global.element.daftar_barang_table.row("#" + data).data([
+                    data.nama_barang,
+                    format_thousand_separator.format(data.stok_barang),
+                    data.nama_kategori,
+                    "Rp" + money_format_bigint(ao_to_bigint(data.harga_jual)),
+                    data.barcode_barang ?? "Tidak Ada",
+                    `<center>
+                    <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
+                    <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
+                    </center>`,
+                    data.id
+                ]);
+                global.element.daftar_barang_table.draw();
+                break;
+            }
+            case "DELETE_BARANG": {
+                global.element.daftar_barang_table.row(e.data.id - 1).remove().draw();
+                break;
+            }
+            default: {
+                console.log("Unknown code:", e.code);
+                break;
+            }
+        }
+    }
 }
 
 global.element.daftar_barang_table.on('click.action_edit', '.action_edit', async function () {
@@ -120,8 +172,6 @@ global.element.daftar_barang_table.on('click.action_delete', '.action_delete', a
                     icon: "success",
                     title: "Barang berhasil dihapus!"
                 });
-
-                fetch_daftar_barang();
             }
             else {
                 const status = await res.text();
@@ -189,6 +239,7 @@ function tambah_barang_modal() {
     global.element.harga_modal.value = "";
     global.element.harga_jual.value = "";
     global.element.persen_jual.value = "0.00";
+    global.element.stok_barang.value = "";
 
     global.element.modal_daftar_barang_title.innerText = "Tambah Barang";
     global.element.modal_daftar_barang_button.innerText = "Tambah Barang";
@@ -220,8 +271,6 @@ async function tambah_barang() {
         });
 
         global.element.modal_daftar_barang.modal("hide");
-
-        fetch_daftar_barang();
     }
     else {
         const status = await res.text();
@@ -275,6 +324,32 @@ async function fetch_kategori_barang() {
     }
 }
 
+async function fetch_barang_id(id) {
+    if (!id) return;
+    let res = await fetch(`/api/barang?id=${id}`, {
+        method: "GET",
+        headers: {
+            token: localStorage.getItem("token")
+        }
+    })
+
+    if (res.status === 200) return await res.json();
+    else {
+        const status = await res.text();
+
+        switch(status) {
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                });
+                break;
+            }
+        }
+        return null;
+    }
+}
+
 async function fetch_daftar_barang() {
     global.element.daftar_barang_table.clear();
     let res = await fetch("/api/daftar_barang", {
@@ -296,7 +371,8 @@ async function fetch_daftar_barang() {
                 `<center>
                 <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                 <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
-                </center>`
+                </center>`,
+                data.id
             ]);
         }
     }

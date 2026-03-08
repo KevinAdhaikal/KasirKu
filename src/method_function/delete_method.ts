@@ -30,6 +30,14 @@ export async function delete_method(req: Request, url: URL) {
                 return new Response("Internal Server Error", {status: 500});
             }
 
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 2,
+                code: "DELETE_BARANG",
+                data: {
+                    id
+                }
+            }));
+
             return new Response("", {status: 200});
         }
         case "/kategori_barang": {
@@ -67,6 +75,13 @@ export async function delete_method(req: Request, url: URL) {
                 return new Response("Internal Server Error", {status: 500});
             }
 
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 3,
+                code: "DELETE_KATEGORI",
+                data: {
+                    id
+                }
+            }));
             return new Response("", {status: 200});
         }
         case "/pengeluaran": {
@@ -95,6 +110,14 @@ export async function delete_method(req: Request, url: URL) {
                 return new Response("Internal Server Error", {status: 500});
             }
 
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 5,
+                code: "DELETE_PENGELUARAN",
+                data: {
+                    id
+                }
+            }));
+            
             return new Response("", {status: 200});
         }
         case "/user": { // delete user (administrator permission only)

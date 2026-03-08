@@ -46,6 +46,15 @@ export async function patch_method(req: Request, url: URL) {
                 console.log("An error occured in patch_method.ts at /barang:", e)
                 return new Response("Internal Server Error", {status: 500});
             }
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 2,
+                code: "UPDATE_BARANG",
+                data: {
+                    id
+                }
+            }));
+
             return new Response("", {status: 200});
         }
         case "/kategori_barang": {
@@ -80,6 +89,14 @@ export async function patch_method(req: Request, url: URL) {
                 return new Response("Internal Server Error", {status: 500});
             }
 
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 3,
+                code: "UPDATE_KATEGORI",
+                data: {
+                    id
+                }
+            }));
+
             return new Response("", {status: 200});
         }
         case "/pengeluaran": {
@@ -113,6 +130,14 @@ export async function patch_method(req: Request, url: URL) {
                 console.log("Unexpected error in patch_method.ts at /pengeluaran:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 5,
+                code: "UPDATE_PENGELUARAN",
+                data: {
+                    id
+                }
+            }));
 
             return new Response("", {status: 200});
         }

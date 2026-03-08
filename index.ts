@@ -142,8 +142,7 @@ async function prepare() {
                 tanggal_key INTEGER,
                 created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
                 modified_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-                FOREIGN KEY (penjualan_id) REFERENCES penjualan(id),
-                FOREIGN KEY (barang_id) REFERENCES barang(id)
+                FOREIGN KEY (penjualan_id) REFERENCES penjualan(id)
             )`
         );
 

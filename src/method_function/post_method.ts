@@ -60,8 +60,9 @@ export async function post_method(req: Request, url: URL) {
             if (!barcode_barang || !barcode_barang.length) barcode_barang = null;
 
             const now = Date.now();
+            let last_row = null;
             try {
-                db.run("INSERT INTO barang (nama_barang, stok_barang, kategori_barang_id, harga_modal, harga_jual, barcode_barang, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
+                last_row = db.run("INSERT INTO barang (nama_barang, stok_barang, kategori_barang_id, harga_modal, harga_jual, barcode_barang, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
                     nama_barang,
                     stok_barang,
                     kategori_barang_id,
@@ -70,11 +71,20 @@ export async function post_method(req: Request, url: URL) {
                     barcode_barang,
                     now,
                     now
-                ])
+                ]).lastInsertRowid;
             } catch(e) {
                 console.log("An error occured in post_method.ts at /barang:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
+
+            if (!last_row) return new Response("Internal Server Error", {status: 500});
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 2,
+                code: "TAMBAH_BARANG",
+                data: {
+                    id: last_row
+                }
+            }));
 
             return new Response("", {status: 200});
         }
@@ -98,17 +108,28 @@ export async function post_method(req: Request, url: URL) {
             if (!nama_kategori) return new Response("Bad Request", {status: 400});
 
             const now = Date.now();
+            let last_row = null;
             try {
-                db.run("INSERT INTO kategori_barang (nama_kategori, created_ms, modified_ms) VALUES (?, ?, ?)", [
+                last_row = db.run("INSERT INTO kategori_barang (nama_kategori, created_ms, modified_ms) VALUES (?, ?, ?)", [
                     nama_kategori,
                     now,
                     now
-                ])
+                ]).lastInsertRowid;
             } catch(e: any) {
                 if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403});
                 console.log("An error occured in post_method.ts at /kategori_barang:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
+
+            if (!last_row) return new Response("Internal Server Error", {status: 500});
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 3,
+                code: "TAMBAH_KATEGORI",
+                data: {
+                    id: last_row
+                }
+            }));
 
             return new Response("", {status: 200});
         }
@@ -147,11 +168,12 @@ export async function post_method(req: Request, url: URL) {
                 if (!to_bigint) return new Response("Bad Request", {status: 400});
                 total_harga += to_bigint;
             });
-            
+
+            let last_row: any = null;
             try {
                 db.transaction(() => {
                     stmt = db.prepare("INSERT INTO penjualan (total_barang, total_harga, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?)");
-                    const last_row = stmt.run(total_barang, bigint_to_buffer(total_harga), date_now, now, now).lastInsertRowid;
+                    last_row = stmt.run(total_barang, bigint_to_buffer(total_harga), date_now, now, now).lastInsertRowid;
                     stmt.finalize();
 
                     stmt = db.prepare("INSERT INTO pembukuan (tipe, jumlah_uang, referensi_id, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)");
@@ -173,6 +195,14 @@ export async function post_method(req: Request, url: URL) {
                 console.log("An error occured in post_method.ts at /masuk_ke_pembukuan:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 4,
+                code: "TAMBAH_PENJUALAN",
+                data: {
+                    id: last_row
+                }
+            }));
             return new Response("", {status: 200});
         }
         case "/pengeluaran": {
@@ -197,20 +227,29 @@ export async function post_method(req: Request, url: URL) {
 
             const now = Date.now();
             const date_now = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
+            let last_row = null;
 
             try {
-                db.run("INSERT INTO pembukuan (tipe, deskripsi, jumlah_uang, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)", [
+                last_row = db.run("INSERT INTO pembukuan (tipe, deskripsi, jumlah_uang, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)", [
                     1,
                     deskripsi,
                     bigint_to_buffer(nominal),
                     date_now,
                     now,
                     now
-                ])
+                ]).lastInsertRowid
             } catch(e) {
                 console.log("Unexpected error in post_method.ts at /pengeluaran:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 5,
+                code: "TAMBAH_PENGELUARAN",
+                data: {
+                    id: last_row
+                }
+            }));
 
             return new Response("", {status: 200});
         }

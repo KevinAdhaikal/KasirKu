@@ -51,12 +51,19 @@ global.element = {
     }),
 }
 
+global.add_sse_handler(sse_handler);
+
 global.deinit = function() { 
+    global.element.tunai_input.removeEventListener("input", tunai_input_event);
     global.element.jumlah_barang.removeEventListener("input", jumlah_barang_input);
 }
 
 global.element.tunai_input.addEventListener("input", tunai_input_event);
 global.element.jumlah_barang.addEventListener("input", jumlah_barang_input);
+
+function sse_handler(e) {
+
+}
 
 function tunai_input_event(e) {
     const res = BigInt(e.target.value.replaceAll(".", "").replaceAll(",", "")) - global.current_total.harga_barang;
