@@ -11,6 +11,7 @@ global.element = {
 
     modal_pengeluaran: $("#modal_pengeluaran"),
     pengeluaran_table: $("#pengeluaran_table").DataTable({
+        rowId: 4,
         columns: [
             {
                 data: 0,
@@ -32,10 +33,65 @@ global.element = {
 
 global.init = () => {
     global.element.tanggal_pengeluaran.addEventListener("changeDate", fetch_pengeluaran);
+    global.element.tanggal_pengeluaran_picker.setDate(Date.now());
 }
 
 global.deinit = () => {
     global.element.tanggal_pengeluaran.removeEventListener("changeDate", fetch_pengeluaran)
+    global.remove_sse_handler(sse_handler);
+}
+
+global.add_sse_handler(sse_handler);
+
+async function sse_handler(e) {
+    if (e.type === 5) {
+        switch(e.code) {
+            case "TAMBAH_PENGELUARAN": {
+                const data = await fetch_pengeluaran_id(e.data.id);
+                if (String(data.tanggal_key) === global.element.tanggal_pengeluaran.value.replaceAll("/", "")) {
+                    global.element.date.setTime(data.created_ms);
+                    global.element.pengeluaran_table.row.add([
+                        global.element.date.toTimeString().slice(0,8),
+                        data.deskripsi,
+                        "Rp" + money_format_bigint(ao_to_bigint(data.jumlah_uang)),
+                        `<center>
+                        <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
+                        <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
+                        </center>`,
+                        data.id
+                    ]);
+                    global.element.pengeluaran_table.draw();
+                }
+                break;
+            }
+            case "UPDATE_PENGELUARAN": {
+                const data = await fetch_pengeluaran_id(e.data.id);
+                if (String(data.tanggal_key) === global.element.tanggal_pengeluaran.value.replaceAll("/", "")) {
+                    global.element.date.setTime(data.created_ms);
+                    global.element.pengeluaran_table.row("#" + e.data.id).data([
+                        global.element.date.toTimeString().slice(0,8),
+                        data.deskripsi,
+                        "Rp" + money_format_bigint(ao_to_bigint(data.jumlah_uang)),
+                        `<center>
+                        <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
+                        <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
+                        </center>`,
+                        data.id
+                    ]);
+                    global.element.pengeluaran_table.draw();
+                }
+                break;
+            }
+            case "DELETE_PENGELUARAN": {
+                if (String(e.data.tanggal_key) === global.element.tanggal_pengeluaran.value.replaceAll("/", "")) global.element.pengeluaran_table.row("#" + e.data.id).remove().draw();
+                break;
+            }
+            default: {
+                console.log("Unknown code:", e.code);
+                break;
+            }
+        }
+    }
 }
 
 global.element.pengeluaran_table.on('click.action_edit', '.action_edit', async function () {
@@ -92,7 +148,8 @@ global.element.pengeluaran_table.on('click.action_delete', '.action_delete', asy
                     token: localStorage.getItem("token")
                 },
                 body: new URLSearchParams({
-                    id: this.value
+                    id: this.value,
+                    tanggal_key: global.element.tanggal_pengeluaran.value.replaceAll("/", "")
                 })
             })
 
@@ -101,8 +158,6 @@ global.element.pengeluaran_table.on('click.action_delete', '.action_delete', asy
                     icon: "success",
                     title: "Pengeluaran berhasil dihapus!"
                 });
-
-                fetch_pengeluaran();
             }
             else {
                 const status = await res.text();
@@ -124,9 +179,62 @@ global.element.pengeluaran_table.on('click.action_delete', '.action_delete', asy
 function tambah_pengeluaran_modal() {
     global.element.modal_pengeluaran_title.innerText = "Tambah Pengeluaran";
     global.element.modal_pengeluaran_button.innerText = "Tambah Pengeluaran";
+    global.element.deskripsi.value = "";
+    global.element.nominal.value = "";
+
     global.element.modal_pengeluaran_button.onclick = tambah_pengeluaran;
 
     global.element.modal_pengeluaran.modal("show");
+}
+
+async function fetch_pengeluaran_id(id) {
+    let res = await fetch(`/api/pengeluaran?id=${id}`, {
+        method: "GET",
+        headers: {
+            token: localStorage.getItem("token")
+        }
+    });
+
+    if (res.status === 200) return await res.json();
+    else {
+        const status = await res.text();
+
+        switch(status) {
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                });
+                break;
+            }
+        }
+        return null;
+    }
+}
+
+async function fetch_pengeluaran_id(id) {
+    let res = await fetch(`/api/pengeluaran?id=${id}`, {
+        method: "GET",
+        headers: {
+            token: localStorage.getItem("token")
+        }
+    });
+
+    if (res.status === 200) return await res.json();
+    else {
+        const status = await res.text();
+
+        switch(status) {
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                });
+                break;
+            }
+        }
+        return null;
+    }
 }
 
 async function fetch_pengeluaran() {
@@ -151,8 +259,9 @@ async function fetch_pengeluaran() {
                 `<center>
                 <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                 <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
-                </center>`
-            ])
+                </center>`,
+                data.id
+            ]);
         })
     }
     else {
@@ -190,7 +299,6 @@ async function tambah_pengeluaran() {
             title: "Pengeluaran berhasil ditambahkan!"
         })
         global.element.modal_pengeluaran.modal("hide");
-        fetch_pengeluaran();
     }
     else {
         const status = await res.text();
@@ -215,6 +323,7 @@ async function edit_pengeluaran(id) {
         },
         body: new URLSearchParams({
             id: id,
+            tanggal_key: global.element.tanggal_pengeluaran.value.replaceAll("/", ""),
             "deskripsi": global.element.deskripsi.value,
             "nominal": global.element.nominal.value.replaceAll(".", "").replaceAll(",", "")
         })
@@ -226,7 +335,6 @@ async function edit_pengeluaran(id) {
             title: "Pengeluaran berhasil diedit!"
         })
         global.element.modal_pengeluaran.modal("hide");
-        fetch_pengeluaran();
     }
     else {
         const status = await res.text();
@@ -245,5 +353,4 @@ async function edit_pengeluaran(id) {
 
 (async function() {
     global.init();
-    global.element.tanggal_pengeluaran_picker.setDate(Date.now());
 })()

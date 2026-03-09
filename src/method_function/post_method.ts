@@ -200,7 +200,8 @@ export async function post_method(req: Request, url: URL) {
                 type: 4,
                 code: "TAMBAH_PENJUALAN",
                 data: {
-                    id: last_row
+                    id: last_row,
+                    tanggal_key: date_now
                 }
             }));
             return new Response("", {status: 200});
@@ -247,7 +248,8 @@ export async function post_method(req: Request, url: URL) {
                 type: 5,
                 code: "TAMBAH_PENGELUARAN",
                 data: {
-                    id: last_row
+                    id: last_row,
+                    tanggal_key: date_now
                 }
             }));
 

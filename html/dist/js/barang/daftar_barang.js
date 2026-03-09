@@ -51,7 +51,9 @@ global.deinit = function() {
     global.element.harga_modal.removeEventListener("input", harga_modal_event);
     global.element.harga_jual.removeEventListener("input", harga_jual_event);
     global.element.persen_jual.removeEventListener("input", persen_jual_event);
+    global.remove_sse_handler(sse_handler);
 }
+
 
 global.add_sse_handler(sse_handler);
 
@@ -77,7 +79,7 @@ async function sse_handler(e) {
             }
             case "UPDATE_BARANG": {
                 const data = await fetch_barang_id(e.data.id);
-                global.element.daftar_barang_table.row("#" + data).data([
+                global.element.daftar_barang_table.row("#" + e.data.id).data([
                     data.nama_barang,
                     format_thousand_separator.format(data.stok_barang),
                     data.nama_kategori,
@@ -93,7 +95,7 @@ async function sse_handler(e) {
                 break;
             }
             case "DELETE_BARANG": {
-                global.element.daftar_barang_table.row(e.data.id - 1).remove().draw();
+                global.element.daftar_barang_table.row("#" + e.data.id).remove().draw();
                 break;
             }
             default: {

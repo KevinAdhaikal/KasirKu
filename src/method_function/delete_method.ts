@@ -100,21 +100,24 @@ export async function delete_method(req: Request, url: URL) {
             const user_input = new URLSearchParams(await req.text());
             
             const id = Number(user_input.get("id"));
+            const tanggal_key = Number(user_input.get("tanggal_key"));
 
-            if (!id) return new Response("", {status: 400});
+            if (isNaN(id) || isNaN(tanggal_key) || !id || !tanggal_key) return new Response("", {status: 400});
 
+            let res = null;
             try {
-                db.run("DELETE FROM pembukuan WHERE id = ? AND tipe = 1", [id]);
+                res = db.run("DELETE FROM pembukuan WHERE id = ? AND tanggal_key = ? AND tipe = 1", [id, tanggal_key]);
             } catch(e) {
                 console.log("An error occured in delete_method.ts at /pengeluaran:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
 
-            global.sse_clients.broadcast(JSON.stringify({
+            if (res.changes) global.sse_clients.broadcast(JSON.stringify({
                 type: 5,
                 code: "DELETE_PENGELUARAN",
                 data: {
-                    id
+                    id,
+                    tanggal_key
                 }
             }));
             

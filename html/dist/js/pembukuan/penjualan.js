@@ -5,6 +5,7 @@ global.element = {
         format: "yyyy/mm/dd"
     }),
     penjualan_table: $("#penjualan_table").DataTable({
+        rowId: 'id',
         columns: [
             {
                 className: 'dt-control',
@@ -23,10 +24,12 @@ global.element = {
 
 global.init = () => {
     global.element.tanggal_penjualan.addEventListener("changeDate", fetch_penjualan);
+    global.element.tanggal_penjualan_picker.setDate(Date.now());
 }
 
 global.deinit = () => {
-    global.element.tanggal_penjualan.removeEventListener("changeDate", fetch_penjualan)
+    global.element.tanggal_penjualan.removeEventListener("changeDate", fetch_penjualan);
+    global.remove_sse_handler(sse_handler);
 }
 
 $('#penjualan_table tbody').on('click', 'td.dt-control', async function () {
@@ -68,6 +71,33 @@ $('#penjualan_table tbody').on('click', 'td.dt-control', async function () {
     }
 });
 
+global.add_sse_handler(sse_handler);
+
+async function sse_handler(e) {
+    if (e.type === 4) {
+        switch(e.code) {
+            case "TAMBAH_PENJUALAN": {
+                const data = await fetch_penjualan_id(e.data.id);
+                if (String(data.tanggal_key) === global.element.tanggal_penjualan.value.replaceAll("/", "")) {
+                    global.element.date.setTime(data.created_ms);
+                    global.element.penjualan_table.row.add({
+                        id: data.id,
+                        jam: global.element.date.toTimeString().slice(0,8),
+                        total_barang: data.total_barang,
+                        total_harga: "Rp" + money_format_bigint(ao_to_bigint(data.total_harga))
+                    });
+                    global.element.penjualan_table.draw();
+                }
+                break;
+            }
+            default: {
+                console.log("Unknown code:", e.code);
+                break;
+            }
+        }
+    }
+}
+
 function format(data) {
     const res = data.map(item => `
         <tr>
@@ -89,6 +119,30 @@ function format(data) {
         ${res}
         </tbody>
     </table>`;
+}
+
+async function fetch_penjualan_id(id) {
+    let res = await fetch(`/api/penjualan?id=${id}`, {
+        method: "GET",
+        headers: {
+            token: localStorage.getItem("token")
+        }
+    })
+
+    if (res.status === 200) return await res.json();
+    else {
+        const status = await res.text();
+        switch(status) {
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                });
+                break;
+            }
+        }
+        return null;
+    }
 }
 
 async function fetch_penjualan() {
@@ -132,5 +186,5 @@ async function fetch_penjualan() {
 
 (async function() {
     global.init();
-    global.element.tanggal_penjualan_picker.setDate(Date.now());
+    
 })();

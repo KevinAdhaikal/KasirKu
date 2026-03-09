@@ -47,12 +47,27 @@ global.element = {
 
 global.init = () => {
     global.element.tanggal_laporan_start.addEventListener("changeDate", tanggal_laporan_start_event);
+    global.element.tanggal_laporan_start_picker.setDate(Date.now());
     global.element.tanggal_laporan_end.addEventListener("changeDate", tanggal_laporan_end_event);
 }
 
 global.deinit = () => {
     global.element.tanggal_laporan_start.removeEventListener("changeDate", tanggal_laporan_start_event);
     global.element.tanggal_laporan_end.removeEventListener("changeDate", tanggal_laporan_end_event);
+    global.remove_sse_handler(sse_handler);
+}
+
+global.add_sse_handler(sse_handler);
+
+async function sse_handler(e) {
+    console.log(e.type);
+    if (e.type === 4 || e.type === 5) {
+        const tanggal_start = Number(global.element.tanggal_laporan_start.value.replaceAll("/", ""));
+        const tanggal_end = Number(global.element.tanggal_laporan_end.value.replaceAll("/", ""));
+        const t = e.data.tanggal_key;
+
+        if (t >= tanggal_start && t <= tanggal_end) fetch_laporan();
+    }
 }
 
 async function tanggal_laporan_start_event(e) {
@@ -171,7 +186,5 @@ async function hitung_total() {
 }
 
 (async function() {
-    global.element.tanggal_laporan_end_picker.setDate(Date.now());
     global.init();
-    global.element.tanggal_laporan_start_picker.setDate(Date.now());
 })();

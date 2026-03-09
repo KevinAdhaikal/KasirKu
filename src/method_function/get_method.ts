@@ -170,12 +170,20 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
 
                 const user_input = url.searchParams;
                 const tanggal_key = Number(user_input.get("tanggal_key"));
+                const id = Number(user_input.get("id"));
 
-                if (isNaN(tanggal_key)) return new Response("Bad Request", {status: 400});
-
-                stmt = db.prepare("SELECT * FROM penjualan WHERE tanggal_key = ?");
-                const res = stmt.all(tanggal_key);
-                stmt.finalize();
+                let res;
+                if (isNaN(id) || !id) {
+                    if (isNaN(tanggal_key)) return new Response("Bad Request", {status: 400});
+                    stmt = db.prepare("SELECT * FROM penjualan WHERE tanggal_key = ?");
+                    res = stmt.all(tanggal_key);
+                    stmt.finalize();
+                }
+                else {
+                    stmt = db.prepare("SELECT * FROM penjualan WHERE id = ?");
+                    res = stmt.get(id);
+                    stmt.finalize();
+                }
 
                 return new Response(JSON.stringify(res), {status: 200});
             }

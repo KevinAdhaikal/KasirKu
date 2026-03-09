@@ -93,7 +93,7 @@ export async function patch_method(req: Request, url: URL) {
                 type: 3,
                 code: "UPDATE_KATEGORI",
                 data: {
-                    id
+                    id,
                 }
             }));
 
@@ -115,27 +115,31 @@ export async function patch_method(req: Request, url: URL) {
             const user_input = new URLSearchParams(await req.text());
 
             const id = Number(user_input.get("id"));
+            const tanggal_key = Number(user_input.get("tanggal_key"));
             const deskripsi = <string>user_input.get("deskripsi");
             const nominal = bigint_safe(user_input.get("nominal"));
 
-            if (!id || !deskripsi || !nominal) return new Response("Bad Request", {status: 400});
+            if (isNaN(id) || isNaN(tanggal_key) || !tanggal_key || !id || !deskripsi || !nominal) return new Response("Bad Request", {status: 400});
 
+            let res = null;
             try {
-                db.run("UPDATE pembukuan SET deskripsi = ?, jumlah_uang = ? WHERE id = ? AND tipe = 1", [
+                res = db.run("UPDATE pembukuan SET deskripsi = ?, jumlah_uang = ? WHERE id = ? AND tanggal_key = ? AND tipe = 1", [
                     deskripsi,
                     bigint_to_buffer(nominal),
-                    id
+                    id,
+                    tanggal_key
                 ]);
             } catch(e) {
                 console.log("Unexpected error in patch_method.ts at /pengeluaran:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
 
-            global.sse_clients.broadcast(JSON.stringify({
+            if (res.changes) global.sse_clients.broadcast(JSON.stringify({
                 type: 5,
                 code: "UPDATE_PENGELUARAN",
                 data: {
-                    id
+                    id,
+                    tanggal_key
                 }
             }));
 

@@ -172,10 +172,15 @@ global.element.kategori_barang_table.on('click.action_delete', '.action_delete',
     })
 });
 
+global.deinit = function() {
+    global.remove_sse_handler(sse_handler);
+}
+
 global.add_sse_handler(sse_handler);
 
 async function sse_handler(e) {
     if (e.type === 3) {
+        console.log(e);
         switch(e.code) {
             case "TAMBAH_KATEGORI": {
                 const data = await fetch_kategori_id(e.data.id);
@@ -192,19 +197,19 @@ async function sse_handler(e) {
             }
             case "UPDATE_KATEGORI": {
                 const data = await fetch_kategori_id(e.data.id);
-                global.element.kategori_barang_table.row(e.data.id).add([
+                global.element.kategori_barang_table.row("#" + e.data.id).data([
                     data.nama_kategori,
                     `<center>
                     <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                     <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}" ${data.id === 1 ? "disabled" : ""}><i class="fa fa-trash"></i> Hapus</button>
                     </center>`,
                     data.id
-                ])
+                ]);
                 global.element.kategori_barang_table.draw();
                 break;
             }
             case "DELETE_KATEGORI": {
-                global.element.kategori_barang_table.row(e.data.id - 1).remove().draw();
+                global.element.kategori_barang_table.row("#" + e.data.id).remove().draw();
                 break;
             }
             default: {
@@ -265,7 +270,8 @@ async function fetch_kategori() {
                 `<center>
                 <button type="button" class="text-right btn btn-primary action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                 <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}" ${data.id === 1 ? "disabled" : ""}><i class="fa fa-trash"></i> Hapus</button>
-                </center>`
+                </center>`,
+                data.id
             ])
         }
     }
