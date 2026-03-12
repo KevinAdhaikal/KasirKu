@@ -284,7 +284,7 @@ export async function post_method(req: Request, url: URL) {
             const password = <string>user_input.get("password");
             const role_id = Number(user_input.get("role_id"));
 
-            if (!username || !full_name || !password || !role_id || isNaN(role_id)) return new Response("Bad Request", {status: 400});
+            if (!username || !full_name || !password || password.length < 8 || !role_id || isNaN(role_id)) return new Response("Bad Request", {status: 400});
 
             const now = Date.now();
             try {

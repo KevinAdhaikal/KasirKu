@@ -234,7 +234,7 @@ export async function patch_method(req: Request, url: URL) {
             if (id === user_info.user_id) return new Response("1", {status: 403}); // you can't edit your own user account!
             if (id === 1) return new Response("2", {status: 403}); // you can't edit default account!
 
-            if (new_password) new_password = get_password_hash_only(Bun.password.hashSync(new_password, {
+            if (new_password && new_password.length >= 8) new_password = get_password_hash_only(Bun.password.hashSync(new_password, {
                     algorithm: "argon2id",
                     timeCost: global.ph_timecost,
                     memoryCost: global.ph_memorycost,
@@ -289,7 +289,7 @@ export async function patch_method(req: Request, url: URL) {
             const old_pass = <string>user_input.get("old_pass");
             const new_pass = <string>user_input.get("new_pass");
 
-            if (!old_pass || !new_pass) return new Response("Bad Request", {status: 400});
+            if (!old_pass || !new_pass || new_pass.length < 8) return new Response("Bad Request", {status: 400});
             
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});

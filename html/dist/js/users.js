@@ -241,6 +241,10 @@ function tambah_user_modal() {
 }
 
 async function tambah_user() {
+    if (global.element.password.value.length < 8 ||  global.element.confirm_password.value.length < 8) return swal2_mixin.fire({
+        icon: "error",
+        title: "Password & Confirm Password length at least 8 characters"
+    });
     if (global.element.password.value !== global.element.confirm_password.value) return swal2_mixin.fire({
         icon: "error",
         title: "Confirm password must match the new password."
@@ -290,6 +294,10 @@ async function tambah_user() {
 
 async function edit_user(id) {
     if (global.element.password.value) {
+        if (global.element.password.value.length < 8 ||  global.element.confirm_password.value.length < 8) return swal2_mixin.fire({
+            icon: "error",
+            title: "Password & Confirm Password length at least 8 characters"
+        });
         if (global.element.password.value !== global.element.confirm_password.value) return swal2_mixin.fire({
             icon: "error",
             title: "Confirm password must match the new password"

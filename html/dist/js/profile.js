@@ -177,7 +177,11 @@ async function change_profile() {
 }
 
 async function change_password() {
-    if (new_password.value !== confirm_new_password.value) return swal2_mixin.fire({
+    if (global.element.new_password.value.length < 8 ||  global.element.confirm_new_password.value.length < 8) return swal2_mixin.fire({
+        icon: "error",
+        title: "New Password & Confirm New Password length at least 8 characters"
+    });
+    if (global.element.new_password.value !== global.element.confirm_new_password.value) return swal2_mixin.fire({
         icon: "error",
         title: "Confirm password must match the new password."
     })
@@ -189,8 +193,8 @@ async function change_password() {
                 "token": localStorage.getItem("token")
             },
             body: new URLSearchParams({
-                "old_pass": current_password.value,
-                "new_pass": new_password.value
+                "old_pass": global.element.current_password.value,
+                "new_pass": global.element.new_password.value
             })
         })
 
@@ -217,7 +221,6 @@ async function change_password() {
         }
     } finally {
     }
-    
 }
 
 (async function() {
