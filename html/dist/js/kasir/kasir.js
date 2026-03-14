@@ -425,7 +425,6 @@ function hapus_semua_barang() {
         }
     })
 }
-
 async function cari_barang() {
     if (!global.element.input_barang.value.trim()) {
         global.element.input_barang.focus();
