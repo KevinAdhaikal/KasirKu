@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KasirKu | Login</title>
 
   <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
   <!-- icheck bootstrap -->
@@ -26,14 +28,14 @@
     }
   </style>
   <script>
-    (async function() {
+    (async function () {
       const username = localStorage.getItem("username");
       const password = localStorage.getItem("password");
       if (username && password) {
         let res = await fetch("/login", {
           method: "POST",
           body: new URLSearchParams({
-              username, password
+            username, password
           })
         })
         if (res.status === 200) {
@@ -44,85 +46,90 @@
     })()
   </script>
 </head>
+
 <body class="hold-transition login-page dark-mode">
-<div class="login-box">
-  <!-- /.login-logo -->
-  <div class="card card-outline card-primary">
-    <div class="card-header text-center">
-      <a class="h1"><b>Kasir</b>Ku</a>
-    </div>
-    <div class="card-body">
-      <div class="input-group mb-3">
-        <div class="input-group-append">
-          <div class="input-group-text">
-            <span class="fas fa-user"></span>
+  <div class="login-box">
+    <!-- /.login-logo -->
+    <div class="card card-outline card-primary">
+      <div class="card-header text-center">
+        <a class="h1"><b>Kasir</b>Ku</a>
+      </div>
+      <div class="card-body">
+        <div class="input-group mb-3">
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+          <input type="text" id="username" class="form-control" placeholder="Username"
+            onkeypress="if(event.keyCode === 13){ document.getElementById('password').focus() }" autocomplete="off">
+        </div>
+        <div class="input-group mb-3">
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+          <input type="password" id="password" class="form-control" placeholder="Password"
+            onkeypress="if(event.keyCode === 13){ login() }" autocomplete="off">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
+              <i class="fas fa-eye"></i>
+            </button>
           </div>
         </div>
-        <input type="username" id="username" class="form-control" placeholder="Username" onkeypress="if(event.keyCode === 13){ document.getElementById('password').focus() }" autocomplete="off">
-      </div>
-      <div class="input-group mb-3">
-        <div class="input-group-append">
-          <div class="input-group-text">
-            <span class="fas fa-lock"></span>
-          </div>
+        <div class="text-right">
+          <div class="icheck-primary"><input type="checkbox" id="remember_me"><label class="form-check-label"
+              for="remember_me"><b>Remember me</b></label></div>
         </div>
-        <input type="password" id="password" class="form-control" placeholder="Password" onkeypress="if(event.keyCode === 13){ login() }" autocomplete="off">
-        <div class="input-group-append">
-          <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
-            <i class="fas fa-eye"></i>
-          </button>
+        <hr>
+        <div class="theme-switch-wrapper">
+          <label class="theme-switch">
+            <input type="checkbox" id="dark_mode_checkbox">
+            <span class="slider round"></span>
+          </label>
+          <label>Dark Mode</label>
         </div>
+        <button type="submit" class="btn btn-primary btn-block" onclick="login()">Sign In</button>
       </div>
-      <div class="text-right">
-        <div class="icheck-primary"><input type="checkbox" id="remember_me"><label class="form-check-label" for="remember_me"><b>Remember me</b></label></div>
-      </div>
-      <hr>
-      <div class="theme-switch-wrapper">
-        <label class="theme-switch">
-          <input type="checkbox" id="dark_mode_checkbox">
-          <span class="slider round"></span>
-        </label>
-        <label>Dark Mode</label>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block" onclick="login()">Sign In</button>
+      <!-- /.card-body -->
     </div>
-    <!-- /.card-body -->
+    <!-- /.card -->
   </div>
-  <!-- /.card -->
-</div>
-<!-- /.login-box -->
+  <!-- /.login-box -->
 
-<!-- Dark Mode Script -->
-<script src="/dist/js/darkmode_login.js"></script>
+  <!-- Dark Mode Script -->
+  <script src="/dist/js/darkmode_login.js"></script>
 
-<!-- jQuery -->
-<script src="/plugins/jquery/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="/dist/js/adminlte.min.js"></script>
-<!-- Sweetalert2 -->
-<script src="/plugins/sweetalert2/sweetalert2.all.min.js"></script>
+  <!-- jQuery -->
+  <script src="/plugins/jquery/jquery.min.js"></script>
+  <!-- Bootstrap 4 -->
+  <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- AdminLTE App -->
+  <script src="/dist/js/adminlte.min.js"></script>
+  <!-- Sweetalert2 -->
+  <script src="/plugins/sweetalert2/sweetalert2.all.min.js"></script>
 
-<!-- Login Script -->
-<script src="/dist/js/login.js"></script>
-<script>
-document.querySelectorAll(".toggle-password").forEach(btn => {
-    btn.addEventListener("click", function () {
+  <!-- Login Script -->
+  <script src="/dist/js/login.js"></script>
+  <script>
+    document.querySelectorAll(".toggle-password").forEach(btn => {
+      btn.addEventListener("click", function () {
         const input = document.getElementById(this.dataset.target);
         const icon = this.querySelector("i");
         if (input.type === "password") {
-            input.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
         } else {
-            input.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
         }
+      });
     });
-});
-</script>
-<script>document.getElementById("username").focus();</script>
+  </script>
+  <script>document.getElementById("username").focus();</script>
 </body>
+
 </html>

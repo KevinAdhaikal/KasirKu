@@ -373,6 +373,12 @@ function hapus_barang(id) {
 }
 
 function hapus_semua_barang() {
+    if (!global.current_items.size) {
+        return swal2_mixin.fire({
+            icon: "error",
+            title: "Tidak ada barang yang ditambahkan!"
+        });
+    }
     document.addEventListener("keydown", esc_handler);
     Swal.fire({
         title: "Hapus Semua Barang",
@@ -405,6 +411,14 @@ function hapus_semua_barang() {
 }
 
 async function cari_barang() {
+    if (!global.element.input_barang.value.trim()) {
+        global.element.input_barang.focus();
+        return swal2_mixin.fire({
+            icon: "error",
+            title: "Silahkan input barang terlebih dahulu!"
+        });
+    }
+
     let res = await fetch(`/api/cari_barang?${new URLSearchParams({
         barang: global.element.input_barang.value
     })}`, {
