@@ -498,8 +498,12 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
         let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
         const res_role = stmt.get(user_info.role_id) as {permission_level: number};
         stmt.finalize();
-
-        if (required_perm && !(res_role.permission_level & required_perm)) pathname = "/404/index.html";
+        
+        if (required_perm && !(res_role.permission_level & required_perm)) {
+            for (const [key, value] of Object.entries(protected_routes)) {
+                if (res_role.permission_level & value) return Response.redirect(key);
+            }
+        }
     }
 
     const should_cache = !pathname.endsWith(".html") && !pathname.startsWith("/profile_img/");

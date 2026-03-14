@@ -227,6 +227,7 @@ async function load_page(url, push = false) {
     if (load_page_abort_controller) load_page_abort_controller.abort();
     load_page_abort_controller = new AbortController();
 
+
     let res;
     try {
       res = await fetch(url, {

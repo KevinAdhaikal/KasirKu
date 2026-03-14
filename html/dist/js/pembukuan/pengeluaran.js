@@ -50,12 +50,6 @@ global.element = {
     date: new Date()
 }
 
-global.init = () => {
-    global.element.tanggal_pengeluaran.addEventListener("changeDate", fetch_pengeluaran);
-    global.element.tanggal_pengeluaran_picker.setDate(Date.now());
-    if (!global.browser_loaded) fetch_pengeluaran();
-}
-
 global.deinit = () => {
     global.element.tanggal_pengeluaran.removeEventListener("changeDate", fetch_pengeluaran)
     global.remove_sse_handler(sse_handler);
@@ -372,5 +366,7 @@ async function edit_pengeluaran(id) {
 }
 
 (async function() {
-    global.init();
+    global.element.tanggal_pengeluaran_picker.setDate(Date.now());
+    global.element.tanggal_pengeluaran.addEventListener("changeDate", fetch_pengeluaran);
+    fetch_pengeluaran();
 })()

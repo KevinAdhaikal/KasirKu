@@ -102,13 +102,18 @@
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-          <li class="nav-item">
-            <a href="/" class="nav-link nav-redirect" data-url="/">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>
-                Dashboard
-              </p>
-            </a>
+          <li class="section_check" style="display: none;" data-value="4">
+            <ul class="nav nav-pills nav-sidebar flex-column">
+              <li class="nav-header">DASHBOARD</li>
+              <li class="nav-item">
+                <a href="/" class="nav-link nav-redirect" data-url="/">
+                  <i class="nav-icon fas fa-tachometer-alt"></i>
+                  <p>
+                    Dashboard
+                  </p>
+                </a>
+              </li>
+            </ul>
           </li>
           <li class="section_check" style="display: none;" data-value="1">
             <ul class="nav nav-pills nav-sidebar flex-column">
@@ -411,6 +416,8 @@
 <!-- ./wrapper -->
 
 <!-- REQUIRED SCRIPTS -->
+<!-- Init -->
+<script src="/dist/js/init.js"></script>
 <!-- Utility -->
 <script src="/dist/js/utils.js"></script>
 <!-- Dark Mode Script -->
@@ -434,9 +441,6 @@
 <script src="/plugins/sweetalert2/sweetalert2.all.min.js" data-init-page-script></script>
 <!-- Bootstrap 4 -->
 <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js" data-init-page-script></script>
-
-<!-- Init -->
-<script src="/dist/js/init.js"></script>
 
 <!-- Login & Logout -->
 <script src="/dist/js/login.js"></script>

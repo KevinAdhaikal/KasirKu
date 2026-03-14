@@ -239,11 +239,17 @@ async function tambah_barang(id, data) {
             return;
         }
     }
-
     let is_found = 0;
     let idx = 0;
-    global.current_items.forEach(e => {
+
+    for (const e of global.current_items) {
         if (e.id === data.id) {
+            if (data.stok_barang <= e.jumlah_barang) {
+                return swal2_mixin.fire({
+                    icon: "error",
+                    title: "Gagal menambahkan barang tersebut! Karena stok barang tersebut telah habis."
+                });
+            }
             e.jumlah_barang++;
             e.harga_barang += BigInt(data.harga_jual);
             global.element.kasir_table.cell(idx, 1).data(format_thousand_separator.format(e.jumlah_barang));
@@ -260,13 +266,14 @@ async function tambah_barang(id, data) {
             return;
         }
         idx++;
-    });
+    }
 
     if (is_found) return;
     global.current_items.add({
         id: data.id,
         nama_barang: data.nama_barang,
         jumlah_barang: 1,
+        limit_barang: data.stok_barang,
         harga_barang: BigInt(data.harga_jual),
         harga_jual: BigInt(data.harga_jual)
     });
@@ -317,12 +324,20 @@ function edit_barang_modal(id) {
 }
 
 function edit_barang_button(id) {
-    global.element.modal_edit_barang.modal("hide");
     let idx = 0;
-    global.current_items.forEach(e => {
+    for (const e of global.current_items) {
         if (e.id === id) {
             const jumlah_barang = Number(global.element.jumlah_barang.value.replaceAll(".", ""));
             const harga_barang = BigInt(global.element.harga_barang.value.slice(2).replaceAll(".", "").replaceAll(",", ""));
+
+            if (e.limit_barang < jumlah_barang) {
+                return swal2_mixin.fire({
+                    icon: "error",
+                    title: "Gagal menambahkan barang tersebut! Karena stok barang tersebut telah habis."
+                });
+            }
+
+            global.element.modal_edit_barang.modal("hide");
 
             global.element.kasir_table.cell(idx, 1).data(global.element.jumlah_barang.value);
             global.element.kasir_table.cell(idx, 2).data(global.element.harga_barang.value);
@@ -338,7 +353,7 @@ function edit_barang_button(id) {
             return;
         }
         idx++;
-    });
+    }
 }
 
 function hapus_barang(id) {

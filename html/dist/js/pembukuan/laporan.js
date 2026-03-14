@@ -45,15 +45,6 @@ global.element = {
     })
 }
 
-global.init = () => {
-    global.element.tanggal_laporan_start.addEventListener("changeDate", tanggal_laporan_start_event);
-    global.element.tanggal_laporan_start_picker.setDate(Date.now());
-    global.element.tanggal_laporan_end.addEventListener("changeDate", tanggal_laporan_end_event);
-    if (!global.browser_loaded) {
-        fetch_laporan();
-    }
-}
-
 global.deinit = () => {
     global.element.tanggal_laporan_start.removeEventListener("changeDate", tanggal_laporan_start_event);
     global.element.tanggal_laporan_end.removeEventListener("changeDate", tanggal_laporan_end_event);
@@ -188,5 +179,9 @@ async function hitung_total() {
 }
 
 (async function() {
-    global.init();
+    global.element.tanggal_laporan_start_picker.setDate(Date.now());
+    global.element.tanggal_laporan_end_picker.setDate(Date.now());
+    global.element.tanggal_laporan_start.addEventListener("changeDate", tanggal_laporan_start_event);
+    global.element.tanggal_laporan_end.addEventListener("changeDate", tanggal_laporan_end_event);
+    fetch_laporan();
 })();

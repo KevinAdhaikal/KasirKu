@@ -29,12 +29,6 @@ global.element = {
     date: new Date()
 }
 
-global.init = () => {
-    global.element.tanggal_penjualan.addEventListener("changeDate", fetch_penjualan);
-    global.element.tanggal_penjualan_picker.setDate(Date.now());
-    if (!global.browser_loaded) fetch_penjualan();
-}
-
 global.deinit = () => {
     global.element.tanggal_penjualan.removeEventListener("changeDate", fetch_penjualan);
     global.remove_sse_handler(sse_handler);
@@ -194,5 +188,7 @@ async function fetch_penjualan() {
 }
 
 (async function() {
-    global.init();
+    global.element.tanggal_penjualan_picker.setDate(Date.now());
+    global.element.tanggal_penjualan.addEventListener("changeDate", fetch_penjualan);
+    fetch_penjualan();
 })();
