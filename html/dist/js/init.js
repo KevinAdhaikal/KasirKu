@@ -313,6 +313,13 @@ async function loadPageScriptFromElement(scriptEl) {
 }
 
 async function load_page(url, push = false) {
+  if (global.sse.readyState !== EventSource.OPEN) {
+    return swal2_mixin.fire({
+      icon: "error",
+      title: "Gagal load page karena kamu tidak terkoneksi dengan server."
+    });
+  }
+  
   NProgress.start();
   
   try {
