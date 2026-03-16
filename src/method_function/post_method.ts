@@ -165,12 +165,12 @@ export async function post_method(req: Request, url: URL) {
             
             stmt = db.prepare("SELECT nama_barang, stok_barang, harga_modal, harga_jual FROM barang WHERE id = ?");
 
-            items.forEach(data => {
+            for (const data of items) {
                 total_barang += data.jumlah_barang;
                 
                 const barang = stmt.get(data.id) as { nama_barang: string, stok_barang: number, harga_modal: number, harga_jual: number };
-                
-                if ((barang.stok_barang - data.jumlah_barang) <= 0) {
+
+                if ((barang.stok_barang - data.jumlah_barang) < 0) {
                     stmt.finalize();
                     return new Response("1", {status: 403});
                 }
@@ -180,7 +180,7 @@ export async function post_method(req: Request, url: URL) {
                 
                 total_harga_modal += data.harga_modal * data.jumlah_barang;
                 total_harga_jual += data.harga_jual * data.jumlah_barang;
-            });
+            }
 
             stmt.finalize();
 
@@ -197,11 +197,11 @@ export async function post_method(req: Request, url: URL) {
                     
                     stmt = db.prepare("INSERT INTO penjualan_item (penjualan_id, barang_id, nama_barang, jumlah, harga_modal, harga_jual, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     const stmt2 = db.prepare("UPDATE barang SET stok_barang = CASE WHEN stok_barang - ? < 0 THEN 0 ELSE stok_barang - ? END WHERE id = ?");
- 
-                    items.forEach(e => {
+
+                    for (const e of items) {
                         stmt.run(last_row, e.id, e.nama_barang, e.jumlah_barang, e.harga_modal * e.jumlah_barang, e.harga_jual * e.jumlah_barang, date_now, now, now);
                         stmt2.run(e.jumlah_barang, e.jumlah_barang, e.id);
-                    });
+                    }
 
                     stmt.finalize();
                     stmt2.finalize();
