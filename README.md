@@ -51,7 +51,7 @@
 
 ## Requirements
 ### Server
-- CPU: 1 vCPU
+- CPU: 1 vCPU (64 bit)
 - RAM: 256 MB (512 MB recommended)
 - Storage: 1 GB (5 GB recommended)
 - OS: Linux / Windows / macOS / Android
