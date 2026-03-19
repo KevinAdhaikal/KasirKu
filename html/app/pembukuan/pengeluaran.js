@@ -50,6 +50,10 @@ global.element = {
     date: new Date()
 }
 
+global.element.modal_pengeluaran.on("shown.bs.modal", function() {
+    global.element.deskripsi.focus();
+})
+
 global.deinit = () => {
     global.element.tanggal_pengeluaran.removeEventListener("changeDate", fetch_pengeluaran)
     global.remove_sse_handler(sse_handler);
