@@ -142,8 +142,6 @@ global.element.kategori_barang.on('select2:select', async function (e) {
             global.element.kategori_barang.val(null).trigger("change");
         }
     }
-
-    
   }
 })
 
@@ -243,6 +241,18 @@ async function sse_handler(e) {
             }
         }
     }
+    else if (e.type === 6) { // barang masuk
+
+        switch(e.code) {
+            case "TAMBAH_BARANG_MASUK": {
+                global.element.daftar_barang_table.cell("#" + e.data.barang_id, 1).data(format_thousand_separator.format(e.data.stok_barang)).draw();
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    }
 }
 
 global.element.daftar_barang_table.on('click.action_edit', '.action_edit', async function () {
@@ -259,7 +269,7 @@ global.element.daftar_barang_table.on('click.action_edit', '.action_edit', async
         const res_json = await res.json();
 
         global.element.nama_barang.value = res_json.nama_barang;
-        global.element.kategori_barang.val(res_json.kategori_barang_id);
+        global.element.kategori_barang.val(res_json.kategori_barang_id).trigger("change");
         global.element.stok_barang.value = format_thousand_separator.format(res_json.stok_barang);
         global.element.harga_modal.value = money_format_bigint(BigInt(res_json.harga_modal));
         global.element.harga_jual.value = money_format_bigint(BigInt(res_json.harga_jual));
@@ -376,7 +386,7 @@ function persen_jual_event(e) {
 
 function tambah_barang_modal() {
     global.element.nama_barang.value = "";
-    global.element.kategori_barang.val("1");
+    global.element.kategori_barang.val("1").trigger("change");
     global.element.harga_modal.value = "";
     global.element.harga_jual.value = "";
     global.element.persen_jual.value = "0.00";

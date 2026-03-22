@@ -33,6 +33,12 @@ const sidebar_data = `<ul class="nav nav-pills nav-sidebar flex-column" data-wid
           <p>Kategori Barang</p>
         </a>
       </li>
+      <li class="nav-item">
+        <a href="/barang/barang_masuk" class="nav-link nav-redirect" data-url="/barang/barang_masuk">
+          <i class="nav-icon fas fa-dolly-flatbed"></i>
+          <p>Barang Masuk</p>
+        </a>
+      </li>
     </ul>
   </li>
   <li class="section_check" style="display: none;" data-value="2">
@@ -391,6 +397,7 @@ async function load_page(url, push = false) {
     clearPageScripts();
 
     if (version !== load_page_version) return -1;
+    if (global.refresh_handler) global.refresh_handler = null;
     document.querySelector(".content-wrapper").innerHTML = newContent.innerHTML;
     document.title = doc.title;
 

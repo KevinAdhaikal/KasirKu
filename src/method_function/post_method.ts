@@ -275,6 +275,72 @@ export async function post_method(req: Request, url: URL) {
 
             return new Response("", {status: 200});
         }
+        case "/barang_masuk": {
+            const user_info = global.user_sessions.get(token);
+            if (!token || !user_info) return new Response("Unauthorized", {status: 401});
+
+            const db = global.database;
+            if (!db) return new Response("Internal Server Error", {status: 500});
+            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+            stmt.finalize();
+            if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+            if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
+
+            const user_input = new URLSearchParams(await req.text());
+
+            const barang_id = Number(user_input.get("barang_id"));
+            const deskripsi = <string>user_input.get("deskripsi");
+            const jumlah_barang = Number(user_input.get("jumlah_barang"));
+            
+            if (isNaN(barang_id) || !barang_id || !deskripsi || isNaN(jumlah_barang) || !jumlah_barang) return new Response("Bad Request", {status: 400});
+
+            stmt = db.prepare("SELECT id, nama_barang, stok_barang FROM barang WHERE id = ?");
+            const res = stmt.get(barang_id) as {id: number, nama_barang: string, stok_barang: number};
+            stmt.finalize();
+
+            if (!res) return new Response("1", {status: 404});
+
+            const now = Date.now();
+            const tanggal_key = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
+            let last_row = null;
+            
+            try {
+                last_row = db.transaction(() => {
+                    const last_row = db.run("INSERT INTO barang_masuk (tanggal_key, barang_id, deskripsi, jumlah_barang, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)", [
+                        tanggal_key,
+                        barang_id,
+                        deskripsi,
+                        jumlah_barang,
+                        now,
+                        now
+                    ]).lastInsertRowid;
+                    db.run(
+                        "UPDATE barang SET stok_barang = stok_barang + ? WHERE id = ?", [jumlah_barang, barang_id]
+                    );
+                    return last_row;
+                })();
+            } catch(e) {
+                console.log("An error occured in post_method.ts at /barang_masuk:", e);
+                return new Response("Intrenal Server Error", {status: 500});
+            }
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 6,
+                code: "TAMBAH_BARANG_MASUK",
+                data: {
+                    id: last_row,
+                    nama_barang: res.nama_barang,
+                    deskripsi,
+                    jumlah_barang: jumlah_barang,
+                    tanggal_key,
+                    barang_id: res.id,
+                    stok_barang: res.stok_barang + jumlah_barang
+                }
+            }));
+            return new Response("", {status: 200});
+        }
         case "/user": { // add user (administrator permission only)
             const user_info = global.user_sessions.get(token);
             if (!token || !user_info) return new Response("Unauthorized", {status: 401});

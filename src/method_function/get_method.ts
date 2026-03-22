@@ -194,9 +194,12 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
                 const user_input = url.searchParams;
 
                 const barang = <string>user_input.get("barang"); // nama barang and barcode barang
+                const bm = <string>user_input.get("bm"); // apakah cari barang ini untuk barang masuk?
                 if (!barang) return new Response("Bad Request", {status: 400});
 
-                stmt = db.prepare("SELECT * FROM barang WHERE stok_barang > 0 AND (barcode_barang = ? OR nama_barang LIKE '%' || ? || '%')");
+                if (bm) stmt = db.prepare("SELECT * FROM barang WHERE barcode_barang = ? OR nama_barang LIKE '%' || ? || '%'");
+                else stmt = db.prepare("SELECT * FROM barang WHERE stok_barang > 0 AND (barcode_barang = ? OR nama_barang LIKE '%' || ? || '%')");
+                
                 const res = stmt.all(barang, barang);
                 stmt.finalize();
 
@@ -219,6 +222,27 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
 
                 stmt = db.prepare("SELECT nama_barang, stok_barang, harga_jual FROM barang WHERE kategori_barang_id = ?");
                 const res = stmt.all(id);
+                stmt.finalize();
+
+                return new Response(JSON.stringify(res), {status: 200});
+            }
+            case "barang_masuk": {
+                const db = global.database;
+                if (!db) return new Response("Internal Server Error", {status: 500});
+                let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
+                const res_role = stmt.get(user_info.role_id) as {permission_level: number};
+                stmt.finalize();
+                if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+                if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
+
+                const user_input = url.searchParams;
+
+                const tanggal_key = Number(user_input.get("tanggal_key"));
+                if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400});
+                
+                stmt = db.prepare("SELECT bm.id, b.nama_barang, bm.deskripsi, bm.jumlah_barang FROM barang_masuk bm JOIN barang b ON b.id = bm.barang_id WHERE bm.tanggal_key = ?");
+                const res = stmt.all(tanggal_key);
                 stmt.finalize();
 
                 return new Response(JSON.stringify(res), {status: 200});

@@ -22,95 +22,85 @@ let default_svg_profile_img = `<?xml version="1.0" encoding="utf-8"?>
 	z"/>
 </svg>` // https://upload.wikimedia.org/wikipedia/commons/4/4b/User-Pict-Profil.svg
 
+const MAX_CONCURRENT = 8;
+
+async function process_file(full_path: string) {
+    const stat_file = await stat(full_path)
+    let need_compile = false
+
+    const build_path = full_path.replace("html/", "html_build/")
+
+    try {
+        const stat_build = await stat(build_path)
+        if (stat_file.mtime > stat_build.mtime) need_compile = true
+    } catch {
+        need_compile = true
+    }
+
+    if (!need_compile) return
+
+    console.log("[BUILD]", full_path)
+
+    let res: any;
+
+    if (full_path.endsWith(".html")) {
+        res = await minifyHTML(await Bun.file(full_path).text(), {
+            collapseWhitespace: true,
+            removeComments: true,
+            removeOptionalTags: true,
+            collapseBooleanAttributes: true,
+            minifyCSS: true,
+            minifyJS: true
+        })
+    }
+    else if (full_path.endsWith(".js") && !full_path.endsWith(".min.js")) {
+        const res_js = await minifyJS(await Bun.file(full_path).text())
+        res = res_js.code
+    }
+    else if (full_path.endsWith(".css") && !full_path.endsWith(".min.css")) {
+        const res_css = new CleanCSS().minify(await Bun.file(full_path).text())
+        res = res_css.styles
+    }
+    else {
+        res = await Bun.file(full_path).arrayBuffer()
+    }
+
+    await Bun.write(build_path, brotliCompressSync(res))
+}
+
 async function scan_html_file(dir: string) {
     const entries = await readdir(dir, { withFileTypes: true })
+    const tasks: Promise<any>[] = []
 
     for (const entry of entries) {
         const full_path = dir + "/" + entry.name
+
         if (entry.isDirectory()) {
-            await scan_html_file(full_path);
-            continue;
+            tasks.push(scan_html_file(full_path))
+            continue
         }
 
-        const stat_file = await stat(full_path);
-        let need_compile = false;
+        tasks.push(process_file(full_path))
 
-        const build_path = full_path.replace("html/", "html_build/");
-
-        try {
-            const stat_build = await stat(build_path)
-            if (stat_file.mtime > stat_build.mtime) need_compile = true
-        } catch {need_compile = true}
-
-        if (need_compile) {
-            console.log("[BUILD] Building " + full_path);
-
-            let res: string | ArrayBuffer = "";
-            if (full_path.endsWith(".html")) {
-                let res_html = await minifyHTML(await Bun.file(full_path).text(), {
-                    collapseWhitespace: true,
-                    removeComments: true,
-                    removeOptionalTags: true,
-                    collapseBooleanAttributes: true,
-                    minifyCSS: true,
-                    minifyJS: true
-                });
-                res = res_html;
-            }
-            else if (full_path.endsWith(".js") && !full_path.endsWith(".min.js")) {
-                let res_js = await minifyJS(await Bun.file(full_path).text());
-                res = <string>res_js.code;
-            }
-            else if (full_path.endsWith(".css") && !full_path.endsWith(".min.css")) {
-                let res_css = new CleanCSS().minify(await Bun.file(full_path).text());
-                res = res_css.styles;
-            }
-            else res = await Bun.file(full_path).arrayBuffer();
-
-            await Bun.write(build_path, brotliCompressSync(res));
+        if (tasks.length >= MAX_CONCURRENT) {
+            await Promise.all(tasks)
+            tasks.length = 0
         }
+    }
+
+    if (tasks.length) {
+        await Promise.all(tasks)
     }
 }
 
-async function prepare() {
-    console.log("[LOG] Preparing Server...");
-
-    // Preapre Profile Image Folder
-    if (!(await Bun.file("profile_img/default.svg").exists())) {
-        console.log("[LOG] default.svg for default profile not found! Creating...");
-        
-        try {
-            mkdirSync("./profile_img");
-        } catch (e) {
-            console.log("[WARNING]:", e)
-        }
-
-        await Bun.write("profile_img/default.svg", default_svg_profile_img);
-        console.log("[LOG] default.svg has been created!");
-    }
-
-    // Prepare Database
-    if (!(await Bun.file("database/kasirku.db").exists())) {
-        console.log("[LOG] Database not found! Creating...");
-        try {
-            mkdirSync("database");
-        } catch(e) {
-            console.log("[WARNING]:", e)
-        }
-        
-        const current_ms = Date.now();
-        const db = new Database("database/kasirku.db");
-
-        db.run("PRAGMA journal_mode = WAL;");
-        db.run("PRAGMA synchronous = NORMAL;");
-        db.run("PRAGMA foreign_keys = ON;");
-
+function database_create_req(db: Database, version: number, current_ms: number) { // database create requirement
+    if (version < 1) { // Database Version 1.0
         // roles
         db.run(
             "CREATE TABLE IF NOT EXISTS roles (id INTEGER PRIMARY KEY, name TEXT UNIQUE, permission_level INTEGER, created_ms INTEGER, modified_ms INTEGER)"
         );
         db.run(
-            "INSERT INTO roles (name, permission_level, created_ms, modified_ms) VALUES (?, ?, ?, ?)", [
+            "INSERT OR IGNORE INTO roles (name, permission_level, created_ms, modified_ms) VALUES (?, ?, ?, ?)", [
                 "Administrator",
                 global.permissions.ADMINISTRATOR,
                 Date.now(),
@@ -123,7 +113,7 @@ async function prepare() {
             "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, full_name TEXT, password_hash TEXT, profile_img TEXT DEFAULT null, role_id INTEGER, created_ms INTEGER, modified_ms INTEGER, FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE ON UPDATE CASCADE)",
         );
         db.run(
-            "INSERT INTO users (username, full_name, password_hash, role_id, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT OR IGNORE INTO users (username, full_name, password_hash, role_id, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)",
             [
                 "admin",
                 "Administrator",
@@ -150,7 +140,7 @@ async function prepare() {
             )`
         );
         db.run(
-            "INSERT INTO kategori_barang (nama_kategori, created_ms, modified_ms) VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO kategori_barang (nama_kategori, created_ms, modified_ms) VALUES (?, ?, ?)",
             [
                 "Tidak Ada",
                 Date.now(),
@@ -171,6 +161,20 @@ async function prepare() {
                 created_ms INTEGER,
                 modified_ms INTEGER,
                 FOREIGN KEY (kategori_barang_id) REFERENCES kategori_barang(id) ON DELETE CASCADE ON UPDATE CASCADE
+            )`
+        );
+
+        // barang masuk
+        db.run(
+            `CREATE TABLE IF NOT EXISTS barang_masuk (
+                id INTEGER PRIMARY KEY,
+                barang_id INTEGER,
+                deskripsi TEXT,
+                jumlah_barang INTEGER,
+                tanggal_key INTEGER,
+                created_ms INTEGER,
+                modified_ms INTEGER,
+                FOREIGN KEY (barang_id) REFERENCES barang(id) ON DELETE CASCADE ON UPDATE CASCADE
             )`
         );
 
@@ -217,7 +221,50 @@ async function prepare() {
                 modified_ms INTEGER -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
             )`
         );
+    }
+}
+
+async function prepare() {
+    console.log("[LOG] Preparing Server...");
+
+    // Preapre Profile Image Folder
+    if (!(await Bun.file("profile_img/default.svg").exists())) {
+        console.log("[LOG] default.svg for default profile not found! Creating...");
         
+        try {
+            mkdirSync("./profile_img");
+        } catch (e) {
+            console.log("[WARNING]:", e)
+        }
+
+        await Bun.write("profile_img/default.svg", default_svg_profile_img);
+        console.log("[LOG] default.svg has been created!");
+    }
+
+    // Prepare Database
+    if (!(await Bun.file("database/kasirku.db").exists())) {
+        console.log("[LOG] Database not found! Creating...");
+        try {
+            mkdirSync("database");
+        } catch(e) {
+            console.log("[WARNING]:", e)
+        }
+        
+        const db = new Database("database/kasirku.db");
+
+        db.run("PRAGMA journal_mode = WAL;");
+        db.run("PRAGMA synchronous = NORMAL;");
+        db.run("PRAGMA foreign_keys = ON;");
+
+        // kasirku property
+        db.run(
+            "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"
+        );
+        db.run(
+            "INSERT INTO kasirku (key, value) VALUES ('version', '1')"
+        )
+
+        database_create_req(db, 0, Date.now());
         db.close();
 
         console.log("[LOG] Database has been created!");
@@ -289,7 +336,29 @@ async function prepare() {
     global.database.run("PRAGMA journal_mode = WAL;");
     global.database.run("PRAGMA synchronous = NORMAL;");
     global.database.run("PRAGMA foreign_keys = ON;");
+
+    let version = null;
+    try {
+        const stmt = global.database.prepare("SELECT value FROM kasirku WHERE key = ?");
+        version = Number(stmt.get("version"));
+
+        stmt.finalize();
+    } catch(e) {
+        global.database.run(
+            "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"
+        );
+        version = 0;
+    }
+    database_create_req(global.database, version, Date.now());
+
+    if (version == 0) global.database.run("INSERT INTO kasirku (key, value) VALUES (?, ?)", [
+        "version", "1"
+    ])
+    else global.database.run("UPDATE kasirku SET value = ? WHERE key = ?", [
+        "1", "version"
+    ])
     
+
     if (!(await Bun.file("config.json").exists())) {
         console.log("[LOG] Config file not found! Creating...");
 
