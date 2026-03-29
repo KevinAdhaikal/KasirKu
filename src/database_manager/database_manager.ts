@@ -7,6 +7,7 @@ type DBType = "sqlite" | "postgresql" | "mysql";
 interface Config {
     type: DBType;
     host?: string;
+    port?: number;
     user?: string;
     password?: string;
     database?: string;

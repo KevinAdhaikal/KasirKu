@@ -9,6 +9,7 @@ import { minify as minifyHTML } from "html-minifier-terser"
 import { minify as minifyJS } from "terser"
 import CleanCSS from "clean-css"
 import { brotliCompressSync } from "node:zlib";
+import { database_manager } from "./src/database_manager/database_manager";
 
 let default_svg_profile_img = `<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
@@ -93,7 +94,7 @@ async function scan_html_file(dir: string) {
     }
 }
 
-function database_create_req(db: Database, version: number, current_ms: number) { // database create requirement
+function database_create_req(db: database_manager, version: number, current_ms: number) { // database create requirement
     if (version < 1) { // Database Version 1.0
         // roles
         db.run(
@@ -244,19 +245,71 @@ async function prepare() {
 
     switch(global.config.db_type) {
         case "sqlite": {
+            if (!(await Bun.file(`database/${global.config.db_name}.db`).exists())) {
+                console.log("[LOG] Database not found! Creating...");
+                try {
+                    mkdirSync("database");
+                } catch(e) {
+                    console.log("[WARNING]:", e)
+                }
+
+                // kasirku property
+                global.database.run(
+                    "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"
+                );
+                global.database.run(
+                    "INSERT INTO kasirku (key, value) VALUES ('version', '1')"
+                )
+
+                database_create_req(global.database, 0, Date.now());
+
+                console.log("[LOG] Database has been created!");
+            }
+            else {
+                global.database = new database_manager({
+                    type: "sqlite",
+                    filename: "database/" + global.config.db_name + ".db",
+                });
+                global.database.run("PRAGMA journal_mode = WAL;");
+                global.database.run("PRAGMA synchronous = NORMAL;");
+                global.database.run("PRAGMA foreign_keys = ON;");
+            }
+            
             break;
         }
         case "mysql": {
+            global.database = new database_manager({
+                type: "mysql",
+                host: global.config.mysql.ip,
+                port: global.config.mysql.port,
+                user: global.config.mysql.username,
+                password: global.config.mysql.password,
+                database: global.config.db_name
+            });
             break;
         }
         case "postgresql": {
+            global.database = new database_manager({
+                type: "postgresql",
+                host: global.config.postgresql.ip,
+                port: global.config.postgresql.port,
+                user: global.config.postgresql.username,
+                password: global.config.postgresql.password,
+                database: global.config.db_name
+            });
+
+            const res = await global.database.get("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'kasirku' AND table_name = 'kasirku');");
+            console.log(res);
             break;
         }
         default: {
+            console.log("[ERROR] Unknown database type:", global.config.db_type);
             process.exit(0);
         }
     }
 
+    console.log("[LOG] Done checking!");
+    process.exit(0);
     // Preapre Profile Image Folder
     if (!(await Bun.file("profile_img/default.svg").exists())) {
         console.log("[LOG] default.svg for default profile not found! Creating...");
@@ -269,35 +322,6 @@ async function prepare() {
 
         await Bun.write("profile_img/default.svg", default_svg_profile_img);
         console.log("[LOG] default.svg has been created!");
-    }
-
-    // Prepare Database
-    if (!(await Bun.file("database/kasirku.db").exists())) {
-        console.log("[LOG] Database not found! Creating...");
-        try {
-            mkdirSync("database");
-        } catch(e) {
-            console.log("[WARNING]:", e)
-        }
-        
-        const db = new Database("database/kasirku.db");
-
-        db.run("PRAGMA journal_mode = WAL;");
-        db.run("PRAGMA synchronous = NORMAL;");
-        db.run("PRAGMA foreign_keys = ON;");
-
-        // kasirku property
-        db.run(
-            "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"
-        );
-        db.run(
-            "INSERT INTO kasirku (key, value) VALUES ('version', '1')"
-        )
-
-        database_create_req(db, 0, Date.now());
-        db.close();
-
-        console.log("[LOG] Database has been created!");
     }
 
     // Create Certificate for SSL/TLS
@@ -360,19 +384,17 @@ async function prepare() {
 
         console.log("[LOG] Certificate SSL/TLS has been created!");
     }
-
-    global.database = new Database("database/kasirku.db");
     
-    global.database.run("PRAGMA journal_mode = WAL;");
-    global.database.run("PRAGMA synchronous = NORMAL;");
-    global.database.run("PRAGMA foreign_keys = ON;");
+    if (global.config.db_type === "sqlite") {
+        global.database.run("PRAGMA journal_mode = WAL;");
+        global.database.run("PRAGMA synchronous = NORMAL;");
+        global.database.run("PRAGMA foreign_keys = ON;");
+    }
 
     let version = null;
     try {
-        const stmt = global.database.prepare("SELECT value FROM kasirku WHERE key = ?");
-        version = Number(stmt.get("version"));
+        version = Number(global.database.get("SELECT value FROM kasirku WHERE key = ?", ["version"]));
 
-        stmt.finalize();
     } catch(e) {
         global.database.run(
             "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"

@@ -13,6 +13,7 @@
     "@types/pg": "^8.20.0",
     "clean-css": "^5.3.3",
     "html-minifier-terser": "^7.2.0",
+    "kasirku": ".",
     "mysql2": "^3.20.0",
     "node-forge": "^1.3.3",
     "pg": "^8.20.0",

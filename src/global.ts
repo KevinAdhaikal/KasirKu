@@ -2,7 +2,7 @@ import { user_session } from "./user_session/user_session";
 import { mutex } from "./utils/utils";
 import { sse_server } from "./sse_server/sse_server";
 import { rate_limit } from "./rate_limit/rate_limit";
-import { Database } from "bun:sqlite";
+import { database_manager } from "./database_manager/database_manager";
 
 export const global = {
     // Date
@@ -26,7 +26,7 @@ export const global = {
     rate_limit: new rate_limit(5, 30, 5),
 
     // Database (SQLite)
-    database: null as unknown as Database,
+    database: null as unknown as database_manager,
 
     // static cache for file
     static_cache: new Map() as Map<string, {buffer: Uint8Array, last_modified: number}>,
@@ -35,13 +35,13 @@ export const global = {
     config: {
         "listen_port": 443,
         "compile_html": true,
-        "db_type": "sqlite",
+        "db_type": "postgresql",
         "db_name": "kasirku",
         "postgresql": {
             "ip": "127.0.0.1",
             "port": 5432,
             "username": "root",
-            "password": ""
+            "password": "admin"
         },
         "mysql": {
             "ip": "127.0.0.1",
