@@ -1,18 +1,8 @@
-import forge from "node-forge";
+import { readdir, mkdir } from "node:fs/promises";
+import { ColumnDefinitionBuilder, InsertQueryBuilder, InsertResult, Kysely, MysqlDialect, PostgresDialect, sql } from "kysely";
 import { main } from "./src/server";
 import { global } from "./src/global";
 import { BunSqliteDialect, get_password_hash_only } from "./src/utils/utils";
-import { mkdirSync } from "node:fs";
-import { readdir, stat } from "node:fs/promises";
-import { minify as minifyHTML } from "html-minifier-terser"
-import { minify as minifyJS } from "terser"
-import CleanCSS from "clean-css"
-import { brotliCompressSync } from "node:zlib";
-import { Database } from "bun:sqlite";
-import { createConnection } from "mysql2/promise";
-import { createPool } from "mysql2";
-import { Client, Pool } from "pg";
-import { ColumnDefinitionBuilder, InsertQueryBuilder, InsertResult, Kysely, MysqlDialect, PostgresDialect, SchemaModule, sql } from "kysely";
 
 let default_svg_profile_img = `<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
@@ -32,19 +22,25 @@ let insert_ignore: (q: InsertQueryBuilder<any, any, InsertResult>) => InsertQuer
 let id_column: (col: ColumnDefinitionBuilder) => ColumnDefinitionBuilder;
 
 async function process_file(full_path: string) {
-    const stat_file = await stat(full_path)
+    const stat_file = await Bun.file(full_path).stat();
     let need_compile = false
 
     const build_path = full_path.replace("html/", "html_build/")
 
     try {
-        const stat_build = await stat(build_path)
+        const stat_build = await Bun.file(build_path).stat();
         if (stat_file.mtime > stat_build.mtime) need_compile = true
     } catch {
         need_compile = true
     }
 
     if (!need_compile) return
+
+    // HTML, JS, and CSS Minifier and Compression.
+    const { minify: minifyHTML } = await import("html-minifier-terser");
+    const { minify: minifyJS } = await import("terser");
+    const CleanCSS = (await import("clean-css")).default;
+    const { brotliCompressSync } = await import("node:zlib");
 
     console.log("[BUILD]", full_path)
 
@@ -83,8 +79,8 @@ async function scan_html_file(dir: string) {
         const full_path = dir + "/" + entry.name
 
         if (entry.isDirectory()) {
-            tasks.push(scan_html_file(full_path))
-            continue
+            tasks.push(scan_html_file(full_path));
+            continue;
         }
 
         tasks.push(process_file(full_path))
@@ -279,7 +275,7 @@ async function prepare() {
 
     if (global.config.compile_html) {
        try {
-            mkdirSync("html_build");
+            await mkdir("html_build");
         } catch(e) {}
 
         await scan_html_file("html");
@@ -287,9 +283,10 @@ async function prepare() {
 
     switch(global.config.db_type) {
         case "sqlite": {
+            const { Database } = await import("bun:sqlite");
             if (!(await Bun.file(`database/${global.config.db_name}.db`).exists())) {
                 try {
-                    mkdirSync("database");
+                    await mkdir("database");
                 } catch(e) {
                     console.log("[WARNING]:", e)
                 }
@@ -305,6 +302,8 @@ async function prepare() {
             break;
         }
         case "mysql": {
+            const { createConnection } = await import("mysql2/promise");
+            const { createPool } = await import("mysql2");
             const tmp_conn = await createConnection({
                 host: global.config.mysql.host,
                 user: global.config.mysql.user,
@@ -329,6 +328,8 @@ async function prepare() {
             break;
         }
         case "postgresql": {
+            const { Client, Pool } = await import("pg");
+            
             const client = new Client({
                 host: global.config.postgresql.host,
                 port: global.config.postgresql.port,
@@ -374,7 +375,7 @@ async function prepare() {
         console.log("[LOG] default.svg for default profile not found! Creating...");
         
         try {
-            mkdirSync("./profile_img");
+            await mkdir("./profile_img");
         } catch (e) {
             console.log("[WARNING]:", e)
         }
@@ -385,9 +386,11 @@ async function prepare() {
 
     // Create Certificate for SSL/TLS
     if (!(await Bun.file("cert/key.pem").exists()) || !(await Bun.file("cert/cert.pem").exists())) {
+        const forge = (await import("node-forge")).default
+
         console.log("[LOG] Certificate not found! Creating self-signed certificate...");
         try {
-            mkdirSync("cert");
+            await mkdir("cert");
         } catch(e) {
             console.log("[WARNING]:", e)   
         }
@@ -424,10 +427,6 @@ async function prepare() {
             {
                 name: "subjectAltName",
                 altNames: [
-                    {
-                        type: 2, // DNS
-                        value: "kevin.adhaikal",
-                    },
                     {
                         type: 2, // DNS
                         value: "localhost",

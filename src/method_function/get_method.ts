@@ -78,8 +78,7 @@ export async function get_method(req: Request, url: URL, remote_ip: string) {
                 if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400});
 
                 const res = await db
-                .selectFrom('penjualan') // Dummy source, karena kita pake subqueries
-                .select([
+                .selectNoFrom(() => [
                     sql<number>`(SELECT SUM(total_barang) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_barang'),
                     sql<number>`(SELECT SUM(total_harga_modal) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_modal'),
                     sql<number>`(SELECT SUM(total_harga_jual) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_jual'),

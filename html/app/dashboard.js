@@ -60,6 +60,23 @@ global.deinit = () => {
     global.element.t_barang_total_terjual_end.removeEventListener("changeDate", tanggal_total_terjual_end_event);
 }
 
+global.refresh_handler = function() {
+    fetch_barang_terjual_tanggal();
+    fetch_info_total_hari_ini();
+    fetch_barang_kosong();
+}
+
+global.add_sse_handler(sse_handler);
+
+function sse_handler(e) {
+    if (e.type === 2) { // daftar barang
+        if (e.code === "UPDATE_BARANG" || e.code === "DELETE_BARANG") fetch_barang_kosong();
+    }
+    else if (e.type === 4 || e.type === 5) { // kasir tambah penjualan & pengeluaran
+        global.refresh_handler();
+    }
+}
+
 async function tanggal_total_terjual_start_event(e) {
     const selectedDate = e.detail.date;
     
@@ -188,7 +205,5 @@ async function fetch_barang_terjual_tanggal() {
     global.element.t_barang_total_terjual_start.addEventListener("changeDate", tanggal_total_terjual_start_event);
     global.element.t_barang_total_terjual_end.addEventListener("changeDate", tanggal_total_terjual_end_event);
     
-    fetch_barang_terjual_tanggal();
-    fetch_info_total_hari_ini();
-    fetch_barang_kosong();
+    global.refresh_handler();
 }());

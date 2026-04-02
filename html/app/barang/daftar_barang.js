@@ -242,7 +242,6 @@ async function sse_handler(e) {
         }
     }
     else if (e.type === 6) { // barang masuk
-
         switch(e.code) {
             case "TAMBAH_BARANG_MASUK": {
                 global.element.daftar_barang_table.cell("#" + e.data.barang_id, 1).data(format_thousand_separator.format(e.data.stok_barang)).draw();
