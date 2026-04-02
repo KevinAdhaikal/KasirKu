@@ -89,6 +89,7 @@ global.element.kategori_barang_table.on('click.button_edit', '.action_edit', asy
     global.element.barang_assigned_kategori.draw();
     global.element.modal_kategori_barang.data("id", data);
     global.element.modal_kategori_barang.modal("show");
+    document.activeElement.blur();
 });
 
 global.element.kategori_barang_table.on('click.action_delete', '.action_delete', async function () {
@@ -287,6 +288,7 @@ async function tambah_kategori_barang_modal() {
     global.element.tambah_kategori_barang_button.onclick = tambah_kategori_barang;
 
     global.element.modal_kategori_barang.modal("show");
+    document.activeElement.blur();
 }
 
 async function fetch_kategori_id(id) {

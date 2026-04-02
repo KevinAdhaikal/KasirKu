@@ -133,6 +133,7 @@ function tambah_barang_modal() {
     global.element.nama_barcode_barang.dataset.id = "";
 
     global.element.modal_barang_masuk.modal("show");
+    document.activeElement.blur();
 }
 
 async function tambah_barang(id, data) {
@@ -246,6 +247,7 @@ async function cari_barang() {
             }
             global.element.cari_barang_table.draw();
             global.element.modal_cari_barang.modal("show");
+            document.activeElement.blur();
         }
         else {
             swal2_mixin.fire({

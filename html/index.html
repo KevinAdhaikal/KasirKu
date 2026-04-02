@@ -205,18 +205,23 @@
                 <h3 class="card-title"><i class="fas fa-boxes"></i> Barang Total Terjual</h3>
               </div>
               <div class="card-body">
-                <label>Tanggal Barang Total Terjual (YYYY/MM/DD s/d YYYY/MM/DD)</label>
                 <div class="row">
-                  <div class="col-6 input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text">
-                        <i class="far fa-calendar-alt"></i>
-                      </span>
+                  <div class="col-6">
+                    <label for="t_barang_total_terjual_start">Tanggal Awal (YYYY/MM/DD)</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text">
+                          <i class="far fa-calendar-alt"></i>
+                        </span>
+                      </div>
+                      <input type="text" class="form-control float-right" id="t_barang_total_terjual_start" onkeydown="return false">
                     </div>
-                    <input type="text" class="form-control float-right" id="t_barang_total_terjual_start" onkeydown="return false">
                   </div>
-                  <div class="col-6 input-group">
-                    <input type="text" class="form-control float-right" id="t_barang_total_terjual_end" onkeydown="return false">
+                  <div class="col-6">
+                    <label for="t_barang_total_terjual_end">Tanggal Akhir (YYYY/MM/DD)</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control float-right" id="t_barang_total_terjual_end" onkeydown="return false">
+                    </div>
                   </div>
                 </div>
                 <hr>

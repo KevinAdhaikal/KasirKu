@@ -157,6 +157,7 @@ function pembayaran_barang_modal() {
     global.element.tunai_input.value = "";
 
     global.element.modal_pembayaran_barang.modal("show");
+    document.activeElement.blur();
 }
 
 async function masuk_ke_pembukuan() {
@@ -337,6 +338,7 @@ function edit_barang_modal(id) {
 
     global.element.modal_edit_barang_button.onclick = function() {edit_barang_button(id)};
     global.element.modal_edit_barang.modal("show");
+    document.activeElement.blur();
 }
 
 function edit_barang_button(id) {
@@ -482,6 +484,7 @@ async function cari_barang() {
             }
             global.element.cari_barang_table.draw();
             global.element.modal_cari_barang.modal("show");
+            document.activeElement.blur();
         }
         else {
             swal2_mixin.fire({

@@ -58,7 +58,12 @@ global.deinit = () => {
     global.element.users_table.destroy();
     global.element.modal_user_button.onclick = null;
     global.remove_sse_handler(sse_handler);
+    document.removeEventListener("keydown", document_keydown);
 }
+
+global.element.modal_user.on('shown.bs.modal', function () {
+    global.element.username.focus();
+});
 
 global.element.users_table.on('click.edit_user', '.action_edit', async function () {
     global.element.role.prop("disabled", false);
@@ -116,7 +121,7 @@ global.element.users_table.on('click.edit_user', '.action_edit', async function 
     }
 
     global.element.modal_user_title.innerText = "View/Edit User";
-    global.element.modal_user_button.innerText = "Edit User";
+    global.element.modal_user_button.innerText = "Edit User (Enter)";
 
     global.element.password.type = "password";
     global.element.confirm_password.type = "password";
@@ -131,6 +136,7 @@ global.element.users_table.on('click.edit_user', '.action_edit', async function 
     global.element.modal_user_button.onclick = function() {edit_user(data)};
 
     global.element.modal_user.modal("show");
+    document.activeElement.blur();
 });
 
 global.element.users_table.on('click.delete_user', '.action_delete', async function () {
@@ -193,6 +199,7 @@ global.element.users_table.on('click.delete_user', '.action_delete', async funct
 });
 
 global.add_sse_handler(sse_handler);
+document.addEventListener("keydown", document_keydown);
 
 async function sse_handler(data) {
     if (data.type === 1) {
@@ -209,9 +216,27 @@ async function sse_handler(data) {
     }
 }
 
+function document_keydown(e) {
+    switch(e.key) {
+        case "Enter": {
+            if (global.element.modal_user.hasClass("show")) {
+                if (e.target.tagName === 'BUTTON') return;
+                global.element.modal_user_button.click();
+            }
+            break;
+        }
+        case "Escape": {
+            if (global.element.modal_user.hasClass("show")) {
+                global.element.modal_user.modal("hide");
+            }
+            break;
+        }
+    }
+}
+
 function tambah_user_modal() {
-    global.element.modal_user_title.innerText = "Tambah User";
-    global.element.modal_user_button.innerText = "Tambah User";
+    global.element.modal_user_title.innerText = "Add User";
+    global.element.modal_user_button.innerText = "Add User (Enter)";
     global.element.password_display.style = "";
     global.element.modal_user_button.onclick = function() {tambah_user()};
 
@@ -237,6 +262,7 @@ function tambah_user_modal() {
     })
 
     global.element.modal_user.modal("show");
+    document.activeElement.blur();
 }
 
 async function tambah_user() {

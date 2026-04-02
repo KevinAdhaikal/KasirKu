@@ -280,6 +280,7 @@ global.element.daftar_barang_table.on('click.action_edit', '.action_edit', async
         global.element.modal_daftar_barang_button.onclick = function() {edit_daftar_barang(data)};
 
         global.element.modal_daftar_barang.modal("show");
+        document.activeElement.blur();
     }
     else {
         const status = await res.text();
@@ -396,6 +397,7 @@ function tambah_barang_modal() {
     global.element.modal_daftar_barang_button.onclick = tambah_barang;
 
     global.element.modal_daftar_barang.modal("show");
+    document.activeElement.blur();
 }
 
 async function tambah_barang() {

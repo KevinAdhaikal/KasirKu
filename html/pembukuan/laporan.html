@@ -127,18 +127,23 @@
           <div class="col">
             <div class="card card-primary">
 							<div class="card-body">
-                <label class="col-form-label">Tanggal Laporan (YYYY/MM/DD s/d YYYY/MM/DD)</label>
                 <div class="row">
-                  <div class="col-6 input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text">
-                        <i class="far fa-calendar-alt"></i>
-                      </span>
+                  <div class="col-6">
+                    <label for="tanggal_laporan_start">Tanggal Awal (YYYY/MM/DD)</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text">
+                          <i class="far fa-calendar-alt"></i>
+                        </span>
+                      </div>
+                      <input type="text" class="form-control float-right" id="tanggal_laporan_start" onkeydown="return false">
                     </div>
-                    <input type="text" class="form-control float-right" id="tanggal_laporan_start" onkeydown="return false">
                   </div>
-                  <div class="col-6 input-group">
-                    <input type="text" class="form-control float-right" id="tanggal_laporan_end" onkeydown="return false">
+                  <div class="col-6">
+                    <label for="tanggal_laporan_end">Tanggal Akhir (YYYY/MM/DD)</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control float-right" id="tanggal_laporan_end" onkeydown="return false">
+                    </div>
                   </div>
                 </div>
                 <hr>

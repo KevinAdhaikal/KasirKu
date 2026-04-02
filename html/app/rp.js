@@ -38,7 +38,12 @@ global.deinit = () => {
     global.element.abort_controllers.forEach(e => {
         if (e) e.abort();
     })
+    document.removeEventListener("keydown", document_keydown);
 }
+
+global.element.modal_role.on('shown.bs.modal', function () {
+    global.element.role_name.focus();
+});
 
 global.element.roles_table.on('click.button_edit', '.action_edit', async function () {
     if (global.element.abort_controllers[1]) global.element.abort_controllers[1].abort();
@@ -120,10 +125,11 @@ global.element.roles_table.on('click.button_edit', '.action_edit', async functio
         }
 
         global.element.modal_role_title.innerText = "Edit Role";
-        global.element.modal_role_button.innerText = "Edit Role";
+        global.element.modal_role_button.innerText = "Edit Role (Enter)";
 
         global.element.modal_role_button.onclick = function() {edit_role(data)};
         global.element.modal_role.modal("show");
+        document.activeElement.blur();
     } catch(e) {
         if (e.name === "AbortError") return;
         console.error(e);
@@ -233,9 +239,28 @@ global.element.roles_table.on('click.button_delete', '.action_delete', async fun
 });
 
 global.add_sse_handler(sse_handler);
+document.addEventListener("keydown", document_keydown);
 
 async function sse_handler(data) {
     if (data.type === 1 && data.code === "REFRESH_RP") await fetch_roles();
+}
+
+function document_keydown(e) {
+    switch(e.key) {
+        case "Enter": {
+            if (global.element.modal_role.hasClass("show")) {
+                if (e.target.tagName === 'BUTTON') return;
+                global.element.modal_role_button.click();
+            }
+            break;
+        }
+        case "Escape": {
+            if (global.element.modal_role.hasClass("show")) {
+                global.element.modal_role.modal("hide");
+            }
+            break;
+        }
+    }
 }
 
 function full_permission_cb() {
@@ -254,7 +279,7 @@ function full_permission_cb() {
 
 async function tambah_role_modal() {
     global.element.modal_role_title.innerText = "Add Role";
-    global.element.modal_role_button.innerText = "Add Role";
+    global.element.modal_role_button.innerText = "Add Role (Enter)";
     global.element.role_name.value = "";
     global.element.perm_cb.forEach(cb => {
         cb.checked = false;
@@ -264,6 +289,7 @@ async function tambah_role_modal() {
 
     global.element.modal_role_button.onclick = function() {tambah_role()};
     global.element.modal_role.modal("show");
+    document.activeElement.blur();
 }
 
 async function fetch_roles() {

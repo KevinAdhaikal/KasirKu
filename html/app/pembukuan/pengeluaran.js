@@ -158,6 +158,7 @@ global.element.pengeluaran_table.on('click.action_edit', '.action_edit', async f
         global.element.modal_pengeluaran_button.onclick = function() {edit_pengeluaran(data)};
 
         global.element.modal_pengeluaran.modal("show");
+        document.activeElement.blur();
     }
     else {
         const status = await res.text();
@@ -228,6 +229,7 @@ function tambah_pengeluaran_modal() {
     global.element.modal_pengeluaran_button.onclick = tambah_pengeluaran;
 
     global.element.modal_pengeluaran.modal("show");
+    document.activeElement.blur();
 }
 
 async function fetch_pengeluaran_id(id) {
