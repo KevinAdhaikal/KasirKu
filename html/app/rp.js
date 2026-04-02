@@ -328,7 +328,6 @@ async function fetch_roles() {
         if (e.name === "AbortError") return;
         console.error(e);
     }
-    
 }
 
 async function tambah_role() {

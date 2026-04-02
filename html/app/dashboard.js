@@ -58,6 +58,7 @@ global.element = {
 global.deinit = () => {
     global.element.t_barang_total_terjual_start.removeEventListener("changeDate", tanggal_total_terjual_start_event);
     global.element.t_barang_total_terjual_end.removeEventListener("changeDate", tanggal_total_terjual_end_event);
+    global.remove_sse_handler(sse_handler);
 }
 
 global.refresh_handler = function() {
