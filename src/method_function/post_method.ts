@@ -181,10 +181,10 @@ export async function post_method(req: Request, url: URL) {
                 total_barang += data.jumlah_barang;
                 
                 const barang = await db
-                    .selectFrom('barang')
-                    .select(['nama_barang', 'stok_barang', 'harga_modal', 'harga_jual'])
-                    .where('id', '=', data.id)
-                    .executeTakeFirst();
+                .selectFrom('barang')
+                .select(['nama_barang', 'stok_barang', 'harga_modal', 'harga_jual'])
+                .where('id', '=', data.id)
+                .executeTakeFirst();
 
                 if (!barang) return new Response("Not Found", { status: 404 });
                 if ((barang.stok_barang - data.jumlah_barang) < 0) return new Response("1", { status: 403 });
@@ -414,7 +414,11 @@ export async function post_method(req: Request, url: URL) {
             const password = <string>user_input.get("password");
             const role_id = Number(user_input.get("role_id"));
 
-            if (!username || !full_name || !password || password.length < 8 || !role_id || isNaN(role_id)) return new Response("Bad Request", {status: 400});
+            if (
+                !username || !full_name || !password || !role_id || isNaN(role_id) // kalo misalnya username, full_name, password dan role_id nya ga ada
+                || password.length < 8 // kalo misalnya password nya kurang dari 8 length nya
+                || !/^[a-z0-9_]+$/.test(username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+            ) return new Response("Bad Request", {status: 400});
 
             const now = Date.now();
             try {

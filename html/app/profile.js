@@ -133,6 +133,13 @@ async function change_profile() {
     if (global.element.change_profile_button.disabled) return;
     global.element.change_profile_button.disabled = true;
 
+    if (!/^[a-z0-9_]+$/.test(global.element.username.value)) {
+        return swal2_mixin.fire({
+            icon: "error",
+            title: "Invalid username! Use lowercase letters, numbers, or underscore"
+        })
+    }
+
     let res = await fetch("/profile", {
         method: "PATCH",
         headers: {

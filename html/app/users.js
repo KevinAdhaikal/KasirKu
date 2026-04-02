@@ -249,6 +249,13 @@ async function tambah_user() {
         title: "Confirm password must match the new password."
     });
 
+    if (!/^[a-z0-9_]+$/.test(global.element.username.value)) {
+        return swal2_mixin.fire({
+            icon: "error",
+            title: "Invalid username! Use lowercase letters, numbers, or underscore"
+        })
+    }
+
     let res = await fetch("/user", {
         method: "POST",
         headers: {
@@ -302,6 +309,14 @@ async function edit_user(id) {
             title: "Confirm password must match the new password"
         });
     }
+
+    if (!/^[a-z0-9_]+$/.test(global.element.username.value)) {
+        return swal2_mixin.fire({
+            icon: "error",
+            title: "Invalid username! Use lowercase letters, numbers, or underscore"
+        })
+    }
+
     let res = await fetch("/user", {
         method: "PATCH",
         headers: {

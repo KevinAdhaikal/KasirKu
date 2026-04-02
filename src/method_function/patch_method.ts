@@ -165,7 +165,10 @@ export async function patch_method(req: Request, url: URL) {
             const new_full_name = <string>user_input.get("new_full_name");
             let new_profile_img = <Buffer<ArrayBufferLike> | Uint8Array<ArrayBufferLike> | string>user_input.get("new_profile_img");
 
-            if (!new_username || !new_full_name) return new Response("Bad Request", {status: 400});
+            if (
+                !new_username || !new_full_name // kalo username dan full name nya kosong
+                || !/^[a-z0-9_]+$/.test(new_username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+            ) return new Response("Bad Request", {status: 400});
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
@@ -245,7 +248,10 @@ export async function patch_method(req: Request, url: URL) {
             const new_role_id = <number>Number(user_input.get("new_role_id"));
             let new_password = <string | null>user_input.get("new_password");
 
-            if (!id || isNaN(id) || !new_username || !new_full_name) return new Response("Bad Request", {status: 400});
+            if (
+                !id || isNaN(id) || !new_username || !new_full_name
+                || !/^[a-z0-9_]+$/.test(new_username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+            ) return new Response("Bad Request", {status: 400});
             if (id === user_info.user_id) return new Response("1", {status: 403}); // you can't edit your own user account!
             if (id === 1) return new Response("2", {status: 403}); // you can't edit default account!
 
