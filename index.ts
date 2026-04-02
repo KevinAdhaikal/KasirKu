@@ -1,15 +1,18 @@
 import forge from "node-forge";
 import { main } from "./src/server";
 import { global } from "./src/global";
-import { get_password_hash_only } from "./src/utils/utils";
-import { Database } from "bun:sqlite";
+import { BunSqliteDialect, get_password_hash_only } from "./src/utils/utils";
 import { mkdirSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { minify as minifyHTML } from "html-minifier-terser"
 import { minify as minifyJS } from "terser"
 import CleanCSS from "clean-css"
 import { brotliCompressSync } from "node:zlib";
-import { database_manager } from "./src/database_manager/database_manager";
+import { Database } from "bun:sqlite";
+import { createConnection } from "mysql2/promise";
+import { createPool } from "mysql2";
+import { Client, Pool } from "pg";
+import { ColumnDefinitionBuilder, InsertQueryBuilder, InsertResult, Kysely, MysqlDialect, PostgresDialect, SchemaModule, sql } from "kysely";
 
 let default_svg_profile_img = `<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
@@ -24,6 +27,9 @@ let default_svg_profile_img = `<?xml version="1.0" encoding="utf-8"?>
 </svg>` // https://upload.wikimedia.org/wikipedia/commons/4/4b/User-Pict-Profil.svg
 
 const MAX_CONCURRENT = 8;
+
+let insert_ignore: (q: InsertQueryBuilder<any, any, InsertResult>) => InsertQueryBuilder<any, any, InsertResult> = (q) => {return q.ignore()}
+let id_column: (col: ColumnDefinitionBuilder) => ColumnDefinitionBuilder;
 
 async function process_file(full_path: string) {
     const stat_file = await stat(full_path)
@@ -94,134 +100,170 @@ async function scan_html_file(dir: string) {
     }
 }
 
-function database_create_req(db: database_manager, version: number, current_ms: number) { // database create requirement
+async function database_create_req(db: Kysely<any>, version: number, current_ms: number) { // database create requirement
     if (version < 1) { // Database Version 1.0
         // roles
-        db.run(
-            "CREATE TABLE IF NOT EXISTS roles (id INTEGER PRIMARY KEY, name TEXT UNIQUE, permission_level INTEGER, created_ms INTEGER, modified_ms INTEGER)"
-        );
-        db.run(
-            "INSERT OR IGNORE INTO roles (name, permission_level, created_ms, modified_ms) VALUES (?, ?, ?, ?)", [
-                "Administrator",
-                global.permissions.ADMINISTRATOR,
-                Date.now(),
-                Date.now()
-            ]
-        );
+        await db.schema
+        .createTable("roles")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("name", "varchar(255)", col => col.unique())
+        .addColumn("permission_level", "integer")
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .execute();
+
+        await insert_ignore(db.insertInto("roles").values({
+            name: "Administrator",
+            permission_level: global.permissions.ADMINISTRATOR,
+            created_ms: current_ms,
+            modified_ms: current_ms
+        })).execute();
 
         // users
-        db.run(
-            "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, full_name TEXT, password_hash TEXT, profile_img TEXT DEFAULT null, role_id INTEGER, created_ms INTEGER, modified_ms INTEGER, FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE ON UPDATE CASCADE)",
-        );
-        db.run(
-            "INSERT OR IGNORE INTO users (username, full_name, password_hash, role_id, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)",
-            [
-                "admin",
-                "Administrator",
-                get_password_hash_only(
-                    Bun.password.hashSync("admin", {
-                        algorithm: "argon2id",
-                        timeCost: global.ph_timecost,
-                        memoryCost: global.ph_memorycost,
-                    }),
-                ),
-                1,
-                current_ms,
-                current_ms
-            ],
-        );
+        await db.schema
+        .createTable("users")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("username", "varchar(255)", col => col.unique())
+        .addColumn("full_name", "text")
+        .addColumn("password_hash", "text")
+        .addColumn("profile_img", "text", col => col.defaultTo(null))
+        .addColumn("role_id", "integer")
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .addForeignKeyConstraint(
+            "users_role_fk", // nama constraint nya (kalo di sqlite mah di ignore)
+            ["role_id"],
+            "roles",
+            ["id"],
+            (cb) => cb.onDelete("cascade").onUpdate("cascade")
+        )
+        .execute();
+
+        await insert_ignore(db.insertInto("users").values({
+            username: "admin",
+            full_name: "Administrator",
+            password_hash: get_password_hash_only(
+                Bun.password.hashSync("admin", {
+                    algorithm: "argon2id",
+                    timeCost: global.ph_timecost,
+                    memoryCost: global.ph_memorycost,
+                }),
+            ),
+            role_id: 1,
+            created_ms: current_ms,
+            modified_ms: current_ms
+        })).execute();
 
         // kategori barang
-        db.run(
-            `CREATE TABLE IF NOT EXISTS kategori_barang (
-                id INTEGER PRIMARY KEY,
-                nama_kategori TEXT UNIQUE,
-                created_ms INTEGER,
-                modified_ms INTEGER
-            )`
-        );
-        db.run(
-            "INSERT OR IGNORE INTO kategori_barang (nama_kategori, created_ms, modified_ms) VALUES (?, ?, ?)",
-            [
-                "Tidak Ada",
-                Date.now(),
-                Date.now()
-            ]
-        );
+        await db.schema
+        .createTable("kategori_barang")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("nama_kategori", "text", col => col.unique())
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .execute();
+
+        await insert_ignore(db.insertInto("kategori_barang")
+        .values({
+            nama_kategori: "Tidak Ada",
+            created_ms: current_ms,
+            modified_ms: current_ms
+        })).execute();
 
         // barang
-        db.run(
-            `CREATE TABLE IF NOT EXISTS barang (
-                id INTEGER PRIMARY KEY,
-                nama_barang TEXT,
-                stok_barang INTEGER,
-                kategori_barang_id INTEGER,
-                harga_modal INTEGER,
-                harga_jual INTEGER,
-                barcode_barang TEXT UNIQUE DEFAULT NULL,
-                created_ms INTEGER,
-                modified_ms INTEGER,
-                FOREIGN KEY (kategori_barang_id) REFERENCES kategori_barang(id) ON DELETE CASCADE ON UPDATE CASCADE
-            )`
-        );
+        await db.schema
+        .createTable("barang")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("nama_barang", "text")
+        .addColumn("stok_barang", "integer")
+        .addColumn("kategori_barang_id", "integer")
+        .addColumn("harga_modal", "integer")
+        .addColumn("harga_jual", "integer")
+        .addColumn("barcode_barang", "text", col => col.unique().defaultTo(null))
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .addForeignKeyConstraint(
+            "barang_kategori_fk",
+            ["kategori_barang_id"],
+            "kategori_barang",
+            ["id"],
+            (cb) => cb.onDelete("cascade").onUpdate("cascade")
+        )
+        .execute();
 
         // barang masuk
-        db.run(
-            `CREATE TABLE IF NOT EXISTS barang_masuk (
-                id INTEGER PRIMARY KEY,
-                barang_id INTEGER,
-                deskripsi TEXT,
-                jumlah_barang INTEGER,
-                tanggal_key INTEGER,
-                created_ms INTEGER,
-                modified_ms INTEGER,
-                FOREIGN KEY (barang_id) REFERENCES barang(id) ON DELETE CASCADE ON UPDATE CASCADE
-            )`
-        );
+        await db.schema
+        .createTable("barang_masuk")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("barang_id", "integer")
+        .addColumn("deskripsi", "text")
+        .addColumn("jumlah_barang", "integer")
+        .addColumn("tanggal_key", "integer")
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .addForeignKeyConstraint(
+            "fk_barang_masuk_barang",
+            ["barang_id"],
+            "barang",
+            ["id"],
+            cb => cb.onDelete("cascade").onUpdate("cascade")
+        )
+        .execute();
 
         // penjualan
-        db.run(
-            `CREATE TABLE IF NOT EXISTS penjualan (
-                id INTEGER PRIMARY KEY,
-                total_barang INT,
-                total_harga_modal INTEGER,
-                total_harga_jual INTEGER,
-                tanggal_key INTEGER,
-                created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-                modified_ms INTEGER -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-            )`
-        );
+        await db.schema
+        .createTable("penjualan")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("total_barang", "integer")
+        .addColumn("total_harga_modal", "integer")
+        .addColumn("total_harga_jual", "integer")
+        .addColumn("tanggal_key", "integer")
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .execute();
 
         // penjualan_item
-        db.run(
-            `CREATE TABLE IF NOT EXISTS penjualan_item (
-                id INTEGER PRIMARY KEY,
-                penjualan_id INTEGER NOT NULL,
-                barang_id INTEGER NOT NULL,
-                nama_barang TEXT,
-                jumlah INTEGER,
-                harga_modal INTEGER,
-                harga_jual INTEGER,
-                tanggal_key INTEGER,
-                created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-                modified_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-                FOREIGN KEY (penjualan_id) REFERENCES penjualan(id)
-            )`
-        );
+        await db.schema
+        .createTable("penjualan_item")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("penjualan_id", "integer", col => col.notNull())
+        .addColumn("barang_id", "integer", col => col.notNull())
+        .addColumn("nama_barang", "text")
+        .addColumn("jumlah", "bigint")
+        .addColumn("harga_modal", "bigint")
+        .addColumn("harga_jual", "bigint")
+        .addColumn("tanggal_key", "integer")
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .addForeignKeyConstraint(
+            "fk_penjualan_item_penjualan",
+            ["penjualan_id"],
+            "penjualan",
+            ["id"],
+            cb => cb.onDelete("cascade").onUpdate("cascade")
+        )
+        .execute();
 
         // pembukuan
-        db.run(
-            `CREATE TABLE IF NOT EXISTS pembukuan (
-                id INTEGER PRIMARY KEY,
-                tipe INTEGER CHECK(tipe IN (0,1)), -- 0 = pembukuan, 1 = pengeluaran
-                deskripsi TEXT DEFAULT NULL,
-                jumlah_uang INTEGER,
-                referensi_id INTEGER,
-                tanggal_key INTEGER,
-                created_ms INTEGER, -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-                modified_ms INTEGER -- gw bikin INTEGER karena gw udah pake Date.now() pas insert
-            )`
-        );
+        await db.schema
+        .createTable("pembukuan")
+        .ifNotExists()
+        .addColumn("id", "integer", col => id_column(col))
+        .addColumn("tipe", "integer", col => col.check(sql`tipe IN (0,1)`))
+        .addColumn("deskripsi", "text", col => col.defaultTo(null))
+        .addColumn("jumlah_uang", "integer")
+        .addColumn("referensi_id", "integer")
+        .addColumn("tanggal_key", "integer")
+        .addColumn("created_ms", "bigint")
+        .addColumn("modified_ms", "bigint")
+        .execute();
     }
 }
 
@@ -246,60 +288,79 @@ async function prepare() {
     switch(global.config.db_type) {
         case "sqlite": {
             if (!(await Bun.file(`database/${global.config.db_name}.db`).exists())) {
-                console.log("[LOG] Database not found! Creating...");
                 try {
                     mkdirSync("database");
                 } catch(e) {
                     console.log("[WARNING]:", e)
                 }
-
-                // kasirku property
-                global.database.run(
-                    "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"
-                );
-                global.database.run(
-                    "INSERT INTO kasirku (key, value) VALUES ('version', '1')"
-                )
-
-                database_create_req(global.database, 0, Date.now());
-
-                console.log("[LOG] Database has been created!");
             }
-            else {
-                global.database = new database_manager({
-                    type: "sqlite",
-                    filename: "database/" + global.config.db_name + ".db",
-                });
-                global.database.run("PRAGMA journal_mode = WAL;");
-                global.database.run("PRAGMA synchronous = NORMAL;");
-                global.database.run("PRAGMA foreign_keys = ON;");
-            }
-            
+
+            global.database = new Kysely({
+                dialect: new BunSqliteDialect({
+                    database: new Database(`database/${global.config.db_name}.db`)
+                })
+            });
+
+            id_column = col => col.primaryKey();
             break;
         }
         case "mysql": {
-            global.database = new database_manager({
-                type: "mysql",
-                host: global.config.mysql.ip,
-                port: global.config.mysql.port,
-                user: global.config.mysql.username,
-                password: global.config.mysql.password,
-                database: global.config.db_name
-            });
+            const tmp_conn = await createConnection({
+                host: global.config.mysql.host,
+                user: global.config.mysql.user,
+                password: global.config.mysql.password
+            })
+            await tmp_conn.query(`CREATE DATABASE IF NOT EXISTS ${global.config.db_name}`);
+            await tmp_conn.end();
+
+            global.database = new Kysely<any>({
+                dialect: new MysqlDialect({
+                    pool: createPool({
+                        host: global.config.mysql.host,
+                        port: global.config.mysql.port,
+                        user: global.config.mysql.user,
+                        password: global.config.mysql.password,
+                        database: global.config.db_name
+                    })
+                })
+            })
+
+            id_column = col => col.primaryKey().autoIncrement();
             break;
         }
         case "postgresql": {
-            global.database = new database_manager({
-                type: "postgresql",
-                host: global.config.postgresql.ip,
+            const client = new Client({
+                host: global.config.postgresql.host,
                 port: global.config.postgresql.port,
-                user: global.config.postgresql.username,
+                user: global.config.postgresql.user,
                 password: global.config.postgresql.password,
-                database: global.config.db_name
+                database: "postgres"
             });
 
-            const res = await global.database.get("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'kasirku' AND table_name = 'kasirku');");
-            console.log(res);
+            await client.connect();
+
+            const check = await client.query(
+                `SELECT 1 FROM pg_database WHERE datname = $1`,
+                [global.config.db_name]
+            );
+            if (check.rowCount === 0) await client.query(`CREATE DATABASE "${global.config.db_name}"`);
+
+            await client.end();
+
+            global.database = new Kysely<any>({
+                dialect: new PostgresDialect({
+                    pool: new Pool({
+                        host: global.config.postgresql.host,
+                        port: global.config.postgresql.port,
+                        user: global.config.postgresql.user,
+                        password: global.config.postgresql.password,
+                        database: global.config.db_name
+                    })
+                })
+            })
+
+            insert_ignore = (q) => {return  q.onConflict(oc => oc.doNothing())};
+            id_column = col => col.primaryKey().generatedAlwaysAsIdentity();
             break;
         }
         default: {
@@ -308,8 +369,6 @@ async function prepare() {
         }
     }
 
-    console.log("[LOG] Done checking!");
-    process.exit(0);
     // Preapre Profile Image Folder
     if (!(await Bun.file("profile_img/default.svg").exists())) {
         console.log("[LOG] default.svg for default profile not found! Creating...");
@@ -384,31 +443,33 @@ async function prepare() {
 
         console.log("[LOG] Certificate SSL/TLS has been created!");
     }
-    
-    if (global.config.db_type === "sqlite") {
-        global.database.run("PRAGMA journal_mode = WAL;");
-        global.database.run("PRAGMA synchronous = NORMAL;");
-        global.database.run("PRAGMA foreign_keys = ON;");
-    }
 
-    let version = null;
+    let version: any = null;
     try {
-        version = Number(global.database.get("SELECT value FROM kasirku WHERE key = ?", ["version"]));
-
+        version = Number((await global.database.selectFrom("kasirku").select("v").where("k", "=", "version").executeTakeFirst())?.v ?? 0);
     } catch(e) {
-        global.database.run(
-            "CREATE TABLE IF NOT EXISTS kasirku (key TEXT, value TEXT)"
-        );
+        await global.database.schema
+        .createTable("kasirku")
+        .ifNotExists()
+        .addColumn("k", "text")
+        .addColumn("v", "text")
+        .execute();
+
         version = 0;
     }
     database_create_req(global.database, version, Date.now());
 
-    if (version == 0) global.database.run("INSERT INTO kasirku (key, value) VALUES (?, ?)", [
-        "version", "1"
-    ])
-    else global.database.run("UPDATE kasirku SET value = ? WHERE key = ?", [
-        "1", "version"
-    ])
+    if (version === 0) {
+        await insert_ignore(global.database.insertInto("kasirku")
+        .values({ k: "version", v: "1" }))
+        .execute();
+    } else {
+        await global.database
+        .updateTable("kasirku")
+        .set({ v: "1" })
+        .where("k", "=", "version")
+        .execute();
+    }
 
     console.log("[LOG] All ready!");
 }

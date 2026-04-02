@@ -181,8 +181,8 @@ global.element.pengeluaran_table.on('click.action_delete', '.action_delete', asy
         showCancelButton: true,
         confirmButtonColor: "#d33",
         cancelButtonColor: "#3085d6",
-        confirmButtonText: "Yes",
-        cancelButtonText: "No"
+        confirmButtonText: "Yes (Enter)",
+        cancelButtonText: "No (Esc)"
     }).then(async ress => {
         if (ress.isConfirmed) {
             let res = await fetch("/pengeluaran", {

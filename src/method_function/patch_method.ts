@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { global } from "../global";
 import { check_image_type, get_password_hash_only } from "../utils/utils";
 
@@ -11,7 +12,7 @@ export async function patch_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            const res_role = db.query("SELECT permission_level FROM roles WHERE id = ?").get(user_info.role_id) as {permission_level: number};
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -30,16 +31,19 @@ export async function patch_method(req: Request, url: URL) {
             if (!barcode_barang || !barcode_barang.length) barcode_barang = null;
             
             try {
-                db.run("UPDATE barang SET nama_barang = ?, stok_barang = ?, kategori_barang_id = ?, harga_modal = ?, harga_jual = ?, barcode_barang = ?, modified_ms = ? WHERE id = ?", [
+                await db
+                .updateTable('barang')
+                .set({
                     nama_barang,
                     stok_barang,
                     kategori_barang_id,
                     harga_modal,
                     harga_jual,
                     barcode_barang,
-                    Date.now(),
-                    id
-                ])
+                    modified_ms: Date.now()
+                })
+                .where('id', '=', id)
+                .execute();
             } catch(e) {
                 console.log("An error occured in patch_method.ts at /barang:", e)
                 return new Response("Internal Server Error", {status: 500});
@@ -62,7 +66,7 @@ export async function patch_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            const res_role = db.query("SELECT permission_level FROM roles WHERE id = ?").get(user_info.role_id) as {permission_level: number};
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -75,11 +79,14 @@ export async function patch_method(req: Request, url: URL) {
             if (isNaN(id) || !id || !nama_kategori) return new Response("Bad Request", {status: 400});
 
             try {
-                db.run("UPDATE kategori_barang SET nama_kategori = ?, modified_ms = ? WHERE id = ?", [
+                await db
+                .updateTable('kategori_barang')
+                .set({
                     nama_kategori,
-                    Date.now(),
-                    id
-                ]);
+                    modified_ms: Date.now()
+                })
+                .where('id', '=', id)
+                .execute();
             } catch(e: any) {
                 if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403});
                 console.log("An error occured in patch_method.ts at /kategori_barang:", e)
@@ -103,7 +110,7 @@ export async function patch_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            const res_role = db.query("SELECT permission_level FROM roles WHERE id = ?").get(user_info.role_id) as {permission_level: number};
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
@@ -117,27 +124,34 @@ export async function patch_method(req: Request, url: URL) {
 
             if (isNaN(id) || isNaN(tanggal_key) || !tanggal_key || !id || !deskripsi || !nominal) return new Response("Bad Request", {status: 400});
 
-            let res = null;
+            let res;
             try {
-                res = db.run("UPDATE pembukuan SET deskripsi = ?, jumlah_uang = ? WHERE id = ? AND tanggal_key = ? AND tipe = 1", [
+                res = await db
+                .updateTable('pembukuan')
+                .set({
                     deskripsi,
-                    nominal,
-                    id,
-                    tanggal_key
-                ]);
+                    jumlah_uang: nominal,
+                    modified_ms: Date.now()
+                })
+                .where('id', '=', id)
+                .where('tanggal_key', '=', tanggal_key)
+                .where('tipe', '=', 1)
+                .executeTakeFirst();
             } catch(e) {
                 console.log("Unexpected error in patch_method.ts at /pengeluaran:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
 
-            if (res.changes) global.sse_clients.broadcast(JSON.stringify({
-                type: 5,
-                code: "UPDATE_PENGELUARAN",
-                data: {
-                    id,
-                    tanggal_key
-                }
-            }));
+            if (res.numUpdatedRows > 0n) {
+                global.sse_clients.broadcast(JSON.stringify({
+                    type: 5,
+                    code: "UPDATE_PENGELUARAN",
+                    data: {
+                        id,
+                        tanggal_key
+                    }
+                }));
+            }
 
             return new Response("", {status: 200});
         }
@@ -156,42 +170,49 @@ export async function patch_method(req: Request, url: URL) {
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
 
-            let get_type = null;
             let body_res = "";
             let header_res: any = {}
 
-            const stmt = db.prepare("SELECT username FROM users WHERE id = ?");
-            const username = stmt.get(user_info.user_id);
-            stmt.finalize();
-            if (!username) return new Response("Internal Server Error", {status: 500});
+            const user = await db
+            .selectFrom('users')
+            .select('username')
+            .where('id', '=', user_info.user_id)
+            .executeTakeFirst();
+
+            if (!user) return new Response("Internal Server Error", { status: 500 });
 
             try {
+                const update_data: any = {
+                    username: new_username,
+                    full_name: new_full_name,
+                    modified_ms: Date.now()
+                };
+
                 if (new_profile_img) {
-                    new_profile_img = Buffer.from(<string>new_profile_img, "base64");
-                    get_type = check_image_type(new_profile_img);
-                    if (!get_type) return new Response("Bad Request", {status: 400});
+                    const img_buffer = Buffer.from(<string>new_profile_img, "base64");
+                    const get_type = check_image_type(img_buffer);
+                    if (!get_type) return new Response("Bad Request", { status: 400 });
 
-                    db.run("UPDATE users SET username = ?, full_name = ?, profile_img = ?, modified_ms = ? WHERE id = ?", [
-                        new_username,
-                        new_full_name,
-                        `/profile_img/${user_info.user_id}.${get_type}`,
-                        Date.now(),
-                        user_info.user_id
-                    ]);
+                    const file_path_img = `profile_img/${user_info.user_id}.${get_type}`;
+                    update_data.profile_img = `/${file_path_img}`;
 
-                    Bun.file(`profile_img/${user_info.user_id}.${get_type}`).write(new_profile_img);
+                    await db.updateTable('users')
+                    .set(update_data)
+                    .where('id', '=', user_info.user_id)
+                    .execute();
+
+                    await Bun.write(file_path_img, img_buffer);
                 } else {
-                    db.run("UPDATE users SET username = ?, full_name = ?, modified_ms = ? WHERE id = ?", [
-                        new_username,
-                        new_full_name,
-                        Date.now(),
-                        user_info.user_id
-                    ]);
+                    await db.updateTable('users')
+                    .set(update_data)
+                    .where('id', '=', user_info.user_id)
+                    .execute();
                 }
-            } catch(e: any) {
-                if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403})
+            } catch (e: any) {
+                if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
+                
                 console.log("An error occured in patch_method.ts at /profile:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.send_to_user(user_info.user_id, JSON.stringify({
@@ -211,7 +232,7 @@ export async function patch_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            const res_role = db.query("SELECT permission_level FROM roles WHERE id = ?").get(user_info.role_id) as {permission_level: number};
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
             
             if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -236,23 +257,32 @@ export async function patch_method(req: Request, url: URL) {
             );
             else new_password = null;
             
-            const stmt = db.prepare("SELECT role_id FROM users WHERE id = ?");
-            let res = stmt.get(id) as {role_id: number};
-            if (!res) return new Response("Not Found", {status: 404});
+            const res = await db
+            .selectFrom('users')
+            .select('role_id')
+            .where('id', '=', id)
+            .executeTakeFirst();
+
+            if (!res) return new Response("Not Found", { status: 404 });
 
             try {
-                db.run("UPDATE users SET username = ?, full_name = ?, role_id = ?, password_hash = COALESCE(?, password_hash), modified_ms = ? WHERE id = ?", [
-                    new_username,
-                    new_full_name,
-                    new_role_id,
-                    new_password,
-                    Date.now(),
-                    id
-                ]);
-            } catch(e: any) {
-                if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("3", {status: 403}); // username is already exists!
+                await db
+                .updateTable('users')
+                .set({
+                    username: new_username,
+                    full_name: new_full_name,
+                    role_id: new_role_id,
+                    password_hash: new_password 
+                        ? new_password 
+                        : sql`password_hash`, 
+                    modified_ms: Date.now()
+                })
+                .where('id', '=', id)
+                .execute();
+            } catch (e: any) {
+                if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("3", { status: 403 });
                 console.log("Unexpected error in patch_method.ts at /user:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.send_to_role(1, JSON.stringify({
@@ -288,25 +318,31 @@ export async function patch_method(req: Request, url: URL) {
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
 
-            const stmt = db.prepare("SELECT password_hash FROM users WHERE id = ?");
-            const res = stmt.get(user_info.user_id) as {password_hash: string};
-            stmt.finalize();
-            if (!res) return new Response("Internal Server Error", {status: 500});
+            const user = await db
+            .selectFrom('users')
+            .select('password_hash')
+            .where('id', '=', user_info.user_id)
+            .executeTakeFirst();
 
-            if (!Bun.password.verifySync(old_pass, global.ph_text + res.password_hash)) return new Response("0", {status: 403}); // incorrect old password
+            if (!user) return new Response("Internal Server Error", { status: 500 });
+            if (!Bun.password.verifySync(old_pass, global.ph_text + user.password_hash)) return new Response("0", { status: 403 }); // incorrect old password
 
             try {
-                db.run("UPDATE users SET password_hash = ?, modified_ms = ? WHERE id = ?", [
-                    get_password_hash_only(
-                        Bun.password.hashSync(new_pass, {
-                            algorithm: "argon2id",
-                            timeCost: global.ph_timecost,
-                            memoryCost: global.ph_memorycost,
-                        }),
-                    ),
-                    Date.now(),
-                    user_info.user_id
-                ]);
+                const new_hash_pass = get_password_hash_only(
+                    Bun.password.hashSync(new_pass, {
+                        algorithm: "argon2id",
+                        timeCost: global.ph_timecost,
+                        memoryCost: global.ph_memorycost,
+                    }),
+                );
+
+                await db.updateTable('users')
+                .set({
+                    password_hash: new_hash_pass,
+                    modified_ms: Date.now()
+                })
+                .where('id', '=', user_info.user_id)
+                .execute();
                 
                 global.sse_clients.remove_by_user_id(user_info.user_id);
                 global.user_sessions.revoke_all_by_userid(user_info.user_id);
@@ -329,7 +365,7 @@ export async function patch_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            const res_role = db.query("SELECT permission_level FROM roles WHERE id = ?").get(user_info.role_id) as {permission_level: number};
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403}); // you don't have a permission to do that.
@@ -343,23 +379,29 @@ export async function patch_method(req: Request, url: URL) {
             if (!id || isNaN(id) || !new_role_name || isNaN(<number>new_permission_level) || (<number>new_permission_level & global.permissions.ADMINISTRATOR)) return new Response("Bad Request", {status: 400});
 
             try {
-                const stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-                const res = stmt.get(id) as {permission_level: number};
+                const role = await db
+                .selectFrom('roles')
+                .select('permission_level')
+                .where('id', '=', id)
+                .executeTakeFirst();
 
-                if (!res) return new Response("Internal Server Error", {status: 500});
+                if (!role) return new Response("Internal Server Error", { status: 500 });
 
-                if (id === 1) new_permission_level = null;
+                await db
+                .updateTable('roles')
+                .set({
+                    name: new_role_name,
+                    permission_level: id === 1 ? sql`permission_level` : (new_permission_level ?? sql`permission_level`),
+                    modified_ms: Date.now()
+                })
+                .where('id', '=', id)
+                .execute();
+
+            } catch (e: any) {
+                if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
                 
-                db.run("UPDATE roles SET name = ?, permission_level = COALESCE(?, permission_level), modified_ms = ? WHERE id = ?", [
-                    new_role_name,
-                    new_permission_level,
-                    Date.now(),
-                    id
-                ]);
-            } catch(e: any) {
-                if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403})
                 console.log("An error occured in patch_method.ts at /role:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.send_to_role(1, JSON.stringify({

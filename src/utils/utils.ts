@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { CompiledQuery, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler, type DatabaseConnection, type Dialect, type Driver, type QueryResult } from 'kysely';
 
 const text_decoder = new TextDecoder();
 
@@ -277,4 +278,91 @@ export function check_image_type(buffer: Uint8Array | Buffer): 'jpg' | 'png' | f
     ) return 'png';
 
     return false;
+}
+
+// bun:sqlite wrapper
+class BunSqliteConnection implements DatabaseConnection {
+  readonly #db: Database;
+  constructor(db: Database) { this.#db = db; }
+
+  async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
+    const stmt = this.#db.prepare(compiledQuery.sql);
+    const parameters = compiledQuery.parameters as any[];
+
+    if (compiledQuery.sql.trimStart().toUpperCase().startsWith('SELECT') || 
+        compiledQuery.sql.trimStart().toUpperCase().startsWith('PRAGMA')) {
+      const rows = stmt.all(...parameters) as R[];
+      return { rows };
+    } else {
+      const info = stmt.run(...parameters);
+      return {
+        rows: [],
+        insertId: BigInt(info.lastInsertRowid),
+        numAffectedRows: BigInt(info.changes),
+      };
+    }
+  }
+
+  async *streamQuery<R>(compiledQuery: CompiledQuery, chunkSize: number): AsyncIterableIterator<QueryResult<R>> {
+    const stmt = this.#db.prepare(compiledQuery.sql);
+    const iter = stmt.iterate(...(compiledQuery.parameters as any[]));
+
+    let rows: R[] = [];
+
+    for (const row of iter) {
+      rows.push(row as R);
+
+      if (rows.length >= chunkSize) {
+        yield { rows };
+        rows = [];
+      }
+    }
+
+    if (rows.length > 0) yield { rows };
+  }
+}
+
+class BunSqliteDriver implements Driver {
+  readonly #db: Database;
+  constructor(db: Database) { this.#db = db; }
+
+  async init(): Promise<void> {
+    this.#db.run("PRAGMA journal_mode = WAL;");
+    this.#db.run("PRAGMA synchronous = NORMAL;");
+    this.#db.run("PRAGMA foreign_keys = ON;");
+  }
+  
+  async acquireConnection(): Promise<DatabaseConnection> {
+    return new BunSqliteConnection(this.#db);
+  }
+  
+  async beginTransaction(conn: DatabaseConnection): Promise<void> {
+    await conn.executeQuery(CompiledQuery.raw("BEGIN"));
+  }
+  
+  async commitTransaction(conn: DatabaseConnection): Promise<void> {
+    await conn.executeQuery(CompiledQuery.raw("COMMIT"));
+  }
+  
+  async rollbackTransaction(conn: DatabaseConnection): Promise<void> {
+    await conn.executeQuery(CompiledQuery.raw("ROLLBACK"));
+  }
+  
+  async releaseConnection(): Promise<void> {}
+  
+  async destroy(): Promise<void> { 
+    this.#db.close(); 
+  }
+}
+
+export class BunSqliteDialect implements Dialect {
+  readonly #db: Database;
+  constructor(config: { database: Database }) {
+    this.#db = config.database;
+  }
+
+  createAdapter() { return new SqliteAdapter(); }
+  createDriver() { return new BunSqliteDriver(this.#db); }
+  createIntrospector(db: any) { return new SqliteIntrospector(db); }
+  createQueryCompiler() { return new SqliteQueryCompiler(); }
 }

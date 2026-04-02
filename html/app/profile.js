@@ -207,10 +207,13 @@ async function change_password() {
                 title: "Password has been changed!"
             })
 
+            if (res_body) {
+                localStorage.setItem("token", res_body);
+                localStorage.setItem("password", new_password.value);
+            }
+
             new_password.value = "";
             confirm_new_password.value = "";
-
-            if (res_body) localStorage.setItem("token", res_body);
 
             $("#modal_change_password").modal("hide");
         } else {

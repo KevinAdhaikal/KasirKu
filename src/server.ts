@@ -9,7 +9,7 @@ let is_server_closed = false;
 let bun_serve: any;
 let bun_serve2: any;
 
-function stop_server() {
+async function stop_server() {
     if (!is_server_closed) {
         is_server_closed = true;
 
@@ -18,7 +18,7 @@ function stop_server() {
         bun_serve.stop();
         bun_serve2.stop();
 
-        if (global.database) global.database.close();
+        if (global.database) await global.database.destroy();
 
         global.sse_clients.destroy();
         global.rate_limit.destroy();
@@ -77,6 +77,6 @@ export function main() {
             return Response.redirect(url.toString(), 302);
         }
     });
-    process.on("SIGINT", () => {stop_server()});
-    process.on("SIGTERM", () => {stop_server()});
+    process.on("SIGINT", async () => {await stop_server()});
+    process.on("SIGTERM", async () => {await stop_server()});
 }
