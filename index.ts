@@ -329,7 +329,7 @@ async function prepare() {
         }
         case "postgresql": {
             const { Client, Pool } = await import("pg");
-            
+
             const client = new Client({
                 host: global.config.postgresql.host,
                 port: global.config.postgresql.port,

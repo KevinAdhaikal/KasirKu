@@ -19,7 +19,7 @@ global.element = {
             }
         },
         escapeMarkup: function (markup) {
-            return markup;
+            return markup.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         },
         createTag: function (params) {
             const term = params.term.trim();

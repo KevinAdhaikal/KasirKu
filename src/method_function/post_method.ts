@@ -419,7 +419,7 @@ export async function post_method(req: Request, url: URL) {
             const now = Date.now();
             try {
                 const passwordHash = get_password_hash_only(
-                    Bun.password.hashSync(password, {
+                    await Bun.password.hash(password, {
                         algorithm: "argon2id",
                         timeCost: global.ph_timecost,
                         memoryCost: global.ph_memorycost,
