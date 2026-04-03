@@ -154,8 +154,8 @@ Jika file ini tidak ditemukan, KasirKu akan menjalankan setup untuk membuat konf
 | :--- | :--- | :--- | :--- |
 | `listen_port` | `Number` | `443` | Port server HTTPS. (Alt: `8443`) |
 | `compile_html` | `Boolean` | `false` | Compile HTML saat startup jika `true`. |
-| `db_type` | `String` | - | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
-| `db_name` | `String` | - | Nama database (disarankan lowercase). |
+| `db_type` | `String` | `sqlite` | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
+| `db_name` | `String` | `kasirku` | Nama database (disarankan lowercase). |
 
 ---
 
