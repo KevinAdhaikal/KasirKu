@@ -17,6 +17,12 @@
 
 **KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dibuat untuk membantu pemilik usaha mengelola transaksi kasir dengan lebih mudah.
 
+Jika ingin mencoba aplikasinya, kamu bisa mengakses demo berikut: https://kasirku.duckdns.org
+
+Gunakan akun berikut untuk login:<br>
+Username: `admin`  
+Password: `admin`
+
 ## Table of contents
 - [Fitur](#fitur)
 - [Requrements](#requirements)
