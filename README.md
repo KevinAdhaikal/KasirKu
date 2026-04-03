@@ -23,6 +23,15 @@
 - [Cara Menjalankan](#cara-menjalankan)
   - [Menggunakan Bun](#pakai-bun)
   - [Pakai Docker](#pakai-docker)
+- [Configuration](#configuration)
+  - [Example Config](#example-config)
+  - [Configuration Options](#configuration-options)
+    - [General Settings](#general-settings)
+    - [Database Specifics](#database-specifics)
+      - [PostgreSQL Configuration](#postgresql-configuration)
+      - [MySQL Configurations](#mysql-configuration)
+  - [Notes](#notes)
+  - [Automatic Setup](#automatic-setup)
 - [Akses](#akses)
 - [QnA](#qna)
   - [Q: Kenapa Anda membuat aplikasi ini?](#q-kenapa-anda-membuat-aplikasi-ini)
@@ -110,6 +119,73 @@ docker run -d -p 80:80 -p 443:443 \
   -v kasirku-profile:/app/profile_img \
   kasirku
 ```
+
+## Configuration
+
+KasirKu menggunakan file konfigurasi bernama `config.json` yang berada di root project.
+
+Jika file ini tidak ditemukan, KasirKu akan menjalankan setup untuk membuat konfigurasi secara otomatis.
+
+### Example Config
+```json
+{
+    "listen_port": 443,
+    "compile_html": false,
+    "db_type": "sqlite",
+    "db_name": "kasirku",
+    "postgresql": {
+        "host": "127.0.0.1",
+        "port": 5432,
+        "user": "root",
+        "password": "admin"
+    },
+    "mysql": {
+        "host": "127.0.0.1",
+        "port": 3306,
+        "user": "root",
+        "password": "root"
+    }
+}
+```
+
+### Configuration Options
+#### General Settings
+| Key | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `listen_port` | `Number` | `443` | Port server HTTPS. (Alt: `8443`) |
+| `compile_html` | `Boolean` | `false` | Compile HTML saat startup jika `true`. |
+| `db_type` | `String` | - | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
+| `db_name` | `String` | - | Nama database (disarankan lowercase). |
+
+---
+
+#### Database Specifics
+
+##### PostgreSQL Configuration
+Digunakan jika `db_type: "postgresql"`
+* **Host:** `postgresql.host` (Contoh: `127.0.0.1`)
+* **Port:** `postgresql.port` (Default: `5432`)
+* **User:** `postgresql.user`
+* **Password:** `postgresql.password`
+
+##### MySQL Configuration
+Digunakan jika `db_type: "mysql"`
+* **Host:** `mysql.host` (Contoh: `127.0.0.1`)
+* **Port:** `mysql.port` (Default: `3306`)
+* **User:** `mysql.user`
+* **Password:** `mysql.password`
+
+---
+
+### Notes
+* Jika menggunakan **SQLite**, konfigurasi MySQL dan PostgreSQL akan **diabaikan**.
+* Sistem hanya akan membaca konfigurasi yang sesuai dengan nilai `db_type`.
+
+### Automatic Setup
+Jika `config.json` tidak ditemukan saat startup, **KasirKu** akan:
+1. Menanyakan konfigurasi via CLI.
+2. Menampilkan preview konfigurasi.
+3. Membuat file `config.json` secara otomatis.
 
 ## Akses
 Buka `https://localhost` di browser, dan untuk default Username / Password: `admin` / `admin`.
