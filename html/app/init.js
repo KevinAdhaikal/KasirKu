@@ -118,7 +118,7 @@ const profile_img2 = document.getElementById("profile_img2");
 const role_profile1 = document.getElementById("role_profile1");
 const status_server = document.getElementById("status_server");
 const sidebar_menu = document.getElementById("sidebar_menu");
-
+let co_wrap = document.getElementById("co_wrap");
 document.addEventListener("click", async e => {
   const link = e.target.closest("a.nav-redirect");
   if (!link) return;
@@ -397,12 +397,30 @@ async function load_page(url, push = false) {
 
     if (version !== load_page_version) return -1;
     if (global.refresh_handler) global.refresh_handler = null;
-    document.querySelector(".content-wrapper").innerHTML = newContent.innerHTML;
-    document.title = doc.title;
 
+    const new_co_wrap = document.createElement("div");
+    new_co_wrap.className = "content-wrapper";
+    new_co_wrap.innerHTML = newContent.innerHTML;
+
+    const newContentEl = new_co_wrap.querySelector(".content");
+    const newHeader = new_co_wrap.querySelector(".content-header");
+
+    newContentEl.classList.add("page-hidden");
+    newHeader.classList.add("page-hidden");
+
+    co_wrap.after(new_co_wrap);
+    co_wrap.remove();
+    co_wrap = new_co_wrap;
+    
     const pageScripts = doc.querySelectorAll("script[data-page-script]");
-    for (const el of pageScripts) await loadPageScriptFromElement(el);
-    NProgress.inc();
+    for (const el of pageScripts) {
+        await loadPageScriptFromElement(el);
+    }
+
+    requestAnimationFrame(() => {
+        newContentEl.classList.remove("page-hidden");
+        newHeader.classList.remove("page-hidden");
+    });
 
     if (push) history.pushState({}, "", url);
 

@@ -22,8 +22,8 @@ export const global = {
     // mutex (mutual expression)
     mutex: new mutex(),
 
-    // rate limit (max req 30/5 seconds. jail for 25 seconds)
-    rate_limit: new rate_limit(5, 30, 5),
+    // rate limit (max req 100/10 seconds. jail for 25 seconds)
+    rate_limit: new rate_limit(10, 100, 5),
 
     // Database
     database: null as unknown as Kysely<any>,
