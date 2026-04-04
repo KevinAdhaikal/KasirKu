@@ -17,9 +17,13 @@ async function stop_server() {
         console.log("[LOG] Stopping Server...");
 
         bun_serve.stop();
-        bun_serve2.stop();
+        if (bun_serve2) {
+            bun_serve2.stop();
+        }
 
-        if (global.database) await global.database.destroy();
+        if (global.database) {
+            await global.database.destroy();
+        }
 
         global.sse_clients.destroy();
         global.rate_limit.destroy();
@@ -32,54 +36,72 @@ async function stop_server() {
 }
 
 export function main() {
-    console.log(`[LOG] HTTPS Server running in port ${global.config.listen_port}`);
+    const protocol = global.config.use_tls ? "HTTPS" : "HTTP";
+    console.log(`[LOG] ${protocol} Server running in port ${global.config.listen_port}`);
 
-    bun_serve = Bun.serve({
-        port: global.config.listen_port,
-        tls: {
-            key: Bun.file("cert/key.pem"),
-            cert: Bun.file("cert/cert.pem")
-        },
-        async fetch(req: Request, server) {
-            const url = new URL(req.url);
-            url.pathname = decodeURIComponent(url.pathname);
-            const remote_ip = server.requestIP(req)?.address;
-            if (!remote_ip) return new Response(null, {status: 400}); 
+    const tls_key_path = global.config.tls_key_path;
+    const tls_cert_path = global.config.tls_cert_path;
 
-            switch(req.method) {
-                case "GET": return await get_method(req, url, remote_ip);
-                case "POST": {
-                    if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
-                    return await post_method(req, url);
-                }
-                case "PATCH": {
-                    if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
-                    return await patch_method(req, url);
-                }
-                case "DELETE": {
-                    if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
-                    return await delete_method(req, url);
-                }
+    const fetch_handler = async (req: Request, server: any) => {
+        const url = new URL(req.url);
+        url.pathname = decodeURIComponent(url.pathname);
+        const remote_ip = server.requestIP(req)?.address;
+        if (!remote_ip) return new Response(null, {status: 400});
+
+        switch(req.method) {
+            case "GET": return await get_method(req, url, remote_ip);
+            case "POST": {
+                if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
+                return await post_method(req, url);
             }
-            return new Response("Bad request", {status: 400});
-        },
-        error(err: Error) {
-            console.log(err);
-            return new Response("Internal Server Error", {status: 500});
+            case "PATCH": {
+                if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
+                return await patch_method(req, url);
+            }
+            case "DELETE": {
+                if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
+                return await delete_method(req, url);
+            }
         }
-    })
+        return new Response("Bad request", {status: 400});
+    };
 
-    bun_serve2 = Bun.serve({
-        port: 80,
-        async fetch(req: Request) {
-            const url = new URL(req.url);
+    if (global.config.use_tls) {
+        bun_serve = Bun.serve({
+            port: global.config.listen_port,
+            tls: {
+                key: Bun.file(tls_key_path),
+                cert: Bun.file(tls_cert_path)
+            },
+            fetch: fetch_handler,
+            error(err: Error) {
+                console.log(err);
+                return new Response("Internal Server Error", {status: 500});
+            }
+        });
 
-            url.protocol = "https:";
-            url.port = String(global.config.listen_port);
+        bun_serve2 = Bun.serve({
+            port: 80,
+            async fetch(req: Request) {
+                const url = new URL(req.url);
 
-            return Response.redirect(url.toString(), 302);
-        }
-    });
+                url.protocol = "https:";
+                url.port = String(global.config.listen_port);
+
+                return Response.redirect(url.toString(), 302);
+            }
+        });
+    } else {
+        bun_serve = Bun.serve({
+            port: global.config.listen_port,
+            fetch: fetch_handler,
+            error(err: Error) {
+                console.log(err);
+                return new Response("Internal Server Error", {status: 500});
+            }
+        });
+        bun_serve2 = null;
+    }
     process.on("SIGINT", async () => {await stop_server()});
     process.on("SIGTERM", async () => {await stop_server()});
 }
