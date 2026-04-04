@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { global } from "../global";
 
 export async function delete_method(req: Request, url: URL) {
@@ -10,9 +11,7 @@ export async function delete_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -23,18 +22,27 @@ export async function delete_method(req: Request, url: URL) {
 
             if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
 
+            const res = await db
+            .selectFrom('barang')
+            .select('kategori_barang_id')
+            .where('id', '=', id)
+            .executeTakeFirst();
+
+            if (!res) return new Response("Not Found", { status: 404 });
+
             try {
-                db.run("DELETE FROM barang WHERE id = ?", [id]);
-            } catch(e) {
+                await db.deleteFrom('barang').where('id', '=', id).execute();
+            } catch (e) {
                 console.log("An error occured in delete_method.ts at /barang:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.broadcast(JSON.stringify({
                 type: 2,
                 code: "DELETE_BARANG",
                 data: {
-                    id
+                    id,
+                    kategori_barang_id: res.kategori_barang_id
                 }
             }));
 
@@ -46,9 +54,7 @@ export async function delete_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -61,18 +67,23 @@ export async function delete_method(req: Request, url: URL) {
             if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
             if (id === 1) return new Response("1", {status: 403});
             if (!recursive) {
-                const stmt = db.prepare("SELECT 1 FROM barang WHERE kategori_barang_id = ?");
-                const res = stmt.get(id);
-                stmt.finalize();
+                const res = await db
+                .selectFrom('barang')
+                .select(sql`1`.as('exists'))
+                .where('kategori_barang_id', '=', id)
+                .executeTakeFirst();
 
-                if (res) return new Response("2", {status: 403});
+                if (res) return new Response("2", { status: 403 });
             }
 
             try {
-                db.run("DELETE FROM kategori_barang WHERE id = ?", [id]);
-            } catch(e) {
+                await db
+                .deleteFrom('kategori_barang')
+                .where('id', '=', id)
+                .execute();
+            } catch (e) {
                 console.log("An error occured in delete_method.ts at /kategori_barang:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.broadcast(JSON.stringify({
@@ -90,9 +101,7 @@ export async function delete_method(req: Request, url: URL) {
             
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
@@ -104,15 +113,20 @@ export async function delete_method(req: Request, url: URL) {
 
             if (isNaN(id) || isNaN(tanggal_key) || !id || !tanggal_key) return new Response("", {status: 400});
 
-            let res = null;
+            let res;
             try {
-                res = db.run("DELETE FROM pembukuan WHERE id = ? AND tanggal_key = ? AND tipe = 1", [id, tanggal_key]);
+                res = await db
+                .deleteFrom('pembukuan')
+                .where('id', '=', id)
+                .where('tanggal_key', '=', tanggal_key)
+                .where('tipe', '=', 1)
+                .executeTakeFirst();
             } catch(e) {
                 console.log("An error occured in delete_method.ts at /pengeluaran:", e);
                 return new Response("Internal Server Error", {status: 500});
             }
 
-            if (res.changes) global.sse_clients.broadcast(JSON.stringify({
+            if (res.numDeletedRows > 0n) global.sse_clients.broadcast(JSON.stringify({
                 type: 5,
                 code: "DELETE_PENGELUARAN",
                 data: {
@@ -129,9 +143,7 @@ export async function delete_method(req: Request, url: URL) {
             
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -145,10 +157,13 @@ export async function delete_method(req: Request, url: URL) {
             if (id === 1) return new Response("2", {status: 403});
 
             try {
-                db.run("DELETE FROM users WHERE id = ?", [id]);
-            } catch(e) {
+                await db
+                .deleteFrom('users')
+                .where('id', '=', id)
+                .execute();
+            } catch (e) {
                 console.log("An error occured in delete_method.ts at /user:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
             
             global.sse_clients.remove_by_user_id(id);
@@ -167,9 +182,7 @@ export async function delete_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -184,18 +197,23 @@ export async function delete_method(req: Request, url: URL) {
             if (id === 1) return new Response("1", {status: 403});
             
             if (!recursive) {
-                const stmt = db.prepare("SELECT 1 FROM users WHERE role_id = ?");
-                const res = stmt.get(id);
-                stmt.finalize();
+                const res = await db
+                    .selectFrom('users')
+                    .select(sql`1`.as('exists'))
+                    .where('role_id', '=', id)
+                    .executeTakeFirst();
 
-                if (res) return new Response("2", {status: 403});
+                if (res) return new Response("2", { status: 403 });
             }
 
             try {
-                db.run("DELETE FROM roles WHERE id = ?", [id]);
-            } catch(e) {
+                await db
+                .deleteFrom('roles')
+                .where('id', '=', id)
+                .execute();
+            } catch (e) {
                 console.log("An error occured in delete_method.ts at /role:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.remove_by_role_id(id);

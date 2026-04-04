@@ -8,5 +8,9 @@ database/
 database/**/
 cert/
 cert/**/
-html/profile_img/
-html/profile_img/**/
+profile_img/
+profile_img/**/
+html_build/
+html_build/**/
+
+config.json

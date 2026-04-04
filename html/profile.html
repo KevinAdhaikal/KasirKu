@@ -25,10 +25,12 @@
   <link rel="stylesheet" href="/plugins/adminlte-docs/adminlte-docs.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="/dist/css/adminlte.min.css">
+  <!-- Swap Page CSS -->
+  <link rel="stylesheet" href="/dist/css/transition.css">
   
-  <script src="/dist/js/darkmode_head.js"></script>
+  <script src="/app/darkmode_head.js"></script>
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
+<body class="hold-transition sidebar-mini layout-footer-fixed layout-fixed sidebar-collapse">
 <div class="wrapper">
   <!-- Navbar -->
   <nav class="main-header navbar navbar-expand navbar-light">
@@ -38,6 +40,7 @@
         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
       </li>
     </ul>
+    <span class="badge badge-pill badge-success" id="status_server">Status: Online</span>
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown user-menu">
         <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
@@ -73,7 +76,7 @@
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="/" class="brand-link">
-      <img src="/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+      <img src="/dist/img/kasirku.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
       <span class="brand-text font-weight-light">KasirKu</span>
     </a>
 
@@ -93,99 +96,7 @@
       </div>
 
       <!-- Sidebar Menu -->
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-          <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-          <li class="nav-item">
-            <a href="/" class="nav-link nav-redirect" data-url="/">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>
-                Dashboard
-              </p>
-            </a>
-          </li>
-          <li class="section_check" style="display: none;" data-value="1">
-            <ul class="nav nav-pills nav-sidebar flex-column">
-              <li class="nav-item">
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 8px 0;">
-              </li>
-              <li class="nav-header">BARANG</li>
-              <li class="nav-item">
-                <a href="/barang/daftar_barang" class="nav-link nav-redirect" data-url="/barang/daftar_barang">
-                  <i class="nav-icon fas fa-boxes"></i>
-                  <p>Daftar Barang</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/barang/kategori_barang" class="nav-link nav-redirect" data-url="/barang/kategori_barang">
-                  <i class="nav-icon fas fa-tag"></i>
-                  <p>Kategori Barang</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-          <li class="section_check" style="display: none;" data-value="2">
-            <ul class="nav nav-pills nav-sidebar flex-column">
-              <li class="nav-item">
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 8px 0;">
-              </li>
-              <li class="nav-header">KASIR</li>
-              <li class="nav-item">
-                <a href="/kasir/kasir" class="nav-link nav-redirect" data-url="/kasir/kasir">
-                  <i class="nav-icon fas fa-cash-register"></i>
-                  <p>Kasir</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-          <li class="section_check" style="display: none;" data-value="3">
-            <ul class="nav nav-pills nav-sidebar flex-column">
-              <li class="nav-item">
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 8px 0;">
-              </li>
-              <li class="nav-header">PEMBUKUAN</li>
-              <li class="nav-item">
-                <a href="/pembukuan/penjualan" class="nav-link nav-redirect" data-url="/pembukuan/penjualan">
-                  <i class="nav-icon fas fa-plus"></i>
-                  <p>Penjualan</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/pembukuan/pengeluaran" class="nav-link nav-redirect" data-url="/pembukuan/pengeluaran">
-                  <i class="nav-icon fas fa-minus"></i>
-                  <p>Pengeluaran</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/pembukuan/laporan" class="nav-link nav-redirect" data-url="/pembukuan/laporan">
-                  <i class="nav-icon fas fa-chart-line"></i>
-                  <p>Laporan</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-          <li class="section_check" style="display: none;" data-value="0">
-            <ul class="nav nav-pills nav-sidebar flex-column">
-              <li class="nav-item">
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 8px 0;">
-              </li>
-              <li class="nav-header">ADMIN</li>
-              <li class="nav-item">
-                <a href="/users" class="nav-link nav-redirect" data-url="/users">
-                  <i class="nav-icon fas fa-users"></i>
-                  <p>Users</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/rp" class="nav-link nav-redirect" data-url="/rp">
-                  <i class="nav-icon fas fa-user-tag"></i>
-                  <p>Roles & Permissions</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
+      <nav class="mt-2" id="sidebar_menu">
       </nav>
       <!-- /.sidebar-menu -->
     </div>
@@ -193,7 +104,7 @@
   </aside>
 
   <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
+  <div class="content-wrapper" id="co_wrap">
     <!-- Content Header (Page header) -->
     <div class="content-header">
       <div class="container-fluid">
@@ -354,10 +265,10 @@
 
 <!-- REQUIRED SCRIPTS -->
 <!-- Utility -->
-<script src="/dist/js/utils.js"></script>
+<script src="/app/utils.js"></script>
 
 <!-- Dark Mode Script -->
-<script src="/dist/js/darkmode.js"></script>
+<script src="/app/darkmode.js"></script>
 <!-- AdminLTE App -->
 <script src="/dist/js/adminlte.min.js"></script>
 
@@ -367,12 +278,12 @@
 <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js" data-init-page-script></script>
 
 <!-- Init -->
-<script src="/dist/js/init.js"></script>
+<script src="/app/init.js"></script>
 
 <!-- Login & Logout -->
-<script src="/dist/js/login.js"></script>
+<script src="/app/login.js"></script>
 
 <!-- Profile -->
-<script src="/dist/js/profile.js" data-page-script></script>
+<script src="/app/profile.js" data-page-script></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 import { global } from "../global";
 import * as Bun from "bun";
 import { get_password_hash_only } from "../utils/utils";
+import { sql } from "kysely";
 
 // server-side
 export async function post_method(req: Request, url: URL) {
@@ -18,21 +19,24 @@ export async function post_method(req: Request, url: URL) {
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
 
-            let stmt = db.prepare("SELECT id, password_hash, role_id FROM users WHERE username = ?");
-            const row = stmt.get(username) as {id: number, password_hash: string, role_id: number};
+            const row = await db
+            .selectFrom('users')
+            .select(['id', 'password_hash', 'role_id'])
+            .where('username', '=', username)
+            .executeTakeFirst();
 
-            stmt.finalize();
-
-            if (!row) return new Response("Forbidden", {status: 403});
-
-            if (!Bun.password.verifySync(password, global.ph_text + row.password_hash)) return new Response("Forbidden", {status: 403});
+            if (!row) return new Response("Forbidden", { status: 403 });
+            if (!Bun.password.verifySync(password, global.ph_text + row.password_hash)) return new Response("Forbidden", { status: 403 });
 
             const session_id = global.user_sessions.add(row.id, row.role_id);
-            if (!session_id) return new Response("Internal Server Error", {status: 500});
+            if (!session_id) return new Response("Internal Server Error", { status: 500 });
 
-            return new Response(session_id, {status: 200, headers: {
-                "set-cookie": `token=${session_id}; Path=/; HttpOnly; Secure`
-            }})
+            return new Response(session_id, {
+                status: 200,
+                headers: {
+                    "set-cookie": `token=${session_id}; Path=/; HttpOnly; SameSite=Strict; Secure`
+                }
+            });
         }
         case "/barang": {
             const user_info = global.user_sessions.get(token);
@@ -40,9 +44,7 @@ export async function post_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -60,29 +62,36 @@ export async function post_method(req: Request, url: URL) {
             if (!barcode_barang || !barcode_barang.length) barcode_barang = null;
 
             const now = Date.now();
-            let last_row = null;
+            let last_row;
             try {
-                last_row = db.run("INSERT INTO barang (nama_barang, stok_barang, kategori_barang_id, harga_modal, harga_jual, barcode_barang, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
+                const result = await db
+                .insertInto('barang')
+                .values({
                     nama_barang,
                     stok_barang,
                     kategori_barang_id,
                     harga_modal,
                     harga_jual,
                     barcode_barang,
-                    now,
-                    now
-                ]).lastInsertRowid;
-            } catch(e) {
+                    created_ms: now,
+                    modified_ms: now
+                })
+                .executeTakeFirstOrThrow();
+
+                last_row = Number(result.insertId);
+            } catch (e) {
                 console.log("An error occured in post_method.ts at /barang:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
-            if (!last_row) return new Response("Internal Server Error", {status: 500});
+            if (!last_row) return new Response("Internal Server Error", { status: 500 });
+
             global.sse_clients.broadcast(JSON.stringify({
                 type: 2,
                 code: "TAMBAH_BARANG",
                 data: {
-                    id: last_row
+                    id: last_row,
+                    kategori_barang_id
                 }
             }));
 
@@ -94,9 +103,7 @@ export async function post_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -108,30 +115,39 @@ export async function post_method(req: Request, url: URL) {
             if (!nama_kategori) return new Response("Bad Request", {status: 400});
 
             const now = Date.now();
-            let last_row = null;
+            let last_row;
             try {
-                last_row = db.run("INSERT INTO kategori_barang (nama_kategori, created_ms, modified_ms) VALUES (?, ?, ?)", [
+                const result = await db
+                .insertInto('kategori_barang')
+                .values({
                     nama_kategori,
-                    now,
-                    now
-                ]).lastInsertRowid;
-            } catch(e: any) {
-                if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403});
+                    created_ms: now,
+                    modified_ms: now
+                })
+                .executeTakeFirstOrThrow();
+
+                last_row = Number(result.insertId);
+            } catch (e: any) {
+                if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
                 console.log("An error occured in post_method.ts at /kategori_barang:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
-            if (!last_row) return new Response("Internal Server Error", {status: 500});
+            if (!last_row) return new Response("Internal Server Error", { status: 500 });
 
             global.sse_clients.broadcast(JSON.stringify({
                 type: 3,
                 code: "TAMBAH_KATEGORI",
                 data: {
-                    id: last_row
+                    id: last_row,
+                    nama_kategori
                 }
             }));
 
-            return new Response("", {status: 200});
+            return new Response(JSON.stringify({
+                id: last_row,
+                nama_kategori
+            }), {status: 200});
         }
         case "/masuk_ke_pembukuan": {
             const user_info = global.user_sessions.get(token);
@@ -139,9 +155,7 @@ export async function post_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.KASIR))) return new Response("0", {status: 403});
@@ -163,53 +177,93 @@ export async function post_method(req: Request, url: URL) {
             let total_harga_modal = 0;
             let total_harga_jual = 0;
             
-            stmt = db.prepare("SELECT nama_barang, harga_modal, harga_jual FROM barang WHERE id = ?");
-
-            items.forEach(data => {
+            for (const data of items) {
                 total_barang += data.jumlah_barang;
                 
-                const barang = stmt.get(data.id) as { nama_barang: string, harga_modal: number, harga_jual: number };
+                const barang = await db
+                .selectFrom('barang')
+                .select(['nama_barang', 'stok_barang', 'harga_modal', 'harga_jual'])
+                .where('id', '=', data.id)
+                .executeTakeFirst();
 
+                if (!barang) return new Response("Not Found", { status: 404 });
+                if ((barang.stok_barang - data.jumlah_barang) < 0) return new Response("1", { status: 403 });
+                
                 data.harga_modal = barang.harga_modal;
                 data.harga_jual = barang.harga_jual;
                 data.nama_barang = barang.nama_barang;
                 
                 total_harga_modal += data.harga_modal * data.jumlah_barang;
                 total_harga_jual += data.harga_jual * data.jumlah_barang;
-            });
+            }
 
-            let last_row: any = null;
             try {
-                db.transaction(() => {
-                    stmt = db.prepare("INSERT INTO penjualan (total_barang, total_harga_modal, total_harga_jual, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)");
-                    last_row = stmt.run(total_barang, total_harga_modal, total_harga_jual, date_now, now, now).lastInsertRowid;
-                    stmt.finalize();
+                await db.transaction().execute(async (trx) => {
+                    const penjualan = await trx
+                    .insertInto('penjualan')
+                    .values({
+                        total_barang,
+                        total_harga_modal,
+                        total_harga_jual,
+                        tanggal_key: date_now,
+                        created_ms: now,
+                        modified_ms: now
+                    })
+                    .executeTakeFirstOrThrow();
 
-                    stmt = db.prepare("INSERT INTO pembukuan (tipe, jumlah_uang, referensi_id, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)");
-                    stmt.run(0, total_harga_jual, last_row, date_now, now, now);
-                    stmt.finalize();
-                    
-                    stmt = db.prepare("INSERT INTO penjualan_item (penjualan_id, barang_id, nama_barang, jumlah, harga_modal, harga_jual, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    const stmt2 = db.prepare("UPDATE barang SET stok_barang = CASE WHEN stok_barang - ? < 0 THEN 0 ELSE stok_barang - ? END WHERE id = ?");
- 
-                    items.forEach(e => {
-                        stmt.run(last_row, e.id, e.nama_barang, e.jumlah_barang, e.harga_modal * e.jumlah_barang, e.harga_jual * e.jumlah_barang, date_now, now, now);
-                        stmt2.run(e.jumlah_barang, e.jumlah_barang, e.id);
-                    });
+                    const last_row = Number(penjualan.insertId);
 
-                    stmt.finalize();
-                    stmt2.finalize();
-                })();
+                    await trx
+                    .insertInto('pembukuan')
+                    .values({
+                        tipe: 0,
+                        jumlah_uang: total_harga_jual,
+                        referensi_id: last_row,
+                        tanggal_key: date_now,
+                        created_ms: now,
+                        modified_ms: now
+                    })
+                    .execute();
+
+                    for (const e of items) {
+                        await trx
+                        .insertInto('penjualan_item')
+                        .values({
+                            penjualan_id: last_row,
+                            barang_id: e.id,
+                            nama_barang: e.nama_barang,
+                            jumlah: e.jumlah_barang,
+                            harga_modal: e.harga_modal * e.jumlah_barang,
+                            harga_jual: e.harga_jual * e.jumlah_barang,
+                            tanggal_key: date_now,
+                            created_ms: now,
+                            modified_ms: now
+                        })
+                        .execute();
+
+                        // Update stok barang pake logic CASE WHEN
+                        await trx
+                        .updateTable('barang')
+                        .set({
+                            stok_barang: sql`CASE 
+                                WHEN stok_barang - ${e.jumlah_barang} < 0 THEN 0 
+                                ELSE stok_barang - ${e.jumlah_barang} 
+                            END`
+                        })
+                        .where('id', '=', e.id)
+                        .execute();
+                    }
+                });
             } catch (e) {
                 console.log("An error occured in post_method.ts at /masuk_ke_pembukuan:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.broadcast(JSON.stringify({
                 type: 4,
                 code: "TAMBAH_PENJUALAN",
                 data: {
-                    id: last_row,
+                    items,
                     tanggal_key: date_now
                 }
             }));
@@ -221,9 +275,7 @@ export async function post_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
@@ -237,20 +289,25 @@ export async function post_method(req: Request, url: URL) {
 
             const now = Date.now();
             const date_now = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
-            let last_row = null;
+            let last_row;
 
             try {
-                last_row = db.run("INSERT INTO pembukuan (tipe, deskripsi, jumlah_uang, tanggal_key, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)", [
-                    1,
+                const result = await db
+                .insertInto('pembukuan')
+                .values({
+                    tipe: 1,
                     deskripsi,
-                    nominal,
-                    date_now,
-                    now,
-                    now
-                ]).lastInsertRowid
-            } catch(e) {
+                    jumlah_uang: nominal,
+                    tanggal_key: date_now,
+                    created_ms: now,
+                    modified_ms: now
+                })
+                .executeTakeFirst();
+
+                last_row = Number(result.insertId);
+            } catch (e) {
                 console.log("Unexpected error in post_method.ts at /pengeluaran:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.broadcast(JSON.stringify({
@@ -264,15 +321,88 @@ export async function post_method(req: Request, url: URL) {
 
             return new Response("", {status: 200});
         }
+        case "/barang_masuk": {
+            const user_info = global.user_sessions.get(token);
+            if (!token || !user_info) return new Response("Unauthorized", {status: 401});
+
+            const db = global.database;
+            if (!db) return new Response("Internal Server Error", {status: 500});
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+            if (!res_role) return new Response("Internal Server Error", {status: 500});
+
+            if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
+
+            const user_input = new URLSearchParams(await req.text());
+
+            const barang_id = Number(user_input.get("barang_id"));
+            const deskripsi = <string>user_input.get("deskripsi");
+            const jumlah_barang = Number(user_input.get("jumlah_barang"));
+            
+            if (isNaN(barang_id) || !barang_id || !deskripsi || isNaN(jumlah_barang) || !jumlah_barang) return new Response("Bad Request", {status: 400});
+
+            const res = await db
+            .selectFrom('barang')
+            .select(['id', 'nama_barang', 'stok_barang'])
+            .where('id', '=', barang_id)
+            .executeTakeFirst();
+
+            if (!res) return new Response("1", {status: 404});
+
+            const now = Date.now();
+            const tanggal_key = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
+            let last_row;
+
+            try {
+                last_row = await db.transaction().execute(async (trx) => {
+                    const result = await trx
+                    .insertInto('barang_masuk')
+                    .values({
+                        tanggal_key,
+                        barang_id,
+                        deskripsi,
+                        jumlah_barang,
+                        created_ms: now,
+                        modified_ms: now
+                    })
+                    .executeTakeFirstOrThrow();
+
+                    await trx
+                    .updateTable('barang')
+                    .set({
+                        stok_barang: sql`stok_barang + ${jumlah_barang}`
+                    })
+                    .where('id', '=', barang_id)
+                    .execute();
+
+                    return Number(result.insertId);;
+                });
+            } catch (e) {
+                console.log("An error occured in post_method.ts at /barang_masuk:", e);
+                return new Response("Internal Server Error", { status: 500 });
+            }
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 6,
+                code: "TAMBAH_BARANG_MASUK",
+                data: {
+                    id: last_row,
+                    nama_barang: res.nama_barang,
+                    deskripsi,
+                    jumlah_barang: jumlah_barang,
+                    tanggal_key,
+                    barang_id: res.id,
+                    stok_barang: res.stok_barang + jumlah_barang
+                }
+            }));
+            return new Response("", {status: 200});
+        }
         case "/user": { // add user (administrator permission only)
             const user_info = global.user_sessions.get(token);
             if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -284,29 +414,37 @@ export async function post_method(req: Request, url: URL) {
             const password = <string>user_input.get("password");
             const role_id = Number(user_input.get("role_id"));
 
-            if (!username || !full_name || !password || !role_id || isNaN(role_id)) return new Response("Bad Request", {status: 400});
+            if (
+                !username || !full_name || !password || !role_id || isNaN(role_id) // kalo misalnya username, full_name, password dan role_id nya ga ada
+                || password.length < 8 // kalo misalnya password nya kurang dari 8 length nya
+                || !/^[a-z0-9_]+$/.test(username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+            ) return new Response("Bad Request", {status: 400});
 
             const now = Date.now();
             try {
-                db.run("INSERT INTO users (username, full_name, password_hash, role_id, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?)", [
+                const passwordHash = get_password_hash_only(
+                    await Bun.password.hash(password, {
+                        algorithm: "argon2id",
+                        timeCost: global.ph_timecost,
+                        memoryCost: global.ph_memorycost,
+                    }),
+                );
+
+                await db
+                .insertInto('users')
+                .values({
                     username,
                     full_name,
-                    get_password_hash_only(
-                        Bun.password.hashSync(password, {
-                            algorithm: "argon2id",
-                            timeCost: global.ph_timecost,
-                            memoryCost: global.ph_memorycost,
-                        }),
-                    ),
+                    password_hash: passwordHash,
                     role_id,
-                    now,
-                    now
-                ]);
-            } catch(e: any) {
-                if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403});
-                
+                    created_ms: now,
+                    modified_ms: now
+                })
+                .execute();
+            } catch (e: any) {
+                if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
                 console.log("Unexpected error in post_method.ts at /user:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.send_to_role(1, JSON.stringify({
@@ -323,9 +461,7 @@ export async function post_method(req: Request, url: URL) {
 
             const db = global.database;
             if (!db) return new Response("Internal Server Error", {status: 500});
-            let stmt = db.prepare("SELECT permission_level FROM roles WHERE id = ?");
-            const res_role = stmt.get(user_info.role_id) as {permission_level: number};
-            stmt.finalize();
+            const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
             if (!res_role) return new Response("Internal Server Error", {status: 500});
 
             if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -339,16 +475,20 @@ export async function post_method(req: Request, url: URL) {
 
             const now = Date.now();
             try {
-                db.run("INSERT INTO roles (name, permission_level, created_ms, modified_ms) VALUES (?, ?, ?, ?)", [
-                    role_name,
+                await db
+                .insertInto('roles')
+                .values({
+                    name: role_name,
                     permission_level,
-                    now,
-                    now
-                ]);
-            } catch(e: any) {
-                if (e.code === "SQLITE_CONSTRAINT_UNIQUE") return new Response("1", {status: 403});
+                    created_ms: now,
+                    modified_ms: now
+                })
+                .execute();
+            } catch (e: any) {
+                if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
+                
                 console.log("An error occured in post_method.ts at /role:", e);
-                return new Response("Internal Server Error", {status: 500});
+                return new Response("Internal Server Error", { status: 500 });
             }
 
             global.sse_clients.send_to_role(1, JSON.stringify({

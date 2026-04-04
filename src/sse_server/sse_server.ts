@@ -8,6 +8,10 @@ export class sse_server {
 
     private encoder = new TextEncoder();
     private ping = this.encoder.encode(":\n\n");
+    private ok = this.encoder.encode("data:" + JSON.stringify({
+        type: 1,
+        code: "OK"
+    }) + "\n\n");
     private interval: NodeJS.Timeout;
 
     constructor(timeout_ms: number) {
@@ -39,6 +43,7 @@ export class sse_server {
 
                 const client = { controller, user };
                 set.add(client);
+                
 
                 const cleanup = () => {
                     try {
@@ -51,6 +56,7 @@ export class sse_server {
                 };
 
                 req.signal?.addEventListener("abort", cleanup);
+                controller.enqueue(this.ok);
             },
 
             cancel: () => {

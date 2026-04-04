@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KasirKu | Laporan (Pembukuan)</title>
+  <title>KasirKu | Barang Masuk</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -15,6 +15,9 @@
   <!-- Select2 -->
   <link rel="stylesheet" href="/plugins/select2/css/select2.min.css" init-page-css>
   <link rel="stylesheet" href="/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css" init-page-css>
+  <!-- DataTables -->
+  <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" init-page-css>
+  <link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" init-page-css>
   <!-- VanillaJS Date Picker -->
   <link rel="stylesheet" href="/plugins/vanillajs-datepicker/css/datepicker.min.css" init-page-css>
   <link rel="stylesheet" href="/plugins/vanillajs-datepicker/css/datepicker-bs4.min.css" init-page-css>
@@ -22,9 +25,6 @@
   <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css" init-page-css>
   <!-- Sweetalert2 -->
   <link rel="stylesheet" href="/plugins/sweetalert2/sweetalert2.css" init-page-css>
-  <!-- DataTables -->
-  <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" init-page-css>
-  <link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" init-page-css>
 
   <!-- Swap Page CSS -->
   <link rel="stylesheet" href="/dist/css/transition.css">
@@ -115,7 +115,7 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0">Laporan</h1>
+            <h1 class="m-0">Barang Masuk</h1>
           </div><!-- /.col -->
         </div><!-- /.row -->
       </div><!-- /.container-fluid -->
@@ -129,82 +129,112 @@
           <div class="col">
             <div class="card card-primary">
 							<div class="card-body">
-                <div class="row">
-                  <div class="col-6">
-                    <label for="tanggal_laporan_start">Tanggal Awal (YYYY/MM/DD)</label>
-                    <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text">
-                          <i class="far fa-calendar-alt"></i>
-                        </span>
-                      </div>
-                      <input type="text" class="form-control float-right" id="tanggal_laporan_start" onkeydown="return false">
-                    </div>
+                <label class="col-form-label">Tanggal Barang Masuk (YYYY/MM/DD)</label>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text">
+                      <i class="far fa-calendar-alt"></i>
+                    </span>
                   </div>
-                  <div class="col-6">
-                    <label for="tanggal_laporan_end">Tanggal Akhir (YYYY/MM/DD)</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control float-right" id="tanggal_laporan_end" onkeydown="return false">
-                    </div>
-                  </div>
+                  <input type="text" class="form-control float-right" id="tanggal_barang_masuk" onkeydown="return false">
                 </div>
                 <hr>
-                <div class="card card-success">
-                  <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-plus"></i> Penjualan</h3>
-                  </div>
-                  <div class="card-body">
-                    <table id="penjualan_table" class="table table-bordered table-striped table-hover display nowrap">
-                      <thead>
-                        <th>Tanggal</th>
-                        <th>Barang Terjual</th>
-                        <th>Total Penjualan</th>
-                      </thead>
-                      <tbody>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div class="card card-danger">
-                  <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-minus"></i> Pengeluaran</h3>
-                  </div>
-                  <div class="card-body">
-                    <table id="pengeluaran_table" style="table-layout: fixed;" class="table table-bordered table-striped table-hover display nowrap">
-                      <thead>
-                        <th>Tanggal</th>
-                        <th>Total Pengeluaran</th>
-                      </thead>
-                      <tbody>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <p class="lead">Total Laporan</p>
-                <div class="table-responsive">
-                  <table class="table">
-                    <tbody><tr>
-                      <th style="width: 50%;">Total Penjualan Barang</th>
-                      <td id="total_penjualan_barang">0</td>
-                    </tr>
-                    <tr>
-                      <th>Total Uang Penjualan</th>
-                      <td id="total_uang_penjualan">Rp0</td>
-                    </tr>
-                    <tr>
-                      <th>Total Pengeluaran</th>
-                      <td id="total_uang_pengeluaran">Rp0</td>
-                    </tr>
-                    <tr>
-                      <th>Total Pendapatan</th>
-                      <td id="total_pendapatan">Rp0</td>
-                    </tr>
-                  </tbody></table>
-                </div>
+                <div class="col-3 row">
+									<button type="button" class="btn btn-success btn-block" onclick="tambah_barang_modal()"><i class="fa fa-plus"></i> Tambah Barang Masuk</button>
+								</div>
+								<br>
+                <table id="barang_masuk_table" class="table table-bordered table-striped table-hover display">
+                  <thead>
+                    <th>Nama Barang</th>
+                    <th>Deskripsi</th>
+                    <th>Jumlah Barang</th>
+                  </thead>
+                  <tbody>
+                  </tbody>
+								</table>
 							</div>
 						</div>
           </div>
         </div>
+        <div class="modal fade" id="modal_barang_masuk" style="display: none;" aria-hidden="true">
+					<div class="modal-dialog modal-xl modal-dialog-centered">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h4 class="modal-title" id="modal_barang_masuk_title">Tambah Barang Masuk</h4>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">×</span>
+								</button>
+							</div>
+							<div class="modal-body">
+                <div class="row">
+                  <div class="col-sm-9">
+                    <div class="form-group">
+                      <label for="nama_barang">Nama / Barcode Barang</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text"><i class="fas fa-box"></i></span>
+                        </div>
+                        <input type="text" class="form-control" id="nama_barcode_barang" placeholder="Nama / Barcode Barang" autocomplete="off">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-3 d-flex align-items-end">
+                    <div class="form-group w-100">
+                      <button type="button" class="btn btn-success btn-block" onclick="cari_barang()" id="cari_barang_button">Cari Barang (Enter)</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="deskripsi">Deskripsi</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-box"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="deskripsi" placeholder="Deskripsi" autocomplete="off" disabled>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="jumlah_barang">Jumlah Barang</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-box"></i></span>
+                    </div>
+                    <input type="text" class="form-control format_thousand_separator" id="jumlah_barang" placeholder="Jumlah Barang" autocomplete="off" disabled>
+                  </div>
+                </div>
+							</div>
+							<div class="modal-footer justify-content-between">
+								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
+								<button type="button" class="btn btn-success" id="modal_barang_masuk_button" onclick="tambah_barang_masuk()" disabled>Tambah Barang Masuk (Enter)</button>
+							</div>
+						</div>
+					</div>
+				</div>
+        <div class="modal fade" id="modal_cari_barang" style="display: none;" aria-hidden="true">
+					<div class="modal-dialog modal-xl modal-dialog-centered">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h4 class="modal-title" id="modal_role_title">Cari Barang</h4>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">×</span>
+								</button>
+							</div>
+							<div class="modal-body">
+                <div class="form-group">
+                  <table id="cari_barang_table" style="table-layout: fixed;" class="table table-bordered table-hover display">
+                    <thead>
+                      <th>Nama Barang</th>
+                      <th>Stok Barang</th>
+                      <th>Action</th>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>
+							  </div>
+							</div>
+						</div>
+					</div>
+				</div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>
@@ -238,12 +268,14 @@
 <script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js" data-init-page-script></script>
 <script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js" data-init-page-script></script>
 <script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js" data-init-page-script></script>
-<!-- VanillaJS Date Picker -->
-<script src="/plugins/vanillajs-datepicker/js/datepicker-full.min.js" data-init-page-script></script>
 <!-- Sweetalert2 -->
 <script src="/plugins/sweetalert2/sweetalert2.all.min.js" data-init-page-script></script>
+<!-- VanillaJS Date Picker -->
+<script src="/plugins/vanillajs-datepicker/js/datepicker-full.min.js" data-init-page-script></script>
 <!-- Bootstrap 4 -->
 <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js" data-init-page-script></script>
+<!-- Select2 -->
+<script src="/plugins/select2/js/select2.min.js" data-init-page-script></script>
 
 <!-- Init -->
 <script src="/app/init.js"></script>
@@ -251,7 +283,7 @@
 <!-- Login & Logout -->
 <script src="/app/login.js"></script>
 
-<!-- Laporan -->
-<script src="/app/pembukuan/laporan.js" data-page-script></script>
+<!-- Barang Masuk -->
+<script src="/app/barang/barang_masuk.js" data-page-script></script>
 </body>
 </html>
