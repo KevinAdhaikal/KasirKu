@@ -16,13 +16,11 @@ export default async function(req: Request, token: string) {
 
     const id = Number(user_input.get("id"));
     const tanggal_key = Number(user_input.get("tanggal_key"));
-    const barang_id = Number(user_input.get("barang_id"));
     const deskripsi = user_input.get("deskripsi");
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
 
     if (
         isNaN(id) || !id
-        || isNaN(barang_id) || !barang_id
         || !deskripsi
         || isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
@@ -30,22 +28,20 @@ export default async function(req: Request, token: string) {
     const now = Date.now();
 
     const res = await db.selectFrom("retur_barang")
-    .select("jumlah_barang")
+    .select(["jumlah_barang", "barang_id"])
     .where("id", '=', id)
     .where("tanggal_key", '=', tanggal_key)
     .executeTakeFirst();
+
 
     if (!res) return new Response("Not Found", {status: 404});
 
     let stok_barang;
     try {
         stok_barang = await db.transaction().execute(async (trx) => {
-            const diff = jumlah_barang - res.jumlah_barang;
-
             await trx
             .updateTable("retur_barang")
             .set({
-                barang_id,
                 deskripsi,
                 jumlah_barang,
                 modified_ms: now
@@ -57,14 +53,13 @@ export default async function(req: Request, token: string) {
             await trx
             .updateTable("barang")
             .set({
-                stok: sql`stok + ${diff}`
+                stok_barang: sql`stok_barang + ${res.jumlah_barang - jumlah_barang}`
             })
-            .where("id", "=", barang_id)
+            .where("id", "=", res.barang_id)
             .execute();
 
-            return (await trx.selectFrom("barang").select("stok_barang").where("id", "=", barang_id).executeTakeFirst())?.stok_barang;
+            return (await trx.selectFrom("barang").select("stok_barang").where("id", "=", res.barang_id).executeTakeFirst())?.stok_barang;
         });
-        
     } catch(e) {
         console.log(e);
         return new Response("Internal Server Error", {status: 500});
@@ -76,18 +71,16 @@ export default async function(req: Request, token: string) {
         data: {
             id,
             tanggal_key,
-            barang_id,
             deskripsi,
             jumlah_barang,
             modified_ms: now
         }
     }));
-
     global.sse_clients.broadcast(JSON.stringify({
         type: 2,
         code: "UPDATE_BARANG",
         data: {
-            id: barang_id,
+            id: res.barang_id,
             stok_barang
         }
     }))

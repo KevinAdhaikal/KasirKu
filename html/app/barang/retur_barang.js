@@ -64,6 +64,13 @@ global.refresh_handler = async function() {
 global.add_sse_handler(sse_handler);
 document.addEventListener("keydown", document_keydown);
 
+global.element.modal_retur_barang.on("shown.bs.modal", function() {
+    if (global.element.modal_retur_barang_title.innerText === "Tambah Retur Barang") global.element.nama_barcode_barang.focus();
+    else {
+        global.element.deskripsi.focus();
+    }
+})
+
 global.element.retur_barang_table.on('click.action_edit', '.action_edit', async function () {
     const data = this.value;
 
@@ -77,9 +84,19 @@ global.element.retur_barang_table.on('click.action_edit', '.action_edit', async 
     if (res.status === 200) {
         const res_json = await res.json();
 
-        global.element.modal_retur_barang_title.innerText = "Edit Barang";
-        global.element.modal_retur_barang_button.innerText = "Edit Barang (Enter)";
-        global.element.modal_retur_barang_button.onclick = function() {edit_(data)};
+        global.element.deskripsi.value = res_json.deskripsi;
+        global.element.deskripsi.disabled = false;
+        global.element.nama_barcode_barang.disabled = true;
+        global.element.nama_barcode_barang.value = `${res_json.nama_barang} (${res_json.barcode_barang ?? "Tidak Ada"})`;
+        global.element.cari_barang_button.disabled = true;
+
+        global.element.jumlah_barang.value = format_thousand_separator.format(res_json.jumlah_barang);
+        global.element.jumlah_barang.disabled = false;
+
+        global.element.modal_retur_barang_title.innerText = "Edit Retur Barang";
+        global.element.modal_retur_barang_button.innerText = "Edit Retur Barang (Enter)";
+        global.element.modal_retur_barang_button.disabled = false;
+        global.element.modal_retur_barang_button.onclick = function() {edit_retur_barang(data)};
 
         global.element.modal_retur_barang.modal("show");
         document.activeElement.blur();
@@ -168,6 +185,7 @@ async function sse_handler(e) {
                     deskripsi: e.data.deskripsi,
                     jumlah_barang: format_thousand_separator.format(e.data.jumlah_barang),
                     action: `<center>
+                    <button type="button" class="text-right btn btn-info action_edit" value="${e.data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                     <button type="button" class="text-right btn btn-danger action_delete" value="${e.data.id}"><i class="fa fa-trash"></i> Hapus</button>
                     </center>`,
                     id: e.data.id,
@@ -182,10 +200,11 @@ async function sse_handler(e) {
                 if (data.jumlah_barang) data.jumlah_barang = format_thousand_separator.format(data.jumlah_barang);
                 if (!data.deskripsi) data.deskripsi = "Tidak Ada";
                 data.action = `<center>
+                    <button type="button" class="text-right btn btn-info action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                     <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
                 </center>`;
 
-                row.add({
+                row.data({
                     ...row.data(),
                     ...data
                 }).draw();
@@ -239,6 +258,7 @@ async function fetch_retur_barang() {
                 deskripsi: data.deskripsi,
                 jumlah_barang: format_thousand_separator.format(data.jumlah_barang),
                 action: `<center>
+                <button type="button" class="text-right btn btn-info action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
                 <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
                 </center>`,
                 id: data.id,
@@ -291,14 +311,18 @@ async function tambah_barang(id, data) {
     global.element.nama_barcode_barang.value = `${data.nama_barang} (${data.barcode_barang ?? "Tidak Ada"})`;
     global.element.nama_barcode_barang.disabled = true;
     global.element.cari_barang_button.disabled = true;
+    global.element.modal_retur_barang_button.innerText = "Tambah Retur Barang (Enter)"
     global.element.modal_retur_barang_button.disabled = false;
+    global.element.modal_retur_barang_button.onclick = function() {tambah_retur_barang()};
     global.element.deskripsi.disabled = false;
     global.element.jumlah_barang.disabled = false;
     global.element.nama_barcode_barang.dataset.id = data.id;
     global.element.deskripsi.focus();
 }
 
-function tambah_barang_modal() {
+function tambah_retur_modal() {
+    global.element.modal_retur_barang_title.innerText = "Tambah Retur Barang";
+    global.element.modal_retur_barang_button.innerText = "Tambah Retur Barang (Enter)";
     global.element.nama_barcode_barang.value = "";
     global.element.nama_barcode_barang.disabled = false;
     global.element.cari_barang_button.disabled = false;
@@ -410,23 +434,22 @@ async function tambah_retur_barang() {
     }
 }
 
-async function edit_daftar_barang(id) {
-    let res = await fetch("/barang", {
+async function edit_retur_barang(id) {
+    let res = await fetch("/retur_barang", {
         method: "PATCH",
         headers: {
             "token": localStorage.getItem("token")
         },
         body: new URLSearchParams({
             "id": id,
-            "tanggal_key": global.element.nama_barang.value,
-            "barang_id": global.element.stok_barang.value.replaceAll(".", ""),
-            "deskripsi": global.element.kategori_barang.val(),
-            "jumlah_barang": global.element.harga_modal.value.replaceAll(".", "").replaceAll(",", ""),
+            "tanggal_key": global.element.tanggal_retur_barang.value.replaceAll("/", ""),
+            "deskripsi": global.element.deskripsi.value,
+            "jumlah_barang": global.element.jumlah_barang.value.replaceAll(".", ""),
         })
     })
 
     if (res.status === 200) {
-        global.element.modal_daftar_barang.modal("hide");
+        global.element.modal_retur_barang.modal("hide");
 
         swal2_mixin.fire({
             icon: "success",
