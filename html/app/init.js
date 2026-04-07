@@ -421,7 +421,8 @@ async function load_page(url, push = false) {
     }
 
     if (global.refresh_handler) await global.refresh_handler();
-
+    
+    document.title = doc.title;
     requestAnimationFrame(() => {
         newContentEl.classList.remove("page-hidden");
         newHeader.classList.remove("page-hidden");

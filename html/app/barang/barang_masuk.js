@@ -28,20 +28,23 @@ global.element = {
         ],
     }),
     barang_masuk_table: $("#barang_masuk_table").DataTable({
-        rowid: 3,
+        rowId: "id",
         columns: [
             {
-                data: 0,
+                data: "nama_barang",
                 render: $.fn.dataTable.render.text()
             },
             {
-                data: 1,
+                data: "deskripsi",
                 render: $.fn.dataTable.render.text()
             },
             {
-                data: 2,
+                data: "jumlah_barang",
                 render: $.fn.dataTable.render.text()
             },
+            {
+                data: "action"
+            }
         ],
     })
 };
@@ -82,12 +85,16 @@ async function sse_handler(e) {
         switch(e.code) {
             case "TAMBAH_BARANG_MASUK": {
                 if (String(e.data.tanggal_key) === global.element.tanggal_barang_masuk.value.replaceAll("/", "")) {
-                    global.element.barang_masuk_table.row.add([
-                        e.data.nama_barang,
-                        e.data.deskripsi,
-                        format_thousand_separator.format(e.data.jumlah_barang),
-                        e.data.id
-                    ]).draw();
+                    global.element.barang_masuk_table.row.add({
+                        mama_barang: e.data.nama_barang,
+                        deskripsi: e.data.deskripsi,
+                        jumlah_barang: format_thousand_separator.format(e.data.jumlah_barang),
+                        action: `<center>
+                            <button type="button" class="text-right btn btn-info action_edit" value="${e.data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
+                            <button type="button" class="text-right btn btn-danger action_delete" value="${e.data.id}"><i class="fa fa-trash"></i> Hapus</button>
+                        </center>`,
+                        id: e.data.id
+                    }).draw();
                 }
                 break;
             }
@@ -96,7 +103,7 @@ async function sse_handler(e) {
                 break;
             }
             case "DELETE_BARANG_MASUK": {
-                fetch_barang_masuk();
+                if (String(e.data.tanggal_key) === global.element.tanggal_barang_masuk.value.replaceAll("/", "")) global.element.barang_masuk_table.row("#" + e.data.id).remove().draw();
                 break;
             }
             default: {
@@ -194,12 +201,16 @@ async function fetch_barang_masuk() {
         const res_json = await res.json();
 
         for (const data of res_json) {
-            global.element.barang_masuk_table.row.add([
-                data.nama_barang,
-                data.deskripsi,
-                format_thousand_separator.format(data.jumlah_barang),
-                data.id
-            ]);
+            global.element.barang_masuk_table.row.add({
+                nama_barang: data.nama_barang,
+                deskripsi: data.deskripsi,
+                jumlah_barang: format_thousand_separator.format(data.jumlah_barang),
+                action: `<center>
+                    <button type="button" class="text-right btn btn-info action_edit" value="${data.id}"><i class="fa fa-eye"></i> Lihat/Edit</button>
+                    <button type="button" class="text-right btn btn-danger action_delete" value="${data.id}"><i class="fa fa-trash"></i> Hapus</button>
+                </center>`,
+                id: data.id
+        });
         }
     }
     else {
