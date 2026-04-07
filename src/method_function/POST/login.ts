@@ -22,7 +22,7 @@ export default async function(req: Request, token: string) {
     const username = user_input.get("username");
     const password = user_input.get("password");
     
-    if (!username || !password) return new Response("Bad Requesst", {status: 400});
+    if (!username || !password) return new Response("Bad Request", {status: 400});
     
     const db = global.database;
     if (!db) return new Response("Internal Server Error", {status: 500});
