@@ -91,6 +91,10 @@ async function sse_handler(e) {
                 }
                 break;
             }
+            case "UPDATE_BARANG_MASUK": {
+                fetch_barang_masuk();
+                break;
+            }
             case "DELETE_BARANG_MASUK": {
                 fetch_barang_masuk();
                 break;

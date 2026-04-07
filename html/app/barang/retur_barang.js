@@ -197,6 +197,7 @@ async function sse_handler(e) {
                 const row = global.element.retur_barang_table.row("#" + e.data.id)
                 const data = e.data;
 
+                if (String(data.tanggal_key) !== global.element.tanggal_retur_barang.value.replaceAll("/", "")) return;
                 if (data.jumlah_barang) data.jumlah_barang = format_thousand_separator.format(data.jumlah_barang);
                 if (!data.deskripsi) data.deskripsi = "Tidak Ada";
                 data.action = `<center>
@@ -211,6 +212,7 @@ async function sse_handler(e) {
                 break;
             }
             case "DELETE_RETUR_BARANG": {
+                if (String(data.tanggal_key) !== global.element.tanggal_retur_barang.value.replaceAll("/", "")) return;
                 global.element.retur_barang_table.row("#" + e.data.id).remove().draw();
                 break;
             }

@@ -20,7 +20,7 @@ export default async function(req: Request, token: string) {
     if (isNaN(id) || !id || isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .selectFrom('retur_barang')
+    .selectFrom('barang_masuk')
     .select(['jumlah_barang', 'barang_id'])
     .where('id', '=', id)
     .where('tanggal_key', '=', tanggal_key)
@@ -33,12 +33,12 @@ export default async function(req: Request, token: string) {
         stok_barang = await db.transaction().execute(async (trx) => {
             await trx.updateTable("barang")
             .set({
-                stok_barang: sql`stok_barang + ${res.jumlah_barang}`
+                stok_barang: sql`stok_barang - ${res.jumlah_barang}`
             })
             .where("id", "=", res.barang_id)
             .execute();
             
-            await trx.deleteFrom("retur_barang").where("id", "=", id).where("tanggal_key", "=", tanggal_key).execute();
+            await trx.deleteFrom("barang_masuk").where("id", "=", id).where("tanggal_key", "=", tanggal_key).execute();
             return (await trx.selectFrom("barang").select("stok_barang").where("id", "=", res.barang_id).executeTakeFirst())?.stok_barang;
         });
     } catch(e) {
@@ -46,8 +46,8 @@ export default async function(req: Request, token: string) {
     }
 
     global.sse_clients.broadcast(JSON.stringify({
-        type: 7,
-        code: "DELETE_RETUR_BARANG",
+        type: 6,
+        code: "DELETE_BARANG_MASUK",
         data: {
             id,
             tanggal_key
