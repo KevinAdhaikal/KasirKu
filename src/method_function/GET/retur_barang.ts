@@ -25,9 +25,13 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
 
     const user_input = url.searchParams;
-    const id = Number(user_input.get("id"));
 
+    const tanggal_key = Number(user_input.get("tanggal_key"));
+    if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Reuqest", {status: 400});
+
+    const id = Number(user_input.get("id"));
     let res;
+
     if (!isNaN(id) && id) {
         res = await db
         .selectFrom('retur_barang as rb')
@@ -40,11 +44,7 @@ export default async function(req: Request, url: URL, user_info: user_session_in
         ])
         .where('rb.id', '=', id)
         .executeTakeFirst();
-    }
-    else {
-        const tanggal_key = Number(user_input.get("tanggal_key"));
-        if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Reuqest", {status: 400});
-        
+    } else {
         res = await db
         .selectFrom('retur_barang as rb')
         .innerJoin('barang as b', 'b.id', 'rb.barang_id')

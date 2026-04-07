@@ -28,18 +28,35 @@ export default async function(req: Request, url: URL, user_info: user_session_in
 
     const tanggal_key = Number(user_input.get("tanggal_key"));
     if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400});
-                
-    const res = await db
-    .selectFrom('barang_masuk as bm')
-    .innerJoin('barang as b', 'b.id', 'bm.barang_id')
-    .select([
-        'bm.id',
-        'b.nama_barang',
-        'bm.deskripsi',
-        'bm.jumlah_barang'
-    ])
-    .where('bm.tanggal_key', '=', tanggal_key)
-    .execute();
+
+    let res;
+    const id = Number(user_input.get("id"));
+    if (!isNaN(id) && id) {
+        res = await db
+        .selectFrom('barang_masuk as bm')
+        .innerJoin('barang as b', 'b.id', 'bm.barang_id')
+        .select([
+            'b.nama_barang',
+            'bm.deskripsi',
+            'bm.jumlah_barang'
+        ])
+        .where('bm.id', '=', id)
+        .where('bm.tanggal_key', '=', tanggal_key)
+        .executeTakeFirst();
+    } else {
+        res = await db
+        .selectFrom('barang_masuk as bm')
+        .innerJoin('barang as b', 'b.id', 'bm.barang_id')
+        .select([
+            'bm.id',
+            'b.nama_barang',
+            'bm.deskripsi',
+            'bm.jumlah_barang'
+        ])
+        .where('bm.tanggal_key', '=', tanggal_key)
+        .execute();
+    }
+    
 
     return new Response(JSON.stringify(res), {status: 200});
 }

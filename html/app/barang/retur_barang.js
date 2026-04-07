@@ -74,7 +74,7 @@ global.element.modal_retur_barang.on("shown.bs.modal", function() {
 global.element.retur_barang_table.on('click.action_edit', '.action_edit', async function () {
     const data = this.value;
 
-    let res = await fetch(`/api/retur_barang?id=${data}`, {
+    let res = await fetch(`/api/retur_barang?id=${data}&tanggal_key=${global.element.tanggal_retur_barang.value.replaceAll("/", "")}`, {
         method: "GET",
         headers: {
             token: localStorage.getItem("token")
@@ -117,7 +117,7 @@ global.element.retur_barang_table.on('click.action_edit', '.action_edit', async 
 
 global.element.retur_barang_table.on('click.action_delete', '.action_delete', async function () {
     Swal.fire({
-        title: "Hapus Barang",
+        title: "Hapus Retur Barang",
         text: "Apakah anda yakin untuk menghapus Retur Barang ini?",
         icon: "error",
         showCancelButton: true,
@@ -141,7 +141,7 @@ global.element.retur_barang_table.on('click.action_delete', '.action_delete', as
             if (res.status === 200) {
                 swal2_mixin.fire({
                     icon: "success",
-                    title: "Barang berhasil dihapus!"
+                    title: "Retur Barang berhasil dihapus!"
                 });
             }
             else {
@@ -456,7 +456,7 @@ async function edit_retur_barang(id) {
 
         swal2_mixin.fire({
             icon: "success",
-            title: "Barang berhasil diedit!"
+            title: "Retur Barang berhasil diedit!"
         });
     }
     else {

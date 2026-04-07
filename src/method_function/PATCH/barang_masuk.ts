@@ -68,7 +68,7 @@ export default async function(req: Request, token: string) {
             await trx
             .updateTable("barang")
             .set({
-                stok_barang: sql`stok_barang + ${res.jumlah_barang - jumlah_barang}`
+                stok_barang: sql`stok_barang + ${jumlah_barang - res.jumlah_barang}`
             })
             .where("id", "=", res.barang_id)
             .execute();

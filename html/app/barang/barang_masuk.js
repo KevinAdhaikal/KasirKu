@@ -68,7 +68,7 @@ global.element.modal_barang_masuk.on("shown.bs.modal", function() {
     }
 })
 
-global.element.modal_barang_masuk.on('click.action_delete', '.action_delete', async function () {
+global.element.barang_masuk_table.on('click.action_delete', '.action_delete', async function () {
     Swal.fire({
         title: "Hapus Barang Masuk",
         text: "Apakah anda yakin untuk menghapus barang masuk ini?",
@@ -86,6 +86,7 @@ global.element.modal_barang_masuk.on('click.action_delete', '.action_delete', as
                     token: localStorage.getItem("token")
                 },
                 body: new URLSearchParams({
+                    tanggal_key: global.element.tanggal_barang_masuk.value.replaceAll("/", ""),
                     id: this.value
                 })
             })
@@ -111,6 +112,50 @@ global.element.modal_barang_masuk.on('click.action_delete', '.action_delete', as
             }
         }
     })
+});
+
+global.element.barang_masuk_table.on('click.action_edit', '.action_edit', async function () {
+    const data = this.value;
+
+    let res = await fetch(`/api/barang_masuk?id=${data}&tanggal_key=${global.element.tanggal_barang_masuk.value.replaceAll("/", "")}`, {
+        method: "GET",
+        headers: {
+            token: localStorage.getItem("token")
+        }
+    });
+
+    if (res.status === 200) {
+        const res_json = await res.json();
+
+        global.element.deskripsi.value = res_json.deskripsi;
+        global.element.deskripsi.disabled = false;
+        global.element.nama_barcode_barang.disabled = true;
+        global.element.nama_barcode_barang.value = `${res_json.nama_barang} (${res_json.barcode_barang ?? "Tidak Ada"})`;
+        global.element.cari_barang_button.disabled = true;
+
+        global.element.jumlah_barang.value = format_thousand_separator.format(res_json.jumlah_barang);
+        global.element.jumlah_barang.disabled = false;
+
+        global.element.modal_barang_masuk_title.innerText = "Edit Barang Masuk";
+        global.element.modal_barang_masuk_button.innerText = "Edit Barang Masuk (Enter)";
+        global.element.modal_barang_masuk_button.disabled = false;
+        global.element.modal_barang_masuk_button.onclick = function() {edit_barang_masuk(data)};
+
+        global.element.modal_barang_masuk.modal("show");
+        document.activeElement.blur();
+    }
+    else {
+        const status = await res.text();
+        switch(status) {
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                })
+                break;
+            }
+        }
+    }
 });
 
 global.add_sse_handler(sse_handler);
@@ -373,6 +418,43 @@ async function tambah_barang_masuk() {
                     icon: "error",
                     title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
                 })
+                break;
+            }
+        }
+    }
+}
+
+async function edit_barang_masuk(id) {
+    let res = await fetch("/barang_masuk", {
+        method: "PATCH",
+        headers: {
+            "token": localStorage.getItem("token")
+        },
+        body: new URLSearchParams({
+            "id": id,
+            "tanggal_key": global.element.tanggal_barang_masuk.value.replaceAll("/", ""),
+            "deskripsi": global.element.deskripsi.value,
+            "jumlah_barang": global.element.jumlah_barang.value.replaceAll(".", ""),
+        })
+    })
+
+    if (res.status === 200) {
+        global.element.modal_barang_masuk.modal("hide");
+
+        swal2_mixin.fire({
+            icon: "success",
+            title: "Barang Masuk berhasil diedit!"
+        });
+    }
+    else {
+        const status = await res.text();
+
+        switch(status) {
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                });
                 break;
             }
         }
