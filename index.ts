@@ -187,7 +187,6 @@ async function database_create_req(db: Kysely<any>, version: number, current_ms:
         .execute();
     }
     if (version < 2) { // Database Version 2.0
-        console.log("test"); 
         // retur barang
         await db.schema
         .createTable("retur_barang")
