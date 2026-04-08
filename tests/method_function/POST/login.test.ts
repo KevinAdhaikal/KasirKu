@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import login from "../../method_function/POST/login";
-import { global } from "../../global";
+import login from "../../../src/method_function/POST/login";
+import { global } from "../../../src/global";
 
 type LoginRow = {
     id: number;
@@ -158,7 +158,7 @@ describe("POST login handler", () => {
             selectedColumns: [],
             whereArgs: null,
         };
-        const row: LoginRow = { id: 1, password_hash: "HASH_TAIL", role_id: 1 };
+        const row: LoginRow = { id: 1, password_hash: "ko", role_id: 1 };
         global.database = createDbMock(row, calls) as any;
 
         const verifyCalls: Array<[string, string]> = [];

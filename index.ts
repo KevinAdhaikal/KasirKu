@@ -187,6 +187,7 @@ async function database_create_req(db: Kysely<any>, version: number, current_ms:
         .execute();
     }
     if (version < 2) { // Database Version 2.0
+        console.log("test"); 
         // retur barang
         await db.schema
         .createTable("retur_barang")
@@ -352,12 +353,12 @@ async function prepare() {
 
     if (version === 0) {
         await global.sql_dialect.insert_ignore(global.database.insertInto("kasirku")
-        .values({ k: "version", v: "1" }))
+        .values({ k: "version", v: "2" }))
         .execute();
     } else {
         await global.database
         .updateTable("kasirku")
-        .set({ v: "1" })
+        .set({ v: "2" })
         .where("k", "=", "version")
         .execute();
     }
