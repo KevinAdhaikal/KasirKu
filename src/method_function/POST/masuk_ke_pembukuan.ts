@@ -38,7 +38,8 @@ export default async function(req: Request, token: string) {
     
     if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
     const now = Date.now();
-    const date_now = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
+    const date = new Date(now);
+    const date_now = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
     
     let total_barang = 0;
     let total_harga_modal = 0;
