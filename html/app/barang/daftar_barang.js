@@ -239,7 +239,7 @@ async function sse_handler(e) {
                 for (const items of e.data.items) {
                     const current_data = global.element.daftar_barang_table.row("#" + items.id).data();
 
-                    current_data.stok_barang = Number(current_data.stok_barang.replaceAll(".", "")) - items.jumlah_barang;
+                    current_data.stok_barang = format_thousand_separator.format(Number(current_data.stok_barang.replaceAll(".", "")) - items.jumlah_barang);
                     global.element.daftar_barang_table.row("#" + items.id).data(current_data, false);
                 }
                 global.element.daftar_barang_table.draw();

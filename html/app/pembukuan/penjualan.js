@@ -14,6 +14,8 @@ global.element = {
                 defaultContent: ''
             },
             { data: 'jam' },
+            { data: 'no_struk'},
+            { data: 'nama_kasir' },
             { data: 'total_barang' },
             { data: 'total_harga' }
         ],
@@ -86,13 +88,14 @@ async function sse_handler(e) {
     if (e.type === 4) {
         switch(e.code) {
             case "TAMBAH_PENJUALAN": {
-                console.log(e.data);
                 const data = await fetch_penjualan_id(e.data.id);
                 if (String(data.tanggal_key) === global.element.tanggal_penjualan.value.replaceAll("/", "")) {
                     global.element.date.setTime(data.created_ms);
                     global.element.penjualan_table.row.add({
                         id: data.id,
                         jam: global.element.date.toTimeString().slice(0,8),
+                        no_struk: data.no_struk,
+                        nama_kasir: data.nama_kasir,
                         total_barang: data.total_barang,
                         total_harga: "Rp" + money_format_bigint(BigInt(data.total_harga_jual))
                     });
@@ -174,6 +177,8 @@ async function fetch_penjualan() {
             global.element.penjualan_table.row.add({
                 id: data.id,
                 jam: global.element.date.toTimeString().slice(0,8),
+                no_struk: data.no_struk,
+                nama_kasir: data.nama_kasir,
                 total_barang: data.total_barang,
                 total_harga: "Rp" + money_format_bigint(BigInt(data.total_harga_jual))
             })

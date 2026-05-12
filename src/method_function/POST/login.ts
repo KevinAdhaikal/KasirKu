@@ -13,7 +13,6 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
 
 export default async function(req: Request, token: string) {

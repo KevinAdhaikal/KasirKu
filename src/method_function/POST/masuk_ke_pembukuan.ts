@@ -19,7 +19,7 @@ import { global } from "../../global";
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
-    
+
     const db = global.database;
     if (!db) return new Response("Internal Server Error", {status: 500});
     const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
@@ -43,7 +43,7 @@ export default async function(req: Request, token: string) {
     let total_barang = 0;
     let total_harga_modal = 0;
     let total_harga_jual = 0;
-                
+
     for (const data of items) {
         total_barang += data.jumlah_barang;
         
@@ -66,7 +66,12 @@ export default async function(req: Request, token: string) {
     
     try {
         await db.transaction().execute(async (trx) => {
+            const res_user = await trx.selectFrom("users").select("name").where("id", "=", user_info.user_id).executeTakeFirst();
+            if (!res_user) return new Response("Not Found", {status: 404});
+
             const last_row  = await global.sql_dialect.insert_return_id(trx, "penjualan", {
+                no_struk: "TRX-ABCD",
+                kasir_id: user_info.user_id,
                 total_barang,
                 total_harga_modal,
                 total_harga_jual,
@@ -74,7 +79,7 @@ export default async function(req: Request, token: string) {
                 created_ms: now,
                 modified_ms: now
             })
-            
+
             await trx
             .insertInto('pembukuan')
             .values({

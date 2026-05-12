@@ -29,11 +29,16 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const id = Number(user_input.get("id"));
 
     let res;
-    const query = db.selectFrom('penjualan').selectAll();
+    const query = db
+    .selectFrom("penjualan")
+    .leftJoin("users", "users.id", "penjualan.kasir_id")
+    .selectAll("penjualan")
+    .select([
+        "users.full_name as nama_kasir"
+    ]);
 
     if (isNaN(id) || !id) {
         if (isNaN(tanggal_key)) return new Response("Bad Request", { status: 400 });
-        
         res = await query
         .where('tanggal_key', '=', tanggal_key)
         .execute();
