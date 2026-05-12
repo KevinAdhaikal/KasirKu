@@ -50,9 +50,7 @@ global.element = {
         ],
         responsive: true,
         autoWidth: false
-    }),
-
-    date: new Date()
+    })
 }
 
 global.deinit = () => {
@@ -99,9 +97,10 @@ async function tanggal_total_terjual_end_event() {
 }
 
 async function fetch_info_total_hari_ini() {
-    const y = global.element.date.getFullYear();
-    const m = String(global.element.date.getMonth() + 1).padStart(2, "0");
-    const day = String(global.element.date.getDate()).padStart(2, "0");
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
 
     let res = await fetch(`/api/info_total?tanggal_key=${y}${m}${day}`, {
         method: "GET",

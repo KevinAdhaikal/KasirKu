@@ -39,9 +39,9 @@ export default async function(req: Request, token: string) {
         || isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
-    let res_data;
-    const tanggal_key = global.date.getFullYear() * 10000 + (global.date.getMonth() + 1) * 100 + global.date.getDate();
-    const now = Date.now();
+    let res_data;    const now = Date.now();
+    const date = new Date(now);
+    const tanggal_key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 
     try {
         res_data = await db.transaction().execute(async (trx) => {

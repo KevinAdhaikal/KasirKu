@@ -20,9 +20,6 @@ import { rate_limit } from "./rate_limit/rate_limit";
 import { ColumnDefinitionBuilder, InsertQueryBuilder, InsertResult, Kysely } from "kysely";
 
 export const global = {
-    // Date
-    date: new Date(),
-
     // user sessions
     user_sessions: new user_session(600, 60, 32),
 
