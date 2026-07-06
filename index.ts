@@ -236,7 +236,7 @@ async function database_create_req(db: Kysely<any>, version: number, current_ms:
             .select([
                 "id",
                 sql`1`.as("kasir_id"),
-                sql`'UNKNOWN'`.as("no_struk"),
+                sql`'TRX-NULL'`.as("no_struk"),
                 "total_barang",
                 "total_harga_modal",
                 "total_harga_jual",

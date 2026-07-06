@@ -37,8 +37,9 @@ export default async function(req: Request, token: string) {
     }];
     
     if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
-    const now = Date.now();
-    const date = new Date(now);
+
+    const date = global.date;
+    const now = global.date.getTime();
     const date_now = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
     
     let total_barang = 0;
@@ -71,7 +72,7 @@ export default async function(req: Request, token: string) {
             if (!res_user) return new Response("Not Found", {status: 404});
 
             const last_row  = await global.sql_dialect.insert_return_id(trx, "penjualan", {
-                no_struk: "TRX-ABCD",
+                no_struk: `TRX-${now}`,
                 kasir_id: user_info.user_id,
                 total_barang,
                 total_harga_modal,
@@ -79,7 +80,7 @@ export default async function(req: Request, token: string) {
                 tanggal_key: date_now,
                 created_ms: now,
                 modified_ms: now
-            })
+            });
 
             await trx
             .insertInto('pembukuan')

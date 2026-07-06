@@ -19,7 +19,15 @@ import { sse_server } from "./sse_server/sse_server";
 import { rate_limit } from "./rate_limit/rate_limit";
 import { ColumnDefinitionBuilder, InsertQueryBuilder, InsertResult, Kysely } from "kysely";
 
+const current_date = new Date()
+
 export const global = {
+    // date
+    get date() {
+        current_date.setTime(Date.now())
+        return current_date
+    },
+
     // user sessions
     user_sessions: new user_session(600, 60, 32),
 

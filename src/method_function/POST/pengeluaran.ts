@@ -32,9 +32,9 @@ export default async function(req: Request, token: string) {
     const nominal = Number(user_input.get("nominal"));
 
     if (!deskripsi || !nominal) return new Response("Bad Reuqest", {status: 400});
-
-    const now = Date.now();
-    const date = new Date(now);
+    
+    const date = global.date;
+    const now = date.getTime();
     const date_now = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
     let last_row;
 

@@ -39,8 +39,10 @@ export default async function(req: Request, token: string) {
         || isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
-    let res_data;    const now = Date.now();
-    const date = new Date(now);
+    let res_data;
+    
+    const date = global.date;
+    const now = date.getTime();
     const tanggal_key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 
     try {

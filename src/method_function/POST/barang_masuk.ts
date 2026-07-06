@@ -43,8 +43,8 @@ export default async function(req: Request, token: string) {
     
     if (!res) return new Response("1", {status: 404});
     
-    const now = Date.now();
-    const date = new Date(now);
+    const date = global.date
+    const now = date.getTime();
     const tanggal_key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
     let last_row;
     
