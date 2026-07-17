@@ -13,244 +13,14 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { Kysely, MysqlDialect, PostgresDialect, sql } from "kysely";
+import { Kysely, MysqlDialect, PostgresDialect } from "kysely";
+import { migrate_up } from "./src/database/migrate"
 import { main } from "./src/server";
 import { global } from "./src/global";
-import { BunSqliteDialect, get_password_hash_only } from "./src/utils/utils";
+import { BunSqliteDialect } from "./src/utils/utils";
 import { mkdir } from "node:fs/promises";
 import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
-
-async function database_create_req(db: Kysely<any>, version: number, current_ms: number) { // database create requirement
-    if (version < 1) { // Database Version 1.0
-        // roles
-        await db.schema
-        .createTable("roles")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("name", "varchar(255)", col => col.unique())
-        .addColumn("permission_level", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .execute();
-
-        await global.sql_dialect.insert_ignore(db.insertInto("roles").values({
-            name: "Administrator",
-            permission_level: global.permissions.ADMINISTRATOR,
-            created_ms: current_ms,
-            modified_ms: current_ms
-        })).execute();
-
-        // users
-        await db.schema
-        .createTable("users")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("username", "varchar(255)", col => col.unique())
-        .addColumn("full_name", "text")
-        .addColumn("password_hash", "text")
-        .addColumn("profile_img", "text", col => col.defaultTo(null))
-        .addColumn("role_id", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .addForeignKeyConstraint(
-            "users_role_fk", // nama constraint nya (kalo di sqlite mah di ignore)
-            ["role_id"],
-            "roles",
-            ["id"],
-            (cb) => cb.onDelete("cascade").onUpdate("cascade")
-        )
-        .execute();
-
-        await global.sql_dialect.insert_ignore(db.insertInto("users").values({
-            username: "admin",
-            full_name: "Administrator",
-            password_hash: get_password_hash_only(
-                Bun.password.hashSync("admin", {
-                    algorithm: "argon2id",
-                    timeCost: global.ph_timecost,
-                    memoryCost: global.ph_memorycost,
-                }),
-            ),
-            role_id: 1,
-            created_ms: current_ms,
-            modified_ms: current_ms
-        })).execute();
-
-        // kategori barang
-        await db.schema
-        .createTable("kategori_barang")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("nama_kategori", "text", col => col.unique())
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .execute();
-
-        await global.sql_dialect.insert_ignore(db.insertInto("kategori_barang")
-        .values({
-            nama_kategori: "Tidak Ada",
-            created_ms: current_ms,
-            modified_ms: current_ms
-        })).execute();
-
-        // barang
-        await db.schema
-        .createTable("barang")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("nama_barang", "text")
-        .addColumn("stok_barang", "integer")
-        .addColumn("kategori_barang_id", "integer")
-        .addColumn("harga_modal", "integer")
-        .addColumn("harga_jual", "integer")
-        .addColumn("barcode_barang", "text", col => col.unique().defaultTo(null))
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .addForeignKeyConstraint(
-            "barang_kategori_fk",
-            ["kategori_barang_id"],
-            "kategori_barang",
-            ["id"],
-            (cb) => cb.onDelete("cascade").onUpdate("cascade")
-        )
-        .execute();
-
-        // barang masuk
-        await db.schema
-        .createTable("barang_masuk")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("barang_id", "integer")
-        .addColumn("deskripsi", "text")
-        .addColumn("jumlah_barang", "integer")
-        .addColumn("tanggal_key", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .addForeignKeyConstraint(
-            "fk_barang_masuk_barang",
-            ["barang_id"],
-            "barang",
-            ["id"],
-            cb => cb.onDelete("cascade").onUpdate("cascade")
-        )
-        .execute();
-
-        // penjualan
-        await db.schema
-        .createTable("penjualan")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("total_barang", "integer")
-        .addColumn("total_harga_modal", "integer")
-        .addColumn("total_harga_jual", "integer")
-        .addColumn("tanggal_key", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .execute();
-
-        // penjualan_item
-        await db.schema
-        .createTable("penjualan_item")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("penjualan_id", "integer", col => col.notNull())
-        .addColumn("barang_id", "integer", col => col.notNull())
-        .addColumn("nama_barang", "text")
-        .addColumn("jumlah", "bigint")
-        .addColumn("harga_modal", "bigint")
-        .addColumn("harga_jual", "bigint")
-        .addColumn("tanggal_key", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .addForeignKeyConstraint(
-            "fk_penjualan_item_penjualan",
-            ["penjualan_id"],
-            "penjualan",
-            ["id"],
-            cb => cb.onDelete("cascade").onUpdate("cascade")
-        )
-        .execute();
-
-        // pembukuan
-        await db.schema
-        .createTable("pembukuan")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("tipe", "integer", col => col.check(sql`tipe IN (0,1)`))
-        .addColumn("deskripsi", "text", col => col.defaultTo(null))
-        .addColumn("jumlah_uang", "integer")
-        .addColumn("referensi_id", "integer")
-        .addColumn("tanggal_key", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .execute();
-    }
-
-    if (version < 2) { // Database Version 2.0
-        // menambahkan retur barang
-        await db.schema
-        .createTable("retur_barang")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("tanggal_key", "integer", col => col.notNull())
-        .addColumn("barang_id", "integer", col => col.notNull())
-        .addColumn("deskripsi", "text", col => col.defaultTo(null))
-        .addColumn("jumlah_barang", "integer", col => col.notNull())
-        .addColumn("created_ms", "bigint", col => col.notNull())
-        .addColumn("modified_ms", "bigint")
-        .addForeignKeyConstraint(
-            "fk_retur_barang_barang",
-            ["barang_id"],
-            "barang",
-            ["id"],
-            cb => cb.onDelete("cascade").onUpdate("cascade")
-        )
-        .execute();
-
-        // update table penjualan
-        await db.schema
-        .createTable("penjualan_new")
-        .ifNotExists()
-        .addColumn("id", "integer", col => global.sql_dialect.id_column(col))
-        .addColumn("kasir_id", "integer", col => col.notNull())
-        .addColumn("no_struk", "text", col => col.unique().notNull())
-        .addColumn("total_barang", "integer")
-        .addColumn("total_harga_modal", "integer")
-        .addColumn("total_harga_jual", "integer")
-        .addColumn("tanggal_key", "integer")
-        .addColumn("created_ms", "bigint")
-        .addColumn("modified_ms", "bigint")
-        .addForeignKeyConstraint(
-            "fk_penjualan_kasir",
-            ["kasir_id"],
-            "users",
-            ["id"],
-            cb => cb.onDelete("restrict").onUpdate("cascade")
-        )
-        .execute();
-
-        await db.insertInto("penjualan_new")
-        .expression(
-            db.selectFrom("penjualan")
-            .select([
-                "id",
-                sql`1`.as("kasir_id"),
-                sql`'TRX-NULL'`.as("no_struk"),
-                "total_barang",
-                "total_harga_modal",
-                "total_harga_jual",
-                "tanggal_key",
-                "created_ms",
-                "modified_ms"
-            ])
-        )
-        .execute();
-
-        await db.schema.dropTable("penjualan").execute();
-        await db.schema.alterTable("penjualan_new").renameTo("penjualan").execute();
-    }
-}
 
 async function load_methods(baseDir = "./src/method_function") {
   const methods = readdirSync(baseDir);
@@ -382,16 +152,16 @@ async function prepare() {
         version = Number((await global.database.selectFrom("kasirku").select("v").where("k", "=", "version").executeTakeFirst())?.v ?? 0);
     } catch(e) {
         await global.database.schema
-        .createTable("kasirku")
-        .ifNotExists()
-        .addColumn("k", "text")
-        .addColumn("v", "text")
+            .createTable("kasirku")
+            .ifNotExists()
+            .addColumn("k", "text")
+            .addColumn("v", "text")
         .execute();
-
+        
         version = 0;
     }
-    
-    database_create_req(global.database, version, Date.now());
+
+    await migrate_up(global.database, version);
 
     if (version === 0) {
         await global.sql_dialect.insert_ignore(global.database.insertInto("kasirku")

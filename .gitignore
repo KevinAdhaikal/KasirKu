@@ -4,8 +4,7 @@ bun.lockb
 node_modules/
 node_modules/**/
 
-database/
-database/**/
+/database/
 cert/
 cert/**/
 profile_img/
