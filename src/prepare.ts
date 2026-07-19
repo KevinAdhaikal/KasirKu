@@ -42,27 +42,9 @@ function print_config(config: any) {
     console.log(`[LOG] Use TLS: ${config.use_tls}`);
     console.log(`[LOG] Compile assets saat startup: ${config.compile_html}`);
     console.log(`[LOG] Database Type: ${config.db_type}`);
-    console.log(`[LOG] Database Name : ${config.db_name}`);
+    console.log(`[LOG] Database Name: ${config.db_name}`);
     console.log(`[LOG] TLS Key Path: ${config.tls_key_path}`);
     console.log(`[LOG] TLS Cert Path: ${config.tls_cert_path}`);
-    
-    if (global.config.db_type === "postgresql") {
-        console.log("[LOG]");
-        console.log("[LOG] PostgreSQL");
-        console.log(`[LOG] host: ${config.postgresql.host}`);
-        console.log(`[LOG] port: ${config.postgresql.port}`);
-        console.log(`[LOG] user: ${config.postgresql.user}`);
-        console.log(`[LOG] pass: ${config.postgresql.password}`);
-    }
-    else if (global.config.db_type === "mysql") {
-        console.log("[LOG]");
-        console.log("[LOG] MySQL");
-        console.log(`[LOG] Host: ${config.mysql.host}`);
-        console.log(`[LOG] Port: ${config.mysql.port}`);
-        console.log(`[LOG] Username: ${config.mysql.user}`);
-        console.log(`[LOG] Password: ${config.mysql.password}`);
-    }
-
     console.log("[LOG] ============================================");
 }
 
@@ -208,6 +190,7 @@ async function check_config() {
 
     while (true) {
         const answer = await user_input("[LOG] Gunakan konfigurasi default (y/n) ");
+        
         if (answer.toLowerCase() === "n") {
             let use_tls = await user_input("[LOG] Gunakan TLS/HTTPS? (true/false) (Default: true): ");
             if (use_tls) global.config.use_tls = use_tls.toLowerCase() === "true";
@@ -218,42 +201,108 @@ async function check_config() {
             let compile_html = await user_input("[LOG] Compile assets saat startup? (true/false) (Default: false): ");
             if (compile_html) global.config.compile_html = compile_html.toLowerCase() === "true";
 
-            let db_type = await user_input("[LOG] Pilih database (sqlite / mysql / postgresql) (Default: sqlite): ");
-            if (db_type) global.config.db_type = db_type.toLowerCase();
+            while (true) {
+                let conn_success = false;
 
-            let db_name = await user_input("[LOG] Nama database (Default: kasirku): ");
-            if (db_name) global.config.db_name = db_name;
+                let db_type = await user_input("[LOG] Pilih database (sqlite / mysql / postgresql): ");
+                if (db_type) global.config.db_type = db_type.toLowerCase();
+                if (!["sqlite", "mysql", "postgresql"].includes(db_type)) {
+                    console.log(`[ERROR] Databse "${db_type}" tidak ada`)
+                    continue;
+                }
 
-            if (global.config.db_type === "postgresql") {
-                console.log("[LOG] Konfigurasi PostgreSQL");
+                let db_name = await user_input("[LOG] Nama database (Default: kasirku): ");
+                if (db_name) global.config.db_name = db_name;
 
-                let pg_host = await user_input("[LOG] PostgreSQL host (Default: 127.0.0.1): ");
-                if (pg_host) global.config.postgresql.host = pg_host;
+                if (global.config.db_type === "sqlite") conn_success = true;
+                else if (global.config.db_type === "postgresql") {
+                    console.log("[LOG] Konfigurasi PostgreSQL");
 
-                let pg_port = await user_input("[LOG] PostgreSQL port (Default: 5432): ");
-                if (pg_port) global.config.postgresql.port = Number(pg_port);
+                    let pg_host = await user_input("[LOG] PostgreSQL host (Default: localhost): ");
+                    if (pg_host) global.config.postgresql.host = pg_host;
 
-                let pg_user = await user_input("[LOG] PostgreSQL user (Default: root): ");
-                if (pg_user) global.config.postgresql.user = pg_user;
+                    let pg_port = await user_input("[LOG] PostgreSQL port (Default: 5432): ");
+                    if (pg_port) global.config.postgresql.port = Number(pg_port);
 
-                let pg_pass = await user_input("[LOG] PostgreSQL password (Default: admin): ");
-                if (pg_pass) global.config.postgresql.password = pg_pass;
-            }
+                    let pg_user = await user_input("[LOG] PostgreSQL user (Default: postgres): ");
+                    if (pg_user) global.config.postgresql.user = pg_user;
 
-            if (global.config.db_type === "mysql") {
-                console.log("[LOG] Konfigurasi MySQL");
+                    let pg_pass = await user_input("[LOG] PostgreSQL password: ");
+                    if (pg_pass) global.config.postgresql.password = pg_pass;
 
-                let mysql_host = await user_input("[LOG] MySQL host (Default: 127.0.0.1): ");
-                if (mysql_host) global.config.mysql.host = mysql_host;
+                    while (true) {
+                        console.log("[LOG] Testing Koneksi PostgreSQL...");
 
-                let mysql_port = await user_input("[LOG] MySQL port (Default: 3306): ");
-                if (mysql_port) global.config.mysql.port = Number(mysql_port);
+                        const { Client } = await import("pg");
 
-                let mysql_user = await user_input("[LOG] MySQL user (Default: root): ");
-                if (mysql_user) global.config.mysql.user = mysql_user;
+                        try {
+                            const conn = new Client({
+                                host: global.config.postgresql.host,
+                                port: global.config.postgresql.port,
+                                user: global.config.postgresql.user,
+                                password: global.config.postgresql.password,
+                                database: "postgres"
+                            });
 
-                let mysql_pass = await user_input("[LOG] MySQL password (Default: root): ");
-                if (mysql_pass) global.config.mysql.password = mysql_pass;
+                            await conn.connect();
+
+                            console.log("[LOG] Koneksi PostgreSQL berhasil!");
+                            await conn.end();
+                            conn_success = true;
+
+                            break;
+                        } catch (err) {
+                            console.log("[ERROR] Koneksi PostgreSQL gagal!");
+                            console.error(err);
+
+                            const try_again = await user_input("[LOG] Apakah anda ingin coba mengulang koneksi lagi? (y/n) (Default: y): ");
+                            if (try_again[0] === 'n') break;
+                        }
+                    }
+                }
+                else if (global.config.db_type === "mysql") {
+                    console.log("[LOG] Konfigurasi MySQL");
+
+                    let mysql_host = await user_input("[LOG] MySQL host (Default: localhost): ");
+                    if (mysql_host) global.config.mysql.host = mysql_host;
+
+                    let mysql_port = await user_input("[LOG] MySQL port (Default: 3306): ");
+                    if (mysql_port) global.config.mysql.port = Number(mysql_port);
+
+                    let mysql_user = await user_input("[LOG] MySQL user (Default: root): ");
+                    if (mysql_user) global.config.mysql.user = mysql_user;
+
+                    let mysql_pass = await user_input("[LOG] MySQL password (Default: no password): ");
+                    if (mysql_pass) global.config.mysql.password = mysql_pass;
+
+                    while (true) {
+                        console.log("[LOG] Testing Koneksi MySQL...");
+
+                        const { createConnection } = await import("mysql2/promise");
+
+                        try {
+                            const conn = await createConnection({
+                                host: global.config.mysql.host,
+                                user: global.config.mysql.user,
+                                password: global.config.mysql.password
+                            });
+
+                            console.log("[LOG] Koneksi MySQL berhasil!");
+                            await conn.end();
+                            conn_success = true;
+                            
+                            break;
+                        } catch (err) {
+                            console.log("[ERROR] Koneksi MySQL gagal!");
+                            console.error(err);
+
+                            const try_again = await user_input("[LOG] Apakah anda ingin coba mengulang koneksi lagi? (y/n) (Default: y): ");
+                            if (try_again[0] === 'n') break;
+                        }
+                    }
+                }
+
+                if (conn_success) break;
             }
         }
 

@@ -68,7 +68,7 @@ export default async function(req: Request, token: string) {
     
     try {
         await db.transaction().execute(async (trx) => {
-            const res_user = await trx.selectFrom("users").select("name").where("id", "=", user_info.user_id).executeTakeFirst();
+            const res_user = await trx.selectFrom("users").select("full_name").where("id", "=", user_info.user_id).executeTakeFirst();
             if (!res_user) return new Response("Not Found", {status: 404});
 
             const last_row  = await global.sql_dialect.insert_return_id(trx, "penjualan", {

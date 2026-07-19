@@ -61,13 +61,13 @@ export const global = {
         "tls_key_path": "cert/key.pem",
         "tls_cert_path": "cert/cert.pem",
         "postgresql": {
-            "host": "127.0.0.1",
+            "host": "localhost",
             "port": 5432,
             "user": "postgres",
             "password": ""
         },
         "mysql": {
-            "host": "127.0.0.1",
+            "host": "localhost",
             "port": 3306,
             "user": "root",
             "password": ""
