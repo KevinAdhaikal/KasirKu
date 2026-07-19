@@ -121,7 +121,7 @@ export function main() {
                     console.log(err);
                 }
             }
-            if (pathname === "/") pathname = "/index.html";
+            if (pathname[pathname.length - 1] === "/") pathname += "index.html";
             if (pathname.endsWith(".")) pathname = pathname.slice(0, -1) + ".html";
             if (!pathname.includes(".")) pathname += ".html";
 
