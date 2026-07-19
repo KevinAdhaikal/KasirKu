@@ -32,10 +32,21 @@
   <link rel="stylesheet" href="/dist/css/adminlte.min.css">
   <!-- AdminLTE Docs CSS -->
   <link rel="stylesheet" href="/plugins/adminlte-docs/adminlte-docs.css">
-  <script src="/app/darkmode_head.js"></script>
+  <!-- Dark Mode Script -->
+  <script src="/app/darkmode.js"></script>
 </head>
 <body class="hold-transition sidebar-mini layout-navbar-fixed layout-fixed sidebar-collapse">
 <div class="wrapper">
+  <!-- Preloader -->
+  <div class="preloader flex-column justify-content-center align-items-center">
+    <img class="animation__shake mb-3" src="/dist/img/kasirku.png" alt="KasirKu Logo" height="60" width="60">
+    <h4 class="font-weight-bold mb-3">KasirKu</h4>
+    <div class="spinner-border text-secondary mb-2" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <p class="text-muted mb-0">Please Wait...</p>
+  </div>
+  
   <!-- Navbar -->
   <nav class="main-header navbar navbar-expand navbar-light">
     <!-- Left navbar links -->
@@ -88,17 +99,6 @@
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="mb-2"></div>
-      <!-- SidebarSearch Form -->
-      <div class="form-inline">
-        <div class="input-group" data-widget="sidebar-search">
-          <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
-          <div class="input-group-append">
-            <button class="btn btn-sidebar">
-              <i class="fas fa-search fa-fw"></i>
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- Sidebar Menu -->
       <nav class="mt-2" id="sidebar_menu">
@@ -227,8 +227,6 @@
 <!-- REQUIRED SCRIPTS -->
 <!-- Utility -->
 <script src="/app/utils.js"></script>
-<!-- Dark Mode Script -->
-<script src="/app/darkmode.js"></script>
 
 <!-- AdminLTE App -->
 <script src="/dist/js/adminlte.min.js"></script>
