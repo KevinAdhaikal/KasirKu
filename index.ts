@@ -22,25 +22,36 @@ import { mkdir } from "node:fs/promises";
 import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-async function load_methods(baseDir = "./src/method_function") {
-  const methods = readdirSync(baseDir);
+async function load_methods(baseDir = "./src/method_function", rootDir = baseDir, cache = global.method_cache) {
+    const entries = readdirSync(baseDir);
 
-    for (const method of methods) {
-        const method_path = path.join(baseDir, method);
-        if (!statSync(method_path).isDirectory()) continue;
+    for (const entry of entries) {
+        const fullPath = path.join(baseDir, entry);
+        const stat = statSync(fullPath);
 
-        global.method_cache[method] = {};
-
-        const files = readdirSync(method_path);
-        for (const file of files) {
-            if (!file.endsWith(".ts")) continue;
-
-            const name = file.replace(".ts", "");
-            const mod = await import(path.resolve(method_path, file));
-            if (!mod.default) continue;
-
-            global.method_cache[method][name.toLowerCase()] = mod.default;
+        if (stat.isDirectory()) {
+            await load_methods(fullPath, rootDir, cache);
+            continue;
         }
+
+        if (!entry.endsWith(".ts")) continue;
+
+        const relative = path
+            .relative(rootDir, fullPath)
+            .replaceAll("\\", "/");
+
+        const parts = relative.split("/");
+
+        const method = parts.shift();
+        const route = "/" + parts.join("/").slice(0, -3);
+
+        const key = `${method}:${route}`;
+
+        const mod = await import(path.resolve(fullPath));
+
+        if (!mod.default) continue;
+
+        cache[key] = mod.default;
     }
 }
 
@@ -147,6 +158,7 @@ async function prepare() {
     }
 
     await load_methods();
+
     let version: any = null;
     try {
         version = Number((await global.database.selectFrom("kasirku").select("v").where("k", "=", "version").executeTakeFirst())?.v ?? 0);

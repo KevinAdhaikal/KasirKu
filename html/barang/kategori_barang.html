@@ -131,7 +131,7 @@
     <!-- /.sidebar -->
 
     <div class="sidebar-custom">
-      <a href="/pengaturan/umum" class="nav-link nav-redirect" data-url="/pengaturan/umum"><i class="fas fa-cogs"></i></a>
+      <a href="/settings/" class="nav-link nav-redirect" data-url="/settings/"><i class="fas fa-cogs"></i></a>
     </div>
   </aside>
 
@@ -173,45 +173,57 @@
           </div>
         </div>
         <div class="modal fade" id="modal_kategori_barang" style="display: none;" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title" id="modal_kategori_barang_title">Tambah Kategori</h4>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">×</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="nama_kategori">Nama Kateogri</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-tag"></i></span>
-										</div>
-										<input type="text" class="form-control" id="nama_kategori" placeholder="Nama Kategori" autocomplete="off">
-									</div>
-								</div>
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal_kategori_barang_title">Tambah Kategori</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Nama Kategori -->
+                <div class="form-group">
+                  <label for="nama_kategori">Nama Kategori <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="nama_kategori" placeholder="Masukkan nama kategori baru" autocomplete="off" aria-describedby="kategoriHelp">
+                  </div>
+                  <small id="kategoriHelp" class="form-text text-muted">Contoh: Makanan, Minuman, Elektronik, dll. Wajib diisi.</small>
+                </div>
+
+                <!-- Daftar Barang dalam Kategori -->
                 <div class="form-group" id="barang_assigned_kategori_div">
-                  <label class="hr-text">Barang assigned to this Kategori</label>
-                  <table id="barang_assigned_kategori" style="table-layout: fixed;" class="table table-bordered table-hover display">
+                  <label class="hr-text">Barang dalam Kategori Ini</label>
+                  <p class="text-muted small mb-2">Daftar barang yang sudah terhubung dengan kategori ini. Kosong jika belum ada barang.</p>
+                  <table id="barang_assigned_kategori" style="table-layout: fixed;" class="table table-bordered table-hover display w-100">
                     <thead>
-                      <th>Nama Barang</th>
-                      <th>Stok Barang</th>
-                      <th>Harga Barang</th>
+                      <tr>
+                        <th>Nama Barang</th>
+                        <th>Stok Barang</th>
+                        <th>Harga Barang</th>
+                      </tr>
                     </thead>
                     <tbody>
+                      <!-- Data akan dimuat oleh DataTables -->
                     </tbody>
                   </table>
                 </div>
-							</div>
-              
-							<div class="modal-footer justify-content-between">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
-								<button type="button" class="btn btn-success" id="tambah_kategori_barang_button">Tambah Kategori</button>
-							</div>
-						</div>
-					</div>
-				</div>
+              </div>
+
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                  <i class="fas fa-times mr-1"></i> Batal (Esc)
+                </button>
+                <button type="button" class="btn btn-success" id="tambah_kategori_barang_button">
+                  <i class="fas fa-plus-circle mr-1"></i> Tambah Kategori (Enter)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>

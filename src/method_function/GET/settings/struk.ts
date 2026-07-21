@@ -1,0 +1,45 @@
+/*
+──────────────────────────────────────────────────────────────
+                           KasirKu
+        Simple & Efficient Point of Sale (PoS) System
+
+            Author      : Kevin Adhaikal
+            Copyright   : (C) 2026 Kevin Adhaikal
+            License     : AplikasiKasir License
+
+    Permission is granted to modify and distribute this
+    software, but the author's name must not be removed
+                     or altered.
+──────────────────────────────────────────────────────────────
+*/
+
+import { user_session_interface } from "../../../user_session/user_session";
+import { global } from "../../../global";
+import { render_template } from "../../../utils/utils";
+
+export default async function(req: Request, url: URL, user_info: user_session_interface) {
+    const db = global.database;
+    if (!db) return new Response("Internal Server Error", {status: 500});
+    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    if (!res_role) return new Response("Internal Server Error", {status: 500});
+    
+    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
+    
+
+    const toko_res = await db
+        .selectFrom("store_settings")
+        .selectAll()
+        .where("id", "=", 1)
+    .executeTakeFirst();
+
+    const res = await db
+        .selectFrom('struk_settings')
+        .selectAll()
+        .where("id", "=", 1)
+    .executeTakeFirst();
+
+    return new Response(JSON.stringify({ ...(res ?? {}), view: render_template(res?.content, {store: toko_res})}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+    });
+}

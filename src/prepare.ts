@@ -403,7 +403,7 @@ async function prepare() {
     
     if (global.config.compile_html) {
        try {
-            await mkdir("html_build");
+            await mkdir("./html_build");
         } catch(e) {}
 
         future_import.minifyHTML = (await import("html-minifier-terser")).minify;

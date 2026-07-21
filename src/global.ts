@@ -101,7 +101,7 @@ export const global = {
         },
     },
 
-    method_cache: {} as Record<string, Record<string, any>>,
+    method_cache: {} as Record<string, any>,
 
     default_svg_profile_img: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->

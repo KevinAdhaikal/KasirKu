@@ -122,6 +122,7 @@ const role_profile1 = document.getElementById("role_profile1");
 const status_server = document.getElementById("status_server");
 const sidebar_menu = document.getElementById("sidebar_menu");
 let co_wrap = document.getElementById("co_wrap");
+
 document.addEventListener("click", async e => {
   const link = e.target.closest("a.nav-redirect");
   if (!link) return;

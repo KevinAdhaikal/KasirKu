@@ -106,7 +106,7 @@
     <!-- /.sidebar -->
 
      <div class="sidebar-custom">
-      <a href="/pengaturan/umum" class="nav-link nav-redirect" data-url="/pengaturan/umum"><i class="fas fa-cogs"></i></a>
+      <a href="/settings/" class="nav-link nav-redirect" data-url="/settings/"><i class="fas fa-cogs"></i></a>
     </div>
   </aside>
 
@@ -152,96 +152,114 @@
           </div>
         </div>
         <div class="modal fade" id="modal_daftar_barang" style="display: none;" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title" id="modal_daftar_barang_title">Tambah Barang</h4>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">×</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="nama_barang">Nama Barang*</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-box"></i></span>
-										</div>
-										<input type="text" class="form-control" id="nama_barang" placeholder="Nama Barang" autocomplete="off">
-									</div>
-								</div>
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal_daftar_barang_title">Tambah Barang</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Nama Barang -->
                 <div class="form-group">
-									<label for="kategori_barang">Stok Barang*</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-boxes"></i></span>
-										</div>
-										<input type="text" class="form-control format_thousand_separator" id="stok_barang" placeholder="Stok Barang" autocomplete="off">
-									</div>
-								</div>
+                  <label for="nama_barang">Nama Barang *</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-box"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="nama_barang" placeholder="Masukkan nama barang" autocomplete="off" aria-describedby="namaHelp">
+                  </div>
+                  <small id="namaHelp" class="form-text text-muted">Nama yang akan ditampilkan di daftar barang dan invoice.</small>
+                </div>
+
+                <!-- Stok Barang -->
                 <div class="form-group">
-									<label for="kategori_barang">Kategori Barang</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-tag"></i></span>
-										</div>
-										<select id="kategori_barang" style="width:200px"></select>
-									</div>
-								</div>
+                  <label for="stok_barang">Stok Awal *</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-cubes"></i></span>
+                    </div>
+                    <input type="text" class="form-control format_thousand_separator" id="stok_barang" placeholder="Jumlah stok awal" autocomplete="off" aria-describedby="stokHelp">
+                  </div>
+                  <small id="stokHelp" class="form-text text-muted">Masukkan jumlah stok awal barang. Pemisah ribuan akan otomatis.</small>
+                </div>
+
+                <!-- Kategori Barang -->
                 <div class="form-group">
-									<label for="harga_modal">Harga Modal*</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text">Rp</span>
-										</div>
-                    <input type="text" class="form-control money_format_idr" id="harga_modal" placeholder="Harga Modal" autocomplete="off">
-									</div>
-								</div>
+                  <label for="kategori_barang">Kategori Barang</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                    </div>
+                    <select id="kategori_barang" class="form-control" style="width:200px" aria-describedby="kategoriHelp"></select>
+                  </div>
+                  <small id="kategoriHelp" class="form-text text-muted">Pilih kategori untuk mengelompokkan barang. Kategori bisa dikelola di menu pengaturan.</small>
+                </div>
+
+                <!-- Harga Modal -->
+                <div class="form-group">
+                  <label for="harga_modal">Harga Modal *</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">Rp</span>
+                    </div>
+                    <input type="text" class="form-control money_format_idr" id="harga_modal" placeholder="Harga beli per unit" autocomplete="off" aria-describedby="modalHelp">
+                  </div>
+                  <small id="modalHelp" class="form-text text-muted">Harga perolehan atau biaya produksi per unit barang.</small>
+                </div>
+
+                <!-- Harga Jual & Persen Jual -->
                 <div class="row">
-                  <div class="col-sm-10">
+                  <div class="col-sm-9">
                     <div class="form-group">
-                      <div class="form-group">
-                        <label for="harga_jual">Harga Jual*</label>
-                        <div class="input-group">
-                          <div class="input-group-prepend">
-                            <span class="input-group-text">Rp</span>
-                          </div>
-                          <input type="text" class="form-control money_format_idr" id="harga_jual" placeholder="Harga Jual" autocomplete="off">
+                      <label for="harga_jual">Harga Jual *</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">Rp</span>
                         </div>
+                        <input type="text" class="form-control money_format_idr" id="harga_jual" placeholder="Harga jual per unit" autocomplete="off" aria-describedby="jualHelp">
                       </div>
+                      <small id="jualHelp" class="form-text text-muted">Harga yang akan dikenakan kepada pelanggan.</small>
                     </div>
                   </div>
-                  <div class="col-sm-2">
+                  <div class="col-sm-3">
                     <div class="form-group">
-                      <div class="form-group">
-                        <label for="persen_jual">Persen Jual</label>
-                        <div class="input-group">
-                          <div class="input-group-prepend">
-                            <span class="input-group-text">%</span>
-                          </div>
-                          <input type="text" class="form-control" id="persen_jual" placeholder="Persen Jual" autocomplete="off" value="0.00">
+                      <label for="persen_jual">Margin (%)</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">%</span>
                         </div>
+                        <input type="text" class="form-control" id="persen_jual" placeholder="0.00" autocomplete="off" value="0.00" aria-describedby="persenHelp">
                       </div>
+                      <small id="persenHelp" class="form-text text-muted">Margin otomatis dari harga modal, bisa dikosongkan.</small>
                     </div>
                   </div>
                 </div>
+
+                <!-- Barcode Barang -->
                 <div class="form-group">
-									<label for="barcode_barang">Barcode Barang</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-barcode"></i></span>
-										</div>
-										<input type="text" class="form-control" id="barcode_barang" placeholder="Barcode Barang" autocomplete="off">
-									</div>
-								</div>
-							</div>
-							<div class="modal-footer justify-content-between">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
-								<button type="button" class="btn btn-success" id="modal_daftar_barang_button">Tambah Kategori</button>
-							</div>
-						</div>
-					</div>
-				</div>
+                  <label for="barcode_barang">Barcode Barang</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="barcode_barang" placeholder="Scan atau ketik barcode" autocomplete="off" aria-describedby="barcodeHelp">
+                  </div>
+                  <small id="barcodeHelp" class="form-text text-muted">Barcode untuk mempercepat pencarian barang. Boleh dikosongkan.</small>
+                </div>
+              </div>
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                  <i class="fas fa-times mr-1"></i> Batal (Esc)
+                </button>
+                <button type="button" class="btn btn-success" id="modal_daftar_barang_button">
+                  Tambah Barang (Enter)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>

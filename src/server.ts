@@ -69,9 +69,9 @@ export function main() {
             if (pathname.startsWith("/api/")) { 
                 if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
 
-                const api_path = pathname.slice(5);
+                const api_path = pathname.slice(4);
 
-                if (api_path === "sse") {
+                if (api_path === "/sse") {
                     const cookies = parse_cookie(req.headers.get("cookie") as string);
                     const token = <string>cookies.get("token");
                     const user_info = global.user_sessions.get(token);
@@ -112,7 +112,7 @@ export function main() {
                     return new Response("Unauthorized", {status: 401});
                 }
 
-                const endpoint_function = global.method_cache[req.method]?.[api_path];
+                const endpoint_function = global.method_cache[`${req.method}:${api_path}`];
                 if (!endpoint_function) return new Response("Not Found", {status: 404})
 
                 try {
@@ -121,7 +121,8 @@ export function main() {
                     console.log(err);
                 }
             }
-            if (pathname[pathname.length - 1] === "/") pathname += "index.html";
+
+            if (pathname.endsWith("/")) pathname += "index.html";
             if (pathname.endsWith(".")) pathname = pathname.slice(0, -1) + ".html";
             if (!pathname.includes(".")) pathname += ".html";
 
@@ -135,7 +136,7 @@ export function main() {
                     "Content-Type": mime_types[pathname.split(".").pop() || ""] || "application/octet-stream",
                 }});
             }
-        
+
             if (pathname.endsWith(".html")) {
                 if (!user_info) {
                     if (pathname !== "/login.html") return new Response("", {
@@ -169,14 +170,14 @@ export function main() {
             }
         
             let cached = global.static_cache.get(pathname);
-        
+
             if (!cached) {
-                const path = global.config.compile_html ? `html_build${pathname}` : `html${pathname}`
+                const path = global.config.compile_html ? `./html_build${pathname}` : `./html${pathname}`
                 let file = Bun.file(path);
-            
+
                 if (!(await file.exists())) {
-                    pathname = "/404/index.html";
-                    file = Bun.file(path);
+                    pathname = "./html/404/index.html";
+                    file = Bun.file(pathname);
                 }
             
                 if (!(await file.exists())) {
@@ -202,7 +203,7 @@ export function main() {
         
             const { buffer, last_modified } = cached;
             const etag = last_modified.toString();
-        
+
             if (req.headers.get("if-none-match") === etag) return new Response(null, { status: 304 });
             const is_asset = pathname.startsWith("/plugins/") || pathname.startsWith("/dist/") || pathname === "/favicon.ico";
         
@@ -221,10 +222,11 @@ export function main() {
                 },
             });
         }
+
         else if (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE") {
             if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
 
-            const endpoint_function = global.method_cache[req.method]?.[url.pathname.slice(1)];
+            const endpoint_function = global.method_cache[`${req.method}:${url.pathname}`];
             if (!endpoint_function) return new Response("Not Found", {status: 404})
 
             try {

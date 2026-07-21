@@ -251,8 +251,3 @@ async function change_password() {
     } finally {
     }
 }
-
-(async function() {
-    global.init();
-    
-})()

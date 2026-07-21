@@ -8,6 +8,8 @@ import * as m0007 from "./0007_penjualan_item";
 import * as m0008 from "./0008_pembukuan";
 import * as m0009 from "./0009_retur_barang";
 import * as m0010 from "./0010_update_penjualan_no_struk";
+import * as m0011 from "./0011_store_settings";
+import * as m0012 from "./0012_struk_settings";
 
 export const migrations = [
     { name: "0001_roles", version: 1, up: m0001.up, down: m0001.down },
@@ -19,5 +21,7 @@ export const migrations = [
     { name: "0007_penjualan_item", version: 1, up: m0007.up, down: m0007.down },
     { name: "0008_pembukuan", version: 1, up: m0008.up, down: m0008.down },
     { name: "0009_retur_barang", version: 2, up: m0009.up, down: m0009.down },
-    { name: "0010_update_penjualan_no_struk", version: 2, up: m0010.up, down: m0010.down }
+    { name: "0010_update_penjualan_no_struk", version: 2, up: m0010.up, down: m0010.down },
+    { name: "0011_store_settings", version: 2, up: m0011.up, down: m0011.down },
+    { name: "0012_struk_settings", version: 2, up: m0012.up, down: m0012.down }
 ];
