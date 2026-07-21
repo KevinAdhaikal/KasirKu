@@ -176,81 +176,86 @@
 					</div>
         </div>
 				<div class="modal fade" id="modal_user" style="display: none;" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title" id="modal_user_title">Add User</h4>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">×</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="username">Username</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-at"></i></span>
-										</div>
-										<input type="text" class="form-control" id="username" placeholder="Username" autocomplete="off">
-									</div>
-								</div>
-								<div class="form-group">
-									<label for="full_name">Full Name</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-user"></i></span>
-										</div>
-										<input type="text" class="form-control" id="full_name" placeholder="Full Name" autocomplete="off">
-									</div>
-								</div>
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal_user_title">Add User</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
                 <div class="form-group">
-									<label for="role">Role</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-user"></i></span>
-										</div>
-                    <select id="role" style="width:200px"></select>
-									</div>
-								</div>
-								<div id="password_display" style="display: none;">
+                  <label for="username">Username</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-at"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="username" placeholder="Username" autocomplete="off" aria-describedby="usernameHelp">
+                  </div>
+                  <small id="usernameHelp" class="form-text text-muted">Nama pengguna unik untuk login. Tidak boleh mengandung spasi.</small>
+                </div>
+                <div class="form-group">
+                  <label for="full_name">Full Name</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="full_name" placeholder="Full Name" autocomplete="off" aria-describedby="fullNameHelp">
+                  </div>
+                  <small id="fullNameHelp" class="form-text text-muted">Nama lengkap pengguna, akan ditampilkan di profil.</small>
+                </div>
+                <div class="form-group">
+                  <label for="role">Role</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    </div>
+                    <select id="role" style="width:200px" aria-describedby="roleHelp"></select>
+                  </div>
+                  <small id="roleHelp" class="form-text text-muted">Pilih level akses pengguna: Admin, Kasir, atau lainnya.</small>
+                </div>
+                <div id="password_display" style="display: none;">
                   <label class="hr-text" id="change_password_label" style="display: none;">Change Password</label>
-									<div class="form-group">
-										<label for="password">Password</label>
-										<div class="input-group">
-											<div class="input-group-prepend">
-												<span class="input-group-text"><i class="fas fa-key"></i></span>
-											</div>
-											<input type="password" class="form-control" id="password" placeholder="Password" autocomplete="off">
+                  <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                      </div>
+                      <input type="password" class="form-control" id="password" placeholder="Password" autocomplete="off" aria-describedby="passwordHelp">
                       <div class="input-group-append">
                         <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
                           <i class="fas fa-eye"></i>
                         </button>
                       </div>
-										</div>
-									</div>
-									<div class="form-group">
-										<label for="confirm_password">Confirm Password</label>
-										<div class="input-group">
-											<div class="input-group-prepend">
-												<span class="input-group-text"><i class="fas fa-key"></i></span>
-											</div>
-											<input type="password" class="form-control" id="confirm_password" placeholder="Confirm Password" autocomplete="off">
+                    </div>
+                    <small id="passwordHelp" class="form-text text-muted">Minimal 6 karakter. Kosongkan jika tidak ingin diubah (saat edit).</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                      </div>
+                      <input type="password" class="form-control" id="confirm_password" placeholder="Confirm Password" autocomplete="off" aria-describedby="confirmHelp">
                       <div class="input-group-append">
                         <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirm_password">
                           <i class="fas fa-eye"></i>
                         </button>
                       </div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="modal-footer justify-content-between">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
-								<button type="button" class="btn btn-success" id="modal_user_button">Add User</button>
-							</div>
-						</div>
-					</div>
-				</div>
+                    </div>
+                    <small id="confirmHelp" class="form-text text-muted">Ketik ulang password yang sama untuk konfirmasi.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
+                <button type="button" class="btn btn-success" id="modal_user_button">Add User</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>

@@ -213,22 +213,25 @@
               </div>
               <div class="card-body">
                 <div class="row">
-                  <div class="col-6">
-                    <label for="t_barang_total_terjual_start">Tanggal Awal (YYYY/MM/DD)</label>
+                  <div class="col-sm-6">
+                    <label for="t_barang_total_terjual_start">Tanggal Awal <span class="text-danger">*</span></label>
                     <div class="input-group">
                       <div class="input-group-prepend">
-                        <span class="input-group-text">
-                          <i class="far fa-calendar-alt"></i>
-                        </span>
+                        <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
                       </div>
-                      <input type="text" class="form-control float-right" id="t_barang_total_terjual_start" onkeydown="return false">
+                      <input type="text" class="form-control" id="t_barang_total_terjual_start" placeholder="YYYY/MM/DD" onkeydown="return false" aria-describedby="startHelp">
                     </div>
+                    <small id="startHelp" class="form-text text-muted">Format: <strong>Tahun/Bulan/Tanggal</strong>. Awal periode laporan.</small>
                   </div>
-                  <div class="col-6">
-                    <label for="t_barang_total_terjual_end">Tanggal Akhir (YYYY/MM/DD)</label>
+                  <div class="col-sm-6">
+                    <label for="t_barang_total_terjual_end">Tanggal Akhir <span class="text-danger">*</span></label>
                     <div class="input-group">
-                      <input type="text" class="form-control float-right" id="t_barang_total_terjual_end" onkeydown="return false">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                      </div>
+                      <input type="text" class="form-control" id="t_barang_total_terjual_end" placeholder="YYYY/MM/DD" onkeydown="return false" aria-describedby="endHelp">
                     </div>
+                    <small id="endHelp" class="form-text text-muted">Format: <strong>Tahun/Bulan/Tanggal</strong>. Akhir periode laporan.</small>
                   </div>
                 </div>
                 <hr>

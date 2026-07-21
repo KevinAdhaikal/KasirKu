@@ -141,6 +141,9 @@
                   </div>
                   <input type="text" class="form-control float-right" id="tanggal_pengeluaran" onkeydown="return false">
                 </div>
+                <small id="tanggalHelp" class="form-text text-muted">
+                  Format: <strong>Tahun/Bulan/Tanggal</strong>. Contoh: <em>2026/07/21</em>. Gunakan pemisah garis miring (/).
+                </small>
                 <hr>
                 <div class="col-3 row">
 									<button type="button" class="btn btn-success btn-block" onclick="tambah_pengeluaran_modal()"><i class="fa fa-plus"></i> Tambah Barang</button>
@@ -161,41 +164,50 @@
           </div>
         </div>
         <div class="modal fade" id="modal_pengeluaran" style="display: none;" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title" id="modal_pengeluaran_title">Tambah Pengeluaran</h4>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">×</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="username">Deskripsi</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-user-tag"></i></span>
-										</div>
-										<input type="text" class="form-control" id="deskripsi" placeholder="Deskripsi" autocomplete="off">
-									</div>
-								</div>
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal_pengeluaran_title">Tambah Pengeluaran</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Deskripsi Pengeluaran -->
                 <div class="form-group">
-									<label for="username">Nominal</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class=""></i>Rp</span>
-										</div>
-										<input type="text" class="form-control money_format_idr" id="nominal" placeholder="Nominal" autocomplete="off">
-									</div>
-								</div>
-							</div>
-							<div class="modal-footer justify-content-between">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
-								<button type="button" class="btn btn-success" id="modal_pengeluaran_button">Tambah Pengeluaran</button>
-							</div>
-						</div>
-					</div>
-				</div>
+                  <label for="deskripsi">Deskripsi Pengeluaran <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="deskripsi" placeholder="Contoh: Beli ATK, bayar listrik, dll." autocomplete="off" aria-describedby="deskripsiHelp">
+                  </div>
+                  <small id="deskripsiHelp" class="form-text text-muted">Isi dengan keterangan singkat pengeluaran. Wajib diisi.</small>
+                </div>
+
+                <!-- Nominal -->
+                <div class="form-group">
+                  <label for="nominal">Nominal (Rp) <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-money-bill-wave mr-1"></i></span>
+                    </div>
+                    <input type="text" class="form-control money_format_idr" id="nominal" placeholder="Masukkan jumlah uang" autocomplete="off" aria-describedby="nominalHelp">
+                  </div>
+                  <small id="nominalHelp" class="form-text text-muted">Gunakan angka, pemisah ribuan akan otomatis. Contoh: 10.000.</small>
+                </div>
+              </div>
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                  <i class="fas fa-times mr-1"></i> Batal (Esc)
+                </button>
+                <button type="button" class="btn btn-success" id="modal_pengeluaran_button">
+                  <i class="fas fa-plus-circle mr-1"></i> Tambah Pengeluaran (Enter)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>

@@ -405,6 +405,7 @@ function get_nested_value(obj: Record<string, any>, path: string): string {
 }
 
 export function render_template(template: string, data: Record<string, any>): string {
+  if (!template) return "";
   return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => {
     return get_nested_value(data, path);
   });

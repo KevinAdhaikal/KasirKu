@@ -135,20 +135,26 @@
 							<div class="card-body">
                 <div class="row">
                   <div class="col-6">
-                    <label for="tanggal_laporan_start">Tanggal Awal (YYYY/MM/DD)</label>
-                    <div class="input-group">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text">
-                          <i class="far fa-calendar-alt"></i>
-                        </span>
+                    <div class="form-group">
+                      <label for="tanggal_laporan_start">Tanggal Awal (YYYY/MM/DD)</label>
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <span class="input-group-text">
+                            <i class="far fa-calendar-alt"></i>
+                          </span>
+                        </div>
+                        <input type="text" class="form-control" id="tanggal_laporan_start" onkeydown="return false" placeholder="YYYY/MM/DD" aria-describedby="startHelp">
                       </div>
-                      <input type="text" class="form-control float-right" id="tanggal_laporan_start" onkeydown="return false">
+                      <small id="startHelp" class="form-text text-muted">Pilih tanggal awal periode laporan. Gunakan format <strong>Tahun/Bulan/Tanggal</strong>.</small>
                     </div>
                   </div>
                   <div class="col-6">
-                    <label for="tanggal_laporan_end">Tanggal Akhir (YYYY/MM/DD)</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control float-right" id="tanggal_laporan_end" onkeydown="return false">
+                    <div class="form-group">
+                      <label for="tanggal_laporan_end">Tanggal Akhir (YYYY/MM/DD)</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="tanggal_laporan_end" onkeydown="return false" placeholder="YYYY/MM/DD" aria-describedby="endHelp">
+                      </div>
+                      <small id="endHelp" class="form-text text-muted">Pilih tanggal akhir periode laporan. Format sama: <strong>Tahun/Bulan/Tanggal</strong>.</small>
                     </div>
                   </div>
                 </div>
