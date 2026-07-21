@@ -128,6 +128,7 @@
           <div class="col">
             <div class="card card-primary">
               <div class="card-body">
+                <!-- Profile Header (Photo & Info) -->
                 <div class="row">
                   <div class="col-12 col-sm-auto mb-3">
                     <div class="mx-auto" style="width: 140px;">
@@ -159,39 +160,53 @@
                   </div>
                 </div>
                 <hr>
+
+                <!-- Form Profile (Full Name & Username) -->
                 <div class="row">
                   <div class="form-group col-6">
-                    <label for="nama_barang">Full Name</label>
+                    <label for="full_name">Full Name</label>
                     <div class="input-group">
                       <div class="input-group-prepend">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                       </div>
-                      <input type="text" class="form-control" id="full_name" oninput="check_change()" placeholder="Full Name" autocomplete="off">
+                      <input type="text" class="form-control" id="full_name" oninput="check_change()" placeholder="e.g. John Doe" autocomplete="off">
                     </div>
+                    <small class="form-text text-muted">
+                      Masukkan nama lengkap Anda. Nama ini akan ditampilkan di seluruh sistem.
+                    </small>
                   </div>
                   <div class="form-group col-6">
-                    <label for="nama_barang">Username</label>
+                    <label for="username">Username</label>
                     <div class="input-group">
                       <div class="input-group-prepend">
                         <span class="input-group-text"><i class="fas fa-at"></i></span>
                       </div>
-                      <input type="text" class="form-control" id="username" oninput="check_change()" placeholder="Username" autocomplete="off">
+                      <input type="text" class="form-control" id="username" oninput="check_change()" placeholder="e.g. johndoe" autocomplete="off">
                     </div>
+                    <small class="form-text text-muted">
+                      Username digunakan untuk login. Harus unik dan hanya terdiri dari huruf, angka, dan garis bawah.
+                    </small>
                   </div>
                 </div>
                 <div class="text-right">
                   <button type="button" class="text-right btn btn-success" id="change_profile_button" onclick="change_profile()" disabled><i class="fa fa-save"></i> Save Profile</button>
                 </div>
                 <hr>
-               <div class="mb-3">
+
+                <!-- Change Password Section -->
+                <div class="mb-3">
                   <label class="d-block fw-bold">Change Password</label>
-                  <small>Update your password to enhance your account security.</small>
+                  <small class="text-muted">
+                    Update your password to enhance your account security. 
+                  </small>
                 </div>
                 <button type="button" class="btn btn-primary" onclick="$('#modal_change_password').modal('show')"><i class="fa fa-key"></i> Change Password</button>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Modal Change Password -->
         <div class="modal fade" id="modal_change_password">
           <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
@@ -202,47 +217,62 @@
                 </button>
               </div>
               <div class="modal-body">
+                <!-- Current Password -->
                 <div class="form-group">
                   <label for="current_password">Current Password</label>
                   <div class="input-group">
                     <div class="input-group-prepend">
                       <span class="input-group-text"><i class="fas fa-key"></i></span>
                     </div>
-                    <input type="password" class="form-control" id="current_password" placeholder="Current Password" autocomplete="off">
+                    <input type="password" class="form-control" id="current_password" placeholder="Masukkan password saat ini" autocomplete="off">
                     <div class="input-group-append">
                       <button class="btn btn-outline-secondary toggle-password" type="button" data-target="current_password">
                         <i class="fas fa-eye"></i>
                       </button>
                     </div>
                   </div>
+                  <small class="form-text text-muted">
+                    Masukkan password yang sedang Anda gunakan untuk verifikasi.
+                  </small>
                 </div>
+
+                <!-- New Password -->
                 <div class="form-group">
                   <label for="new_password">New Password</label>
                   <div class="input-group">
                     <div class="input-group-prepend">
                       <span class="input-group-text"><i class="fas fa-key"></i></span>
                     </div>
-                    <input type="password" class="form-control" id="new_password" placeholder="New Password" autocomplete="off">
+                    <input type="password" class="form-control" id="new_password" placeholder="Masukkan password baru" autocomplete="off">
                     <div class="input-group-append">
                       <button class="btn btn-outline-secondary toggle-password" type="button" data-target="new_password">
                         <i class="fas fa-eye"></i>
                       </button>
                     </div>
                   </div>
+                  <small class="form-text text-muted">
+                    Password baru harus minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol (!@#$%^&*).
+                  </small>
                 </div>
+
+                <!-- Confirm New Password -->
                 <div class="form-group">
                   <label for="confirm_new_password">Confirm New Password</label>
                   <div class="input-group">
                     <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="fas fa-key"></i></span>
+                      <span class="input-group-text"><i class="fas fa-check-double"></i></span>
                     </div>
-                    <input type="password" class="form-control" id="confirm_new_password" placeholder="Confirm New Password" autocomplete="off">
+                    <input type="password" class="form-control" id="confirm_new_password" placeholder="Ketik ulang password baru" autocomplete="off">
                     <div class="input-group-append">
                       <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirm_new_password">
                         <i class="fas fa-eye"></i>
                       </button>
                     </div>
                   </div>
+                  <small class="form-text text-muted">
+                    Ketik ulang password baru untuk memastikan tidak terjadi kesalahan ketik.
+                  </small>
+                  <div id="password_match_feedback" class="mt-1"></div>
                 </div>
               </div>
               <div class="modal-footer justify-content-between">
