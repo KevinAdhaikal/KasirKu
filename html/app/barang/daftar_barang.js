@@ -129,6 +129,13 @@ global.element.kategori_barang.on('select2:select', async function (e) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             case "1": {
                 swal2_mixin.fire({
                     icon: "error",
@@ -294,6 +301,13 @@ global.element.daftar_barang_table.on('click.action_edit', '.action_edit', async
     else {
         const status = await res.text();
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -337,6 +351,13 @@ global.element.daftar_barang_table.on('click.action_delete', '.action_delete', a
                 const status = await res.text();
 
                 switch(status) {
+                    case "0": {
+                        swal2_mixin.fire({
+                            icon: "error",
+                            title: "Anda tidak punya permission untuk mengakses ini."
+                        })
+                        break;
+                    }
                     default: {
                         swal2_mixin.fire({
                             icon: "error",
@@ -440,8 +461,21 @@ async function tambah_barang() {
     }
     else {
         const status = await res.text();
-
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
+            case "1": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Barcode tersebut sudah ada! Mohon ganti yang lain."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -551,6 +585,20 @@ async function edit_daftar_barang(id) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
+            case "1": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Barcode tersebut sudah ada! Mohon ganti yang lain."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",

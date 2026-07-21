@@ -109,18 +109,22 @@ global.element.roles_table.on('click.button_edit', '.action_edit', async functio
                 title: "The role is not exists! Please refresh the page."
             })
         } else {
-            const res_code = await res.text();
-
-            if (res_code === "0") {
-                swal2_mixin.fire({
-                    icon: "error",
-                    title: "You are not authorized to perform this action."
-                });
-            } else {
-                return swal2_mixin.fire({
-                    icon: "error",
-                    title: "Something went wrong! Please try again later or contact admin."
-                })
+            const code = await res.text();
+            switch(code) {
+                case "0": {
+                    swal2_mixin.fire({
+                        icon: "error",
+                        title: "You are not authorized to perform this action."
+                    })
+                    break;
+                }
+                default: {
+                    swal2_mixin.fire({
+                        icon: "error",
+                        title: "Something went wrong! Please try again or contact admin."
+                    });
+                    break;
+                }
             }
         }
 
@@ -229,7 +233,7 @@ global.element.roles_table.on('click.button_delete', '.action_delete', async fun
                 }
                 else {
                     swal2_mixin.fire({
-                        icon: "success",
+                        icon: "error",
                         title: "Something went wrong! Please try again later or contact admin."
                     })
                 }

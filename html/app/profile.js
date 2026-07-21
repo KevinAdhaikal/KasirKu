@@ -140,10 +140,23 @@ async function fetch_current_profile() {
         } else global.element.delete_photo_button.disabled = true;
     }
     else if (res.status !== 404) {
-        swal2_mixin.fire({
-            icon: "error",
-            title: "Something went wrong! Please try again or contact admin."
-        });
+        const code = await res.text();
+        switch(code) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "You are not authorized to perform this action."
+                })
+                break;
+            }
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Something went wrong! Please try again or contact admin."
+                });
+                break;
+            }
+        }
     }
 }
 
@@ -187,20 +200,30 @@ async function change_profile() {
     else if (res.status !== 404) {
         global.element.change_profile_button.disabled = false;
         const code = await res.text();
-        if (code === "1") {
-            swal2_mixin.fire({
-                icon: "error",
-                title: "Username is exists! Please try another username."
-            });
-        } else {
-            swal2_mixin.fire({
-                icon: "error",
-                title: "Something went wrong! Please try again or contact admin."
-            });
+        switch(code) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "You are not authorized to perform this action."
+                })
+                break;
+            }
+            case "1": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Username is exists! Please try another username."
+                });
+            }
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Something went wrong! Please try again or contact admin."
+                });
+                break;
+            }
         }
     }
 }
-
 
 async function change_password() {
     if (global.element.new_password.value.length < 8 ||  global.element.confirm_new_password.value.length < 8) return swal2_mixin.fire({

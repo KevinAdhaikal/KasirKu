@@ -104,6 +104,13 @@ global.element.retur_barang_table.on('click.action_edit', '.action_edit', async 
     else {
         const status = await res.text();
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -148,6 +155,13 @@ global.element.retur_barang_table.on('click.action_delete', '.action_delete', as
                 const status = await res.text();
 
                 switch(status) {
+                    case "0": {
+                        swal2_mixin.fire({
+                            icon: "error",
+                            title: "Anda tidak punya permission untuk mengakses ini."
+                        })
+                        break;
+                    }
                     default: {
                         swal2_mixin.fire({
                             icon: "error",
@@ -272,6 +286,13 @@ async function fetch_retur_barang() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -299,11 +320,18 @@ async function tambah_barang(id, data) {
             const status = await res.text();
 
             switch(status) {
+                case "0": {
+                    swal2_mixin.fire({
+                        icon: "error",
+                        title: "Anda tidak punya permission untuk mengakses ini."
+                    })
+                    break;
+                }
                 default: {
                     swal2_mixin.fire({
                         icon: "error",
-                        title: "Kesalahan Terjadi! Silahkan coba lagi nanti."
-                    });
+                        title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                    })
                     break;
                 }
             }
@@ -389,12 +417,18 @@ async function cari_barang() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
                     title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
                 })
-                global.element.nama_barcode_barang.focus();
                 break;
             }
         }
@@ -426,6 +460,13 @@ async function tambah_retur_barang() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -463,11 +504,18 @@ async function edit_retur_barang(id) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
                     title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
-                });
+                })
                 break;
             }
         }

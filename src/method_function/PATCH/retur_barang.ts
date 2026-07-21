@@ -77,7 +77,7 @@ export default async function(req: Request, token: string) {
             return (await trx.selectFrom("barang").select("stok_barang").where("id", "=", res.barang_id).executeTakeFirst())?.stok_barang;
         });
     } catch(e) {
-        console.log(e);
+        console.log("An error occured in patch_method.ts at /retur_barang:", e);
         return new Response("Internal Server Error", {status: 500});
     }
 

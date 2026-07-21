@@ -14,6 +14,7 @@
 */
 
 import { global } from "../../global";
+import { check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
@@ -55,6 +56,7 @@ export default async function(req: Request, token: string) {
         .where('id', '=', id)
         .execute();
     } catch(e) {
+        if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
         console.log("An error occured in patch_method.ts at /barang:", e)
         return new Response("Internal Server Error", {status: 500});
     }

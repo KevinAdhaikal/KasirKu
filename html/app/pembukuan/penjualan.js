@@ -57,6 +57,13 @@ $('#penjualan_table tbody').on('click', 'td.dt-control', async function () {
             const status = await res.text();
 
             switch(status) {
+                case "0": {
+                    swal2_mixin.fire({
+                        icon: "error",
+                        title: "Anda tidak punya permission untuk mengakses ini."
+                    })
+                    break;
+                }
                 default: {
                     swal2_mixin.fire({
                         icon: "error",
@@ -148,6 +155,13 @@ async function fetch_penjualan_id(id) {
     else {
         const status = await res.text();
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -188,6 +202,13 @@ async function fetch_penjualan() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",

@@ -165,6 +165,13 @@ global.element.pengeluaran_table.on('click.action_edit', '.action_edit', async f
     else {
         const status = await res.text();
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -209,6 +216,13 @@ global.element.pengeluaran_table.on('click.action_delete', '.action_delete', asy
                 const status = await res.text();
 
                 switch(status) {
+                    case "0": {
+                        swal2_mixin.fire({
+                            icon: "error",
+                            title: "Anda tidak punya permission untuk mengakses ini."
+                        })
+                        break;
+                    }
                     default: {
                         swal2_mixin.fire({
                             icon: "error",
@@ -247,6 +261,13 @@ async function fetch_pengeluaran_id(id) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -272,6 +293,13 @@ async function fetch_pengeluaran_id(id) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -315,6 +343,13 @@ async function fetch_pengeluaran() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -351,6 +386,13 @@ async function tambah_pengeluaran() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -387,6 +429,13 @@ async function edit_pengeluaran(id) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",

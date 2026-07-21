@@ -15,7 +15,7 @@
 
 import { sql } from "kysely";
 import { global } from "../../global";
-import { get_password_hash_only } from "../../utils/utils";
+import { check_sql_is_duplicate_error, get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
@@ -73,8 +73,8 @@ export default async function(req: Request, token: string) {
         })
         .where('id', '=', id)
         .execute();
-    } catch (e: any) {
-        if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("3", { status: 403 });
+    } catch (e) {
+        if (check_sql_is_duplicate_error(e)) return new Response("3", {status: 403});
         console.log("Unexpected error in patch_method.ts at /user:", e);
         return new Response("Internal Server Error", { status: 500 });
     }

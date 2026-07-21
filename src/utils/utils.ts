@@ -380,6 +380,23 @@ export class BunSqliteDialect implements Dialect {
   createQueryCompiler() { return new SqliteQueryCompiler(); }
 }
 
+// check sql errors
+export function check_sql_is_duplicate_error(error: any): boolean {
+    return (
+        // PostgreSQL
+        error?.code === "23505" ||
+
+        // MySQL
+        error?.code === "ER_DUP_ENTRY" ||
+        error?.errno === 1062 ||
+
+        // SQLite
+        error?.code === "SQLITE_CONSTRAINT_UNIQUE" ||
+        error?.code === "SQLITE_CONSTRAINT_PRIMARYKEY" ||
+        error?.code === "SQLITE_CONSTRAINT"
+    );
+}
+
 // render template
 function get_nested_value(obj: Record<string, any>, path: string): string {
   const result = path.trim().split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);

@@ -198,11 +198,18 @@ async function masuk_ke_pembukuan() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
                     title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
-                });
+                })
                 break;
             }
         }
@@ -245,11 +252,18 @@ async function tambah_barang(id, data) {
             const status = await res.text();
 
             switch(status) {
+                case "0": {
+                    swal2_mixin.fire({
+                        icon: "error",
+                        title: "Anda tidak punya permission untuk mengakses ini."
+                    })
+                    break;
+                }
                 default: {
                     swal2_mixin.fire({
                         icon: "error",
-                        title: "Kesalahan Terjadi! Silahkan coba lagi nanti."
-                    });
+                        title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                    })
                     break;
                 }
             }
@@ -498,6 +512,13 @@ async function cari_barang() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",

@@ -14,6 +14,7 @@
 */
 
 import { global } from "../../global";
+import { check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     // add role (administrator permission only)
@@ -45,9 +46,8 @@ export default async function(req: Request, token: string) {
             modified_ms: now
         })
         .execute();
-    } catch (e: any) {
-        if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
-        
+    } catch (e) {
+        if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
         console.log("An error occured in post_method.ts at /role:", e);
         return new Response("Internal Server Error", { status: 500 });
     }

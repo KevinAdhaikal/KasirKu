@@ -126,6 +126,13 @@ global.element.kategori_barang_table.on('click.action_delete', '.action_delete',
                 const status = await res.text();
 
                 switch(status) {
+                    case "0": {
+                        swal2_mixin.fire({
+                            icon: "error",
+                            title: "Anda tidak punya permission untuk mengakses ini."
+                        })
+                        break;
+                    }
                     case "1": {
                         swal2_mixin.fire({
                             icon: "error",
@@ -165,6 +172,13 @@ global.element.kategori_barang_table.on('click.action_delete', '.action_delete',
                                     const status = await res.text();
 
                                     switch(status) {
+                                        case "0": {
+                                            swal2_mixin.fire({
+                                                icon: "error",
+                                                title: "Anda tidak punya permission untuk mengakses ini."
+                                            })
+                                            break;
+                                        }
                                         case "1": {
                                             swal2_mixin.fire({
                                                 icon: "error",
@@ -303,6 +317,13 @@ async function fetch_kategori_id(id) {
     else {
         const status = await res.text();
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             default: {
                 swal2_mixin.fire({
                     icon: "error",
@@ -370,6 +391,13 @@ async function tambah_kategori_barang() {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             case "1": {
                 swal2_mixin.fire({
                     icon: "error",
@@ -416,7 +444,18 @@ async function edit_kategori_barang(id) {
         const status = await res.text();
 
         switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
             case "1": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Kategori barang tersebut sudah ada! Mohon ganti yang lain."
+                })
                 break;
             }
             default: {
