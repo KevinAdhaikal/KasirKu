@@ -166,59 +166,67 @@
           </div>
         </div>
         <div class="modal fade" id="modal_barang_masuk" style="display: none;" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title" id="modal_barang_masuk_title">Tambah Barang Masuk</h4>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">×</span>
-								</button>
-							</div>
-							<div class="modal-body">
-                <div class="row">
-                  <div class="col-sm-9">
-                    <div class="form-group">
-                      <label for="nama_barang">Nama / Barcode Barang</label>
-                      <div class="input-group">
-                        <div class="input-group-prepend">
-                          <span class="input-group-text"><i class="fas fa-box"></i></span>
-                        </div>
-                        <input type="text" class="form-control" id="nama_barcode_barang" placeholder="Nama / Barcode Barang" autocomplete="off">
-                      </div>
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal_barang_masuk_title">Tambah Barang Masuk</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Field Nama / Barcode + Tombol Cari -->
+                <div class="form-group">
+                  <label for="nama_barcode_barang">Nama / Barcode Barang</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-box"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="nama_barcode_barang" placeholder="Ketik nama atau scan barcode barang" autocomplete="off">
+                    <div class="input-group-append">
+                      <button type="button" class="btn btn-success" onclick="cari_barang()" id="cari_barang_button">Cari Barang (Enter)</button>
                     </div>
                   </div>
-                  <div class="col-sm-3 d-flex align-items-end">
-                    <div class="form-group w-100">
-                      <button type="button" class="btn btn-success btn-block" onclick="cari_barang()" id="cari_barang_button">Cari Barang (Enter)</button>
-                    </div>
-                  </div>
+                  <small class="form-text text-muted">
+                    Masukkan nama barang atau scan barcode untuk mencari data barang.
+                  </small>
                 </div>
+
+                <!-- Field Deskripsi -->
                 <div class="form-group">
                   <label for="deskripsi">Deskripsi</label>
                   <div class="input-group">
                     <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="fas fa-box"></i></span>
+                      <span class="input-group-text"><i class="fas fa-align-left"></i></span>
                     </div>
-                    <input type="text" class="form-control" id="deskripsi" placeholder="Deskripsi" autocomplete="off" disabled>
+                    <input type="text" class="form-control" id="deskripsi" placeholder="Deskripsi barang akan muncul otomatis" autocomplete="off" disabled>
                   </div>
+                  <small class="form-text text-muted">
+                    Isi catatan atau keterangan tambahan untuk transaksi masuk ini, misalnya nama supplier, nomor PO, invoice, atau tujuan penerimaan barang. Field ini opsional.
+                  </small>
                 </div>
+
+                <!-- Field Jumlah Barang -->
                 <div class="form-group">
                   <label for="jumlah_barang">Jumlah Barang</label>
                   <div class="input-group">
                     <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="fas fa-box"></i></span>
+                      <span class="input-group-text"><i class="fas fa-sort-numeric-up"></i></span>
                     </div>
-                    <input type="text" class="form-control format_thousand_separator" id="jumlah_barang" placeholder="Jumlah Barang" autocomplete="off" disabled>
+                    <input type="text" class="form-control format_thousand_separator" id="jumlah_barang" placeholder="Masukkan jumlah barang masuk" autocomplete="off" disabled>
                   </div>
+                  <small class="form-text text-muted">
+                    Masukkan jumlah barang yang akan ditambahkan ke stok. Hanya angka yang diperbolehkan.
+                  </small>
                 </div>
-							</div>
-							<div class="modal-footer justify-content-between">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
-								<button type="button" class="btn btn-success" id="modal_barang_masuk_button" onclick="tambah_barang_masuk()" disabled>Tambah Barang Masuk (Enter)</button>
-							</div>
-						</div>
-					</div>
-				</div>
+              </div>
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
+                <button type="button" class="btn btn-success" id="modal_barang_masuk_button" onclick="tambah_barang_masuk()" disabled>Tambah Barang Masuk (Enter)</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="modal fade" id="modal_cari_barang" style="display: none;" aria-hidden="true">
 					<div class="modal-dialog modal-xl modal-dialog-centered">
 						<div class="modal-content">

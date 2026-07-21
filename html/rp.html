@@ -176,27 +176,33 @@
 					</div>
         </div>
         <div class="modal fade" id="modal_role" style="display: none;" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h4 class="modal-title" id="modal_role_title">Add Role</h4>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">×</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<div class="form-group">
-									<label for="username">Role Name</label>
-									<div class="input-group">
-										<div class="input-group-prepend">
-											<span class="input-group-text"><i class="fas fa-user-tag"></i></span>
-										</div>
-										<input type="text" class="form-control" id="role_name" placeholder="Role Name" autocomplete="off">
-									</div>
-								</div>
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal_role_title">Add Role</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <!-- Role Name -->
                 <div class="form-group">
-									<label class="hr-text">Permissions</label>
-									<div class="row">
+                  <label for="role_name">Role Name</label>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="role_name" placeholder="Role Name" autocomplete="off">
+                  </div>
+                  <small class="form-text text-muted">
+                    Masukkan nama role yang akan dibuat. Nama role harus unik dan menggambarkan fungsi, misalnya "Admin", "Kasir", atau "Manager".
+                  </small>
+                </div>
+
+                <!-- Permissions -->
+                <div class="form-group">
+                  <label class="hr-text">Permissions</label>
+                  <div class="row">
                     <div class="col-md-4">
                       <label class="mb-2">Kasir Permission</label>
                       <div class="icheck-primary"><input class="perm_cb" type="checkbox" id="manage_barang" value="1"><label class="form-check-label" for="manage_barang">Manage Barang</label></div>
@@ -205,9 +211,14 @@
                       <div class="icheck-primary"><input class="perm_cb" type="checkbox" id="dashboard" value="4"><label class="form-check-label" for="dashboard">Dashboard</label></div>
                     </div>
                   </div>
-							  </div>
+                  <small class="form-text text-muted">
+                    Pilih hak akses yang akan diberikan kepada role ini. Centang satu atau lebih permission sesuai kebutuhan.
+                  </small>
+                </div>
+
+                <!-- Users assigned -->
                 <div class="form-group" id="user_assigned_role" style="display: none;">
-									<label class="hr-text">Users assigned to this role</label>
+                  <label class="hr-text">Users assigned to this role</label>
                   <table id="user_assigned_role_table" style="table-layout: fixed;" class="table table-bordered table-striped table-hover display">
                     <thead>
                       <th>Full Name (Username)</th>
@@ -215,15 +226,18 @@
                     <tbody>
                     </tbody>
                   </table>
-							  </div>
-							</div>
-							<div class="modal-footer justify-content-between">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
-								<button type="button" class="btn btn-success" id="modal_role_button">Add Role</button>
-							</div>
-						</div>
-					</div>
-				</div>
+                  <small class="form-text text-muted">
+                    Daftar pengguna yang sudah memiliki role ini. Akan muncul setelah role disimpan atau saat mengedit role.
+                  </small>
+                </div>
+              </div>
+              <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close (Esc)</button>
+                <button type="button" class="btn btn-success" id="modal_role_button">Add Role</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>
