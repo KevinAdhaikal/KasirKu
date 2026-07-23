@@ -396,17 +396,3 @@ export function check_sql_is_duplicate_error(error: any): boolean {
         error?.code === "SQLITE_CONSTRAINT"
     );
 }
-
-// render template
-function get_nested_value(obj: Record<string, any>, path: string): string {
-  const result = path.trim().split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
-
-  return result !== undefined && result !== null ? String(result) : '';
-}
-
-export function render_template(template: string, data: Record<string, any>): string {
-  if (!template) return "";
-  return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => {
-    return get_nested_value(data, path);
-  });
-}

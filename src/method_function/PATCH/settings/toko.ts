@@ -65,11 +65,13 @@ export default async function(req: Request, token: string) {
         type: 8,
         code: "UPDATE_TOKO_SETTING",
         data: {
-            nama_toko,
-            deskripsi_toko,
-            alamat_toko,
-            telepon_toko,
-            email_toko
+            store: {
+                name: nama_toko,
+                description: deskripsi_toko,
+                address: alamat_toko,
+                no_phone: telepon_toko,
+                email: email_toko
+            }
         }
     }));
 

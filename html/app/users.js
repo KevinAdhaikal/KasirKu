@@ -418,10 +418,10 @@ async function fetch_users() {
 
         for (let a = 0; a < res_json.length; a++) {
             global.element.temp_date.setTime(res_json[a].created_ms);
-            const created_at = format_date(global.element.temp_date);
+            const created_at = format_date(global.element.temp_date, "YYYY/MM/DD HH:mm:ss");
 
             global.element.temp_date.setTime(res_json[a].modified_ms);
-            const modified_at = format_date(global.element.temp_date);
+            const modified_at = format_date(global.element.temp_date, "YYYY/MM/DD HH:mm:ss");
 
             global.element.users_table.row.add([
                 res_json[a].username,

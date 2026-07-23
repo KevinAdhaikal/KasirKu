@@ -41,5 +41,11 @@ export default async function(req: Request, token: string) {
         .where('id', '=', 1)
     .execute();
 
+    global.sse_clients.broadcast(JSON.stringify({
+        type: 8,
+        code: "UPDATE_STRUK_SETTING",
+        data: user_input ?? null
+    }));
+
     return new Response("", {status: 200});
 }

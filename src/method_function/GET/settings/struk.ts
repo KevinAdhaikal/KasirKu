@@ -15,7 +15,6 @@
 
 import { user_session_interface } from "../../../user_session/user_session";
 import { global } from "../../../global";
-import { render_template } from "../../../utils/utils";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = global.database;
@@ -24,13 +23,6 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
-    
-
-    const toko_res = await db
-        .selectFrom("store_settings")
-        .selectAll()
-        .where("id", "=", 1)
-    .executeTakeFirst();
 
     const res = await db
         .selectFrom('struk_settings')
@@ -38,7 +30,7 @@ export default async function(req: Request, url: URL, user_info: user_session_in
         .where("id", "=", 1)
     .executeTakeFirst();
 
-    return new Response(JSON.stringify({ ...(res ?? {}), view: render_template(res?.content, {store: toko_res})}), {
+    return new Response(JSON.stringify(res), {
         status: 200,
         headers: { "Content-Type": "application/json" }
     });

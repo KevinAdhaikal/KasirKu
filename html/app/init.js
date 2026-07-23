@@ -224,6 +224,14 @@ global.connect_sse = () => {
         }
       }
     }
+    else if (data.type === 8) {
+      switch(data.code) {
+        case "UPDATE_TOKO_SETTING": {
+          global.public_info = data.data;
+          break;
+        }
+      }
+    }
 
     for (const handler of global.sse_handlers) {
       try {
@@ -491,7 +499,26 @@ async function fetch_profile() {
       profile_img2.src = res_json.profile_img;
     }
   } catch (err) {
+    swal2_mixin.fire({
+      icon: "error",
+      title: "Something went wrong! Please try again or contact admin."
+    });
+  }
+}
 
+async function fetch_public_info() {
+  const res = await fetch("/api/public_info", {
+    method: "GET",
+    headers: {
+      "token": localStorage.getItem("token")
+    }
+  });
+
+  if (res.status === 200) {
+    const res_json = await res.json();
+    global.public_info = res_json;
+  }
+  else {
     swal2_mixin.fire({
       icon: "error",
       title: "Something went wrong! Please try again or contact admin."
@@ -501,6 +528,7 @@ async function fetch_profile() {
 
 (async function() {
   NProgress.start();
+  await fetch_public_info();
   await fetch_profile();
   NProgress.inc();
   sidebar_menu.innerHTML = sidebar_data;

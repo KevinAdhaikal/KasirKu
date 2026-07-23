@@ -116,17 +116,34 @@ function formatYMD(date) {
   return `${y}/${m}/${d}`;
 }
 
-function format_date(date) {
-  const pad = (n) => n.toString().padStart(2, "0");
-
-  return (
-    date.getFullYear() + "/" +
-    pad(date.getMonth() + 1) + "/" +
-    pad(date.getDate()) + " " +
-    pad(date.getHours()) + ":" +
-    pad(date.getMinutes()) + ":" +
-    pad(date.getSeconds())
-  );
+function format_date(date, format) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const map = {
+        'YYYY': date.getFullYear(),
+        'YY': String(date.getFullYear()).slice(-2),
+        'MM': pad(date.getMonth() + 1),
+        'M': date.getMonth() + 1,
+        'DD': pad(date.getDate()),
+        'D': date.getDate(),
+        'HH': pad(date.getHours()),
+        'H': date.getHours(),
+        'mm': pad(date.getMinutes()),
+        'm': date.getMinutes(),
+        'ss': pad(date.getSeconds()),
+        's': date.getSeconds()
+    };
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    let result = format
+        .replace(/MMMM/g, monthNames[date.getMonth()])
+        .replace(/MMM/g, monthNames[date.getMonth()].slice(0, 3))
+        .replace(/dddd/g, dayNames[date.getDay()])
+        .replace(/ddd/g, dayNames[date.getDay()].slice(0, 3));
+    for (let key in map) {
+        result = result.replace(new RegExp(key, 'g'), map[key]);
+    }
+    return result;
 }
 
 class mutex {
@@ -150,4 +167,74 @@ class mutex {
             if (next) next();
         } else this.locked = false;
     }
+}
+
+function get_nested_value(obj, path) {
+    const result = path
+        .trim()
+        .split('.')
+        .reduce((acc, key) => (
+            acc && acc[key] !== undefined ? acc[key] : undefined
+        ), obj);
+
+    return result !== undefined && result !== null
+        ? String(result)
+        : '';
+}
+
+
+function get_raw_value(obj, path) {
+    return path.trim().split('.').reduce((acc, key) => (
+      acc && acc[key] !== undefined ? acc[key] : undefined
+    ), obj);
+}
+
+
+function render_template_html(template, data) {
+    if (!template) return '';
+
+    /* ini buat handle:
+        {{#each items as item}}
+            ...
+        {{/each}}
+    */
+    template = template.replace(
+        /\{\{#each\s+([\w.]+)\s+as\s+(\w+)\s*\}\}([\s\S]*?)\{\{\/each\}\}/g,
+        (_, arrayPath, itemName, content) => {
+
+            const items = get_raw_value(data, arrayPath);
+
+            if (!Array.isArray(items)) {
+                return '';
+            }
+
+            return items.map(item => {
+
+                const loopData = {
+                    ...data,
+                    [itemName]: item
+                };
+
+                return content.replace(
+                    /\{\{\s*([\w.]+)\s*\}\}/g,
+                    (_, path) => {
+                        return get_nested_value(loopData, path);
+                    }
+                );
+
+            }).join('');
+        }
+    );
+
+    /*
+        ini buat handle:
+        {{ store.name }}
+        {{ transaction.total }}
+    */
+    return template.replace(
+        /\{\{\s*([\w.]+)\s*\}\}/g,
+        (_, path) => {
+            return get_nested_value(data, path).replaceAll("\n", "<br>");
+        }
+    );
 }

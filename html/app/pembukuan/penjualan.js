@@ -1,4 +1,8 @@
 global.element = {
+    // ini buat struk
+    receipt_print: document.getElementById("receipt_print"),
+    receipt_html: "",
+
     tanggal_penjualan: document.getElementById("tanggal_penjualan"),
     tanggal_penjualan_picker: new Datepicker(document.getElementById("tanggal_penjualan"), {
         autohide: true,
@@ -17,7 +21,8 @@ global.element = {
             { data: 'no_struk'},
             { data: 'nama_kasir' },
             { data: 'total_barang' },
-            { data: 'total_harga' }
+            { data: 'total_harga' },
+            { data: 'action_button' }
         ],
         columnDefs: [
             {
@@ -89,6 +94,10 @@ global.element.tanggal_penjualan.addEventListener("changeDate", fetch_penjualan)
 
 global.refresh_handler = async function() {
     await fetch_penjualan();
+    await fetch_struk_setting();
+    global.element.receipt_print.onload = () => {
+        global.element.receipt_print.contentWindow.print();
+    };
 }
 
 async function sse_handler(e) {
@@ -104,7 +113,8 @@ async function sse_handler(e) {
                         no_struk: data.no_struk,
                         nama_kasir: data.nama_kasir,
                         total_barang: data.total_barang,
-                        total_harga: "Rp" + money_format_bigint(BigInt(data.total_harga_jual))
+                        total_harga: "Rp" + money_format_bigint(BigInt(data.total_harga_jual)),
+                        action_button: "<center><button class='btn btn-success'><i class='fas fa-print'></i> Print</button></center>"
                     });
                     global.element.penjualan_table.draw();
                 }
@@ -141,6 +151,25 @@ function format(data) {
         ${res}
         </tbody>
     </table>`;
+}
+
+async function fetch_struk_setting() {
+    const res = await fetch("/api/settings/struk", {
+        method: "GET",
+        headers: {
+            "token": localStorage.getItem("token")
+        }
+    });
+
+    if (res.status === 200) {
+        const res_json = await res.json();
+        global.element.receipt_html = res_json.content;
+    } else {
+        swal2_mixin.fire({
+            icon: "error",
+            title: "Something went wrong! Please try again or contact admin."
+        });
+    }
 }
 
 async function fetch_penjualan_id(id) {
@@ -194,7 +223,8 @@ async function fetch_penjualan() {
                 no_struk: data.no_struk,
                 nama_kasir: data.nama_kasir,
                 total_barang: data.total_barang,
-                total_harga: "Rp" + money_format_bigint(BigInt(data.total_harga_jual))
+                total_harga: "Rp" + money_format_bigint(BigInt(data.total_harga_jual)),
+                action_button: `<center><button class='btn btn-success action_print' value='${data.id}' data-full='${JSON.stringify(data)}'><i class='fas fa-print'></i> Print</button></center>`
             })
         })
     }
@@ -218,6 +248,66 @@ async function fetch_penjualan() {
             }
         }
     }
-
     global.element.penjualan_table.draw();
 }
+
+global.element.penjualan_table.on('click.action_print', '.action_print', async function () {
+    const data = this.value;
+    const full = JSON.parse(this.dataset.full);
+    const date = new Date(full.created_ms);
+
+    const items_fetch = await fetch(`/api/penjualan_item?penjualan_id=${data}`, {
+        method: "GET",
+        headers: {
+            token: localStorage.getItem("token")
+        }
+    })
+
+    if (items_fetch.status === 200) {
+        const items_result = await items_fetch.json();
+
+        global.element.receipt_print.srcdoc = render_template_html(global.element.receipt_html, {
+            store: global.public_info.store,
+            struk: {
+                no: full.no_struk,
+                time: format_date(date, "HH:mm:ss"),
+                date: format_date(date, "YYYY-MM-DD"),
+                cashier_name: full.nama_kasir
+            },
+            items: items_result.map(item => ({
+                name: item.nama_barang,
+                qty: item.jumlah,
+                price: money_format_bigint(BigInt(item.harga_jual)),
+                total: money_format_bigint(BigInt(item.harga_jual * item.jumlah))
+            })),
+            summary: {
+                total: money_format_bigint(BigInt(full.total_harga_jual)),
+                item_count: full.total_barang
+            },
+            payment: {
+                amount: money_format_bigint(BigInt(full.total_harga_jual)),
+                change: "0",
+            }
+        });
+    }
+    else {
+        const status = await items_fetch.text();
+        switch(status) {
+            case "0": {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Anda tidak punya permission untuk mengakses ini."
+                })
+                break;
+            }
+            default: {
+                swal2_mixin.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan! Silahkan coba lagi nanti."
+                });
+                break;
+            }
+        }
+        return null;
+    }
+});
