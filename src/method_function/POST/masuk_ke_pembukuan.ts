@@ -102,8 +102,10 @@ export default async function(req: Request, token: string) {
                     barang_id: e.id,
                     nama_barang: e.nama_barang,
                     jumlah: e.jumlah_barang,
-                    harga_modal: e.harga_modal * e.jumlah_barang,
-                    harga_jual: e.harga_jual * e.jumlah_barang,
+                    harga_modal: e.harga_modal,
+                    total_harga_modal: e.harga_modal * e.jumlah_barang,
+                    harga_jual: e.harga_jual,
+                    total_harga_jual: e.harga_jual * e.jumlah_barang,
                     tanggal_key: date_now,
                     created_ms: now,
                     modified_ms: now

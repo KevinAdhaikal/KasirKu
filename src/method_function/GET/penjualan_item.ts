@@ -34,6 +34,7 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     .select([
         'jumlah',
         'harga_jual',
+        'total_harga_jual',
         'tanggal_key',
         'created_ms',
         'modified_ms',
