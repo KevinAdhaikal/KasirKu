@@ -13,7 +13,9 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 import { get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
@@ -27,14 +29,15 @@ export default async function(req: Request, token: string) {
     
     if (!old_pass || !new_pass || new_pass.length < 8) return new Response("Bad Request", {status: 400});
                 
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
+    const db = getDb();
+    const { users } = getSchema();
     
     const user = await db
-    .selectFrom('users')
-    .select('password_hash')
-    .where('id', '=', user_info.user_id)
-    .executeTakeFirst();
+    .select({ password_hash: users.password_hash })
+    .from(users)
+    .where(eq(users.id, user_info.user_id))
+    .limit(1)
+    .then((r: any) => r[0]);
     
     if (!user) return new Response("Internal Server Error", { status: 500 });
     if (!Bun.password.verifySync(old_pass, global.ph_text + user.password_hash)) return new Response("0", { status: 403 }); // incorrect old password
@@ -48,12 +51,12 @@ export default async function(req: Request, token: string) {
             }),
         );
         
-        await db.updateTable('users')
+        await db.update(users)
         .set({
             password_hash: new_hash_pass,
             modified_ms: Date.now()
         })
-        .where('id', '=', user_info.user_id)
+        .where(eq(users.id, user_info.user_id))
         .execute();
                     
         global.sse_clients.remove_by_user_id(user_info.user_id);

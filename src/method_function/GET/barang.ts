@@ -15,11 +15,13 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
+import { getDb, getSchema } from "../../database/schema";
+import { eq } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, barang, kategori_barang } = getSchema();
+    const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -29,24 +31,24 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const id = Number(user_input.get("id"));
                     
     let res;
-    const query = db
-    .selectFrom('barang as b')
-    .innerJoin('kategori_barang as k', 'b.kategori_barang_id', 'k.id')
-    .select([
-        'b.id',
-        'b.nama_barang',
-        'b.stok_barang',
-        'b.kategori_barang_id',
-        'b.harga_modal',
-        'b.harga_jual',
-        'b.barcode_barang',
-        'b.created_ms',
-        'b.modified_ms',
-        'k.nama_kategori as nama_kategori'
-    ]);
+    const baseQuery = db
+    .select({
+        id: barang.id,
+        nama_barang: barang.nama_barang,
+        stok_barang: barang.stok_barang,
+        kategori_barang_id: barang.kategori_barang_id,
+        harga_modal: barang.harga_modal,
+        harga_jual: barang.harga_jual,
+        barcode_barang: barang.barcode_barang,
+        created_ms: barang.created_ms,
+        modified_ms: barang.modified_ms,
+        nama_kategori: kategori_barang.nama_kategori
+    })
+    .from(barang)
+    .innerJoin(kategori_barang, eq(barang.kategori_barang_id, kategori_barang.id));
 
-    if (isNaN(id) || !id) res = await query.execute();
-    else res = await query.where('b.id', '=', id).executeTakeFirst();
+    if (isNaN(id) || !id) res = await baseQuery;
+    else res = await baseQuery.where(eq(barang.id, id)).limit(1).then((r: any) => r[0]);
     
     return new Response(JSON.stringify(res), {status: 200});
 }

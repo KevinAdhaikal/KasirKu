@@ -13,7 +13,9 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_input = new URLSearchParams(await req.text());
@@ -23,14 +25,14 @@ export default async function(req: Request, token: string) {
     
     if (!username || !password) return new Response("Bad Request", {status: 400});
     
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
+    const db = getDb();
+    const schema = getSchema();
     
-    const row = await db
-    .selectFrom('users')
-    .select(['id', 'password_hash', 'role_id'])
-    .where('username', '=', username)
-    .executeTakeFirst();
+    const [row] = await db
+    .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})
+    .from(schema.users)
+    .where(eq(schema.users.username, username))
+    .limit(1);
     
     if (!row) return new Response("Forbidden", { status: 403 });
     if (!Bun.password.verifySync(password, global.ph_text + row.password_hash)) return new Response("Forbidden", { status: 403 });

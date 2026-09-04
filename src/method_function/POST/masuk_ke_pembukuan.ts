@@ -13,16 +13,17 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { sql } from "kysely";
+import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const schema = getSchema();
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.KASIR))) return new Response("0", {status: 403});
@@ -49,11 +50,11 @@ export default async function(req: Request, token: string) {
     for (const data of items) {
         total_barang += data.jumlah_barang;
         
-        const barang = await db
-        .selectFrom('barang')
-        .select(['nama_barang', 'stok_barang', 'harga_modal', 'harga_jual'])
-        .where('id', '=', data.id)
-        .executeTakeFirst();
+        const [barang] = await db
+        .select({nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang, harga_modal: schema.barang.harga_modal, harga_jual: schema.barang.harga_jual})
+        .from(schema.barang)
+        .where(eq(schema.barang.id, data.id))
+        .limit(1);
         
         if (!barang) return new Response("Not Found", { status: 404 });
         if ((barang.stok_barang - data.jumlah_barang) < 0) return new Response("1", { status: 403 });
@@ -67,11 +68,11 @@ export default async function(req: Request, token: string) {
     }
     
     try {
-        await db.transaction().execute(async (trx) => {
-            const res_user = await trx.selectFrom("users").select("full_name").where("id", "=", user_info.user_id).executeTakeFirst();
+        await db.transaction(async (trx: any) => {
+            const [res_user] = await trx.select({full_name: schema.users.full_name}).from(schema.users).where(eq(schema.users.id, user_info.user_id)).limit(1);
             if (!res_user) return new Response("Not Found", {status: 404});
 
-            const last_row  = await global.sql_dialect.insert_return_id(trx, "penjualan", {
+            const [penjualanResult] = await trx.insert(schema.penjualan).values({
                 no_struk: `TRX-${now}`,
                 kasir_id: user_info.user_id,
                 total_barang,
@@ -80,24 +81,20 @@ export default async function(req: Request, token: string) {
                 tanggal_key: date_now,
                 created_ms: now,
                 modified_ms: now
-            });
+            }).returning();
+            const last_row = Number(penjualanResult.id);
 
-            await trx
-            .insertInto('pembukuan')
-            .values({
+            await trx.insert(schema.pembukuan).values({
                 tipe: 0,
                 jumlah_uang: total_harga_jual,
                 referensi_id: last_row,
                 tanggal_key: date_now,
                 created_ms: now,
                 modified_ms: now
-            })
-            .execute();
+            });
             
             for (const e of items) {
-                await trx
-                .insertInto('penjualan_item')
-                .values({
+                await trx.insert(schema.penjualan_item).values({
                     penjualan_id: last_row,
                     barang_id: e.id,
                     nama_barang: e.nama_barang,
@@ -109,20 +106,18 @@ export default async function(req: Request, token: string) {
                     tanggal_key: date_now,
                     created_ms: now,
                     modified_ms: now
-                })
-                .execute();
+                });
                 
                 // Update stok barang pake logic CASE WHEN
                 await trx
-                .updateTable('barang')
+                .update(schema.barang)
                 .set({
                     stok_barang: sql`CASE 
                         WHEN stok_barang - ${e.jumlah_barang} < 0 THEN 0 
                         ELSE stok_barang - ${e.jumlah_barang} 
                     END`
                 })
-                .where('id', '=', e.id)
-                .execute();
+                .where(eq(schema.barang.id, e.id));
             }
         });
     } catch (e) {

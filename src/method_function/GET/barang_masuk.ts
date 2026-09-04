@@ -15,11 +15,13 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
+import { getDb, getSchema } from "../../database/schema";
+import { eq, and } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, barang_masuk, barang } = getSchema();
+    const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -33,28 +35,27 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const id = Number(user_input.get("id"));
     if (!isNaN(id) && id) {
         res = await db
-        .selectFrom('barang_masuk as bm')
-        .innerJoin('barang as b', 'b.id', 'bm.barang_id')
-        .select([
-            'b.nama_barang',
-            'bm.deskripsi',
-            'bm.jumlah_barang'
-        ])
-        .where('bm.id', '=', id)
-        .where('bm.tanggal_key', '=', tanggal_key)
-        .executeTakeFirst();
+        .select({
+            nama_barang: barang.nama_barang,
+            deskripsi: barang_masuk.deskripsi,
+            jumlah_barang: barang_masuk.jumlah_barang
+        })
+        .from(barang_masuk)
+        .innerJoin(barang, eq(barang.id, barang_masuk.barang_id))
+        .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
+        .limit(1)
+        .then((r: any) => r[0]);
     } else {
         res = await db
-        .selectFrom('barang_masuk as bm')
-        .innerJoin('barang as b', 'b.id', 'bm.barang_id')
-        .select([
-            'bm.id',
-            'b.nama_barang',
-            'bm.deskripsi',
-            'bm.jumlah_barang'
-        ])
-        .where('bm.tanggal_key', '=', tanggal_key)
-        .execute();
+        .select({
+            id: barang_masuk.id,
+            nama_barang: barang.nama_barang,
+            deskripsi: barang_masuk.deskripsi,
+            jumlah_barang: barang_masuk.jumlah_barang
+        })
+        .from(barang_masuk)
+        .innerJoin(barang, eq(barang.id, barang_masuk.barang_id))
+        .where(eq(barang_masuk.tanggal_key, tanggal_key));
     }
     
 

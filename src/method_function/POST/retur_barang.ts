@@ -13,16 +13,17 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { sql } from "kysely";
+import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const schema = getSchema();
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
@@ -46,24 +47,24 @@ export default async function(req: Request, token: string) {
     const tanggal_key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 
     try {
-        res_data = await db.transaction().execute(async (trx) => {
-            await trx.updateTable("barang")
+        res_data = await db.transaction(async (trx: any) => {
+            await trx.update(schema.barang)
             .set({
                 stok_barang: sql`stok_barang - ${jumlah_barang}`
             })
-            .where("id", "=", barang_id)
-            .execute();
+            .where(eq(schema.barang.id, barang_id));
             
-            const last_row = await global.sql_dialect.insert_return_id(trx, "retur_barang", {
+            const [returResult] = await trx.insert(schema.retur_barang).values({
                 tanggal_key,
                 barang_id,
                 deskripsi,
                 jumlah_barang,
                 created_ms: now,
                 modified_ms: now
-            });
+            }).returning();
+            const last_row = Number(returResult.id);
 
-            const res_barang = await db.selectFrom("barang").select(["stok_barang", "nama_barang"]).where("id", "=", barang_id).executeTakeFirst();
+            const [res_barang] = await db.select({stok_barang: schema.barang.stok_barang, nama_barang: schema.barang.nama_barang}).from(schema.barang).where(eq(schema.barang.id, barang_id)).limit(1);
             return {
                 last_row,
                 nama_barang: res_barang?.nama_barang,

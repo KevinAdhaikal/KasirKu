@@ -15,16 +15,18 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
+import { getDb, getSchema } from "../../database/schema";
+import { eq } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
+    const db = getDb();
+    const { store_settings } = getSchema();
 
-    const toko_res = await db
-        .selectFrom("store_settings")
-        .selectAll()
-        .where("id", "=", 1)
-    .executeTakeFirst();
+    const [toko_res] = await db
+        .select()
+        .from(store_settings)
+        .where(eq(store_settings.id, 1))
+        .limit(1);
 
     return new Response(JSON.stringify({store: toko_res}), {status: 200});
 }

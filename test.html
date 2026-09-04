@@ -3,32 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Struk SumberMart</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: white;
             font-family: 'Courier New', 'Liberation Mono', 'Consolas', monospace;
             display: block;
             width: 100%;
         }
-
-        /* Ukuran Normal */
         .receipt {
             background: white;
             color: black;
             width: 100%;
             padding: 10px;
-            font-size: 12px; /* Dibalikin ke standar 12px */
+            font-size: 12px;
             line-height: 1.4;
         }
-
-        /* Cetak: Mengikuti lebar kertas tapi ukuran teks tetap normal */
         @media print {
             @page {
                 margin: 5mm;
@@ -48,8 +42,6 @@
                 margin: 0;
             }
         }
-
-        /* ---- Elemen Struk ---- */
         .store-name {
             text-align: center;
             font-size: 18px;
@@ -164,10 +156,7 @@
     </style>
 </head>
 <body>
-
     <div class="receipt">
-
-        <!-- TOKO -->
         <div class="store-name">SUMBERMART</div>
         <div class="store-tagline">● Murah & Lengkap ●</div>
         <div class="store-info">
@@ -177,18 +166,12 @@
             NPWP: 12.345.678.9-012.000<br>
             Telp: (022) 1234-5678
         </div>
-
         <hr class="divider-dot">
-
-        <!-- META TRANSAKSI -->
         <div class="row"><span class="label">No. Struk</span><span class="value">SM-20260719-004281</span></div>
         <div class="row"><span class="label">Tgl / Jam</span><span class="value">19-07-2026 &nbsp; 14:32:08</span></div>
         <div class="row"><span class="label">Kasir</span><span class="value">Dewi - POS#03</span></div>
         <div class="row"><span class="label">Pelanggan</span><span class="value">Umum</span></div>
-
         <hr class="divider">
-
-        <!-- DAFTAR ITEM -->
         <div class="item-list">
             <div class="item-header">
                 <span class="item-name">Nama Barang</span>
@@ -209,28 +192,19 @@
             <div class="item"><span class="item-name">Roti Tawar Sari</span><span class="item-qty">1</span><span class="item-price">14.000</span><span class="item-total">14.000</span></div>
             <div class="item"><span class="item-name">Sabun Lifebuoy Merah</span><span class="item-qty">2</span><span class="item-price">4.200</span><span class="item-total">8.400</span></div>
         </div>
-
         <hr class="divider">
-
-        <!-- RINGKASAN -->
         <div class="summary">
             <div class="row"><span class="label">Subtotal (7 item)</span><span class="value">177.400</span></div>
             <div class="row"><span class="label">Diskon Member</span><span class="value">-5.000</span></div>
             <div class="row"><span class="label">Pembulatan</span><span class="value">-400</span></div>
             <div class="row total-row"><span class="label">TOTAL</span><span class="value">Rp 172.000</span></div>
         </div>
-
         <hr class="divider-dot">
-
-        <!-- PEMBAYARAN -->
         <div class="payment">
             <div class="row"><span class="label">Tunai</span><span class="value">Rp 200.000</span></div>
             <div class="row change"><span class="label">Kembali</span><span class="value">Rp 28.000</span></div>
         </div>
-
         <hr class="divider-dot">
-
-        <!-- FOOTER -->
         <div class="footer">
             <div class="thank-you">TERIMA KASIH</div>
             <div>
@@ -243,8 +217,6 @@
                 www.sumbermart.co.id &bull; IG @sumbermart
             </div>
         </div>
-
     </div>
-
 </body>
 </html>

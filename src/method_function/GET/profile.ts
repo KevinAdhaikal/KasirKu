@@ -15,26 +15,28 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
+import { getDb, getSchema } from "../../database/schema";
+import { eq } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
+    const db = getDb();
+    const { users, roles } = getSchema();
 
-    const res = await db
-    .selectFrom('users as u')
-    .innerJoin('roles as r', 'u.role_id', 'r.id')
-    .select([
-        'u.id',
-        'u.username',
-        'u.full_name',
-        'u.profile_img',
-        'u.modified_ms',
-        'u.created_ms',
-        'r.name as role_name',
-        'r.permission_level as permission_level'
-    ])
-    .where('u.id', '=', user_info.user_id)
-    .executeTakeFirst();
+    const [res] = await db
+    .select({
+        id: users.id,
+        username: users.username,
+        full_name: users.full_name,
+        profile_img: users.profile_img,
+        modified_ms: users.modified_ms,
+        created_ms: users.created_ms,
+        role_name: roles.name,
+        permission_level: roles.permission_level
+    })
+    .from(users)
+    .innerJoin(roles, eq(users.role_id, roles.id))
+    .where(eq(users.id, user_info.user_id))
+    .limit(1);
 
     return new Response(JSON.stringify(res), {status: 200});
 }

@@ -13,15 +13,17 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../../global";
+import { getSchema, getDb } from "../../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, store_settings } = getSchema();
+    const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
@@ -49,7 +51,7 @@ export default async function(req: Request, token: string) {
     }
 
     await db
-        .updateTable('store_settings')
+        .update(store_settings)
         .set({
             name: nama_toko,
             description: deskripsi_toko,
@@ -58,7 +60,7 @@ export default async function(req: Request, token: string) {
             email: email_toko,
             modified_ms: Date.now()
         })
-        .where('id', '=', 1)
+        .where(eq(store_settings.id, 1))
     .execute();
 
     global.sse_clients.broadcast(JSON.stringify({

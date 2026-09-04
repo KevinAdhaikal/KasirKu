@@ -16,7 +16,7 @@
 const MAX_CONCURRENT = 4;
 
 import { dirname } from "node:path";
-import { global } from "../src/global";
+import { global } from "./global";
 import { readdir, mkdir } from "node:fs/promises";
 
 let future_import = {
@@ -134,7 +134,7 @@ function apply_env_config() {
     if (compile_html !== undefined) global.config.compile_html = compile_html;
 
     const db_type = get_env_value("DB_TYPE");
-    if (db_type) global.config.db_type = db_type.toLowerCase();
+                if (db_type) global.config.db_type = db_type.toLowerCase() as "sqlite" | "mysql" | "postgresql";
 
     const db_name = get_env_value("DB_NAME");
     if (db_name) global.config.db_name = db_name;
@@ -205,7 +205,7 @@ async function check_config() {
                 let conn_success = false;
 
                 let db_type = await user_input("[LOG] Pilih database (sqlite / mysql / postgresql): ");
-                if (db_type) global.config.db_type = db_type.toLowerCase();
+    if (db_type) global.config.db_type = db_type.toLowerCase() as "sqlite" | "mysql" | "postgresql";
                 if (!["sqlite", "mysql", "postgresql"].includes(db_type)) {
                     console.log(`[ERROR] Databse "${db_type}" tidak ada`)
                     continue;

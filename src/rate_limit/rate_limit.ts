@@ -31,7 +31,6 @@ export class rate_limit {
         max_reqs = 50,
         jail_ms_times = 2
     ) {
-
         this.rate_limits = new Map();
         this.max_reqs = max_reqs;
         this.limit_ms = limit_req_sec * 1000;

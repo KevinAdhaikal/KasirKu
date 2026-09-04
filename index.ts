@@ -13,16 +13,14 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { Kysely, MysqlDialect, PostgresDialect } from "kysely";
 import { migrate_up } from "./src/database/migrate"
-import { main } from "./src/server";
-import { global } from "./src/global";
-import { BunSqliteDialect } from "./src/utils/utils";
+import { setActiveSchema, setActiveDb } from "./src/database/schema";
 import { mkdir } from "node:fs/promises";
 import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
+import { setup_http_main } from "./src/setup";
 
-async function load_methods(baseDir = "./src/method_function", rootDir = baseDir, cache = global.method_cache) {
+async function load_methods(baseDir: string, rootDir: string, cache: Record<string, any>) {
     const entries = readdirSync(baseDir);
 
     for (const entry of entries) {
@@ -36,9 +34,7 @@ async function load_methods(baseDir = "./src/method_function", rootDir = baseDir
 
         if (!entry.endsWith(".ts")) continue;
 
-        const relative = path
-            .relative(rootDir, fullPath)
-            .replaceAll("\\", "/");
+        const relative = path.relative(rootDir, fullPath).replaceAll("\\", "/");
 
         const parts = relative.split("/");
 
@@ -55,14 +51,50 @@ async function load_methods(baseDir = "./src/method_function", rootDir = baseDir
     }
 }
 
+function get_env_value(key: string): string | undefined {
+    const value = Bun.env[key] ?? process.env[key];
+    if (value === undefined) return undefined;
+    const trimmed = String(value).trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function check_env_file() {
+    const keys = [
+        "APP_LISTEN_PORT",
+        "APP_USE_TLS",
+        "APP_COMPILE_HTML",
+        "DB_TYPE",
+        "DB_NAME",
+        "POSTGRES_HOST",
+        "POSTGRES_PORT",
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "MYSQL_HOST",
+        "MYSQL_PORT",
+        "MYSQL_USER",
+        "MYSQL_PASSWORD",
+        "TLS_KEY_PATH",
+        "TLS_CERT_PATH",
+    ];
+
+    for (const key of keys) {
+        if (!get_env_value(key)) return false;
+    }
+
+    return true;
+}
+
 async function prepare() {
+    const global = (await import("./src/global")).global;
     await Bun.$`bun src/prepare.ts`;
 
-    global.config = (await Bun.file("config.json").exists()) ? JSON.parse(await Bun.file("config.json").text()) : global.config;
+    global.config = Bun.env as unknown as Record<string, any>;
 
     switch(global.config.db_type) {
         case "sqlite": {
             const { Database } = await import("bun:sqlite");
+            const { drizzle } = await import("drizzle-orm/bun-sqlite");
+
             if (!(await Bun.file(`database/${global.config.db_name}.db`).exists())) {
                 try {
                     await mkdir("database");
@@ -71,43 +103,41 @@ async function prepare() {
                 }
             }
 
-            global.database = new Kysely({
-                dialect: new BunSqliteDialect({
-                    database: new Database(`database/${global.config.db_name}.db`)
-                })
-            });
-
-            global.sql_dialect.id_column = col => col.primaryKey();
+            const sqlite = new Database(`database/${global.config.db_name}.db`);
+            global.database = drizzle({ client: sqlite });
+            const sqliteSchema = await import("./src/database/schema/sqlite");
+            setActiveSchema(sqliteSchema);
+            setActiveDb(global.database);
             break;
         }
         case "mysql": {
-            const { createConnection } = await import("mysql2/promise");
-            const { createPool } = await import("mysql2");
-            const tmp_conn = await createConnection({
+            const mysql = await import("mysql2/promise");
+            const { drizzle } = await import("drizzle-orm/mysql2");
+
+            const tmp_conn = await mysql.createConnection({
                 host: global.config.mysql.host,
                 user: global.config.mysql.user,
                 password: global.config.mysql.password
-            })
-            await tmp_conn.query(`CREATE DATABASE IF NOT EXISTS ${global.config.db_name}`);
+            });
+            await tmp_conn.query(`CREATE DATABASE IF NOT EXISTS \`${global.config.db_name}\``);
             await tmp_conn.end();
 
-            global.database = new Kysely<any>({
-                dialect: new MysqlDialect({
-                    pool: createPool({
-                        host: global.config.mysql.host,
-                        port: global.config.mysql.port,
-                        user: global.config.mysql.user,
-                        password: global.config.mysql.password,
-                        database: global.config.db_name
-                    })
-                })
-            })
-
-            global.sql_dialect.id_column = col => col.primaryKey().autoIncrement();
+            const pool = mysql.createPool({
+                host: global.config.mysql.host,
+                port: global.config.mysql.port,
+                user: global.config.mysql.user,
+                password: global.config.mysql.password,
+                database: global.config.db_name
+            });
+            global.database = drizzle({ client: pool });
+            const mysqlSchema = await import("./src/database/schema/mysql");
+            setActiveSchema(mysqlSchema);
+            setActiveDb(global.database);
             break;
         }
         case "postgresql": {
             const { Client, Pool } = await import("pg");
+            const { drizzle } = await import("drizzle-orm/node-postgres");
 
             const client = new Client({
                 host: global.config.postgresql.host,
@@ -127,28 +157,17 @@ async function prepare() {
 
             await client.end();
 
-            global.database = new Kysely<any>({
-                dialect: new PostgresDialect({
-                    pool: new Pool({
-                        host: global.config.postgresql.host,
-                        port: global.config.postgresql.port,
-                        user: global.config.postgresql.user,
-                        password: global.config.postgresql.password,
-                        database: global.config.db_name
-                    })
-                })
-            })
-
-            global.sql_dialect.insert_ignore = (q) => {return  q.onConflict(oc => oc.doNothing())};
-            global.sql_dialect.id_column = col => col.primaryKey().generatedAlwaysAsIdentity();
-            global.sql_dialect.insert_return_id = async (db: Kysely<any>, table: string, values: {}): Promise<Number> => {
-                const result = await db
-                    .insertInto(table)
-                    .values(values).returning("id")
-                    .executeTakeFirstOrThrow()
-
-                return Number(result.id)
-            }
+            const pool = new Pool({
+                host: global.config.postgresql.host,
+                port: global.config.postgresql.port,
+                user: global.config.postgresql.user,
+                password: global.config.postgresql.password,
+                database: global.config.db_name
+            });
+            global.database = drizzle({ client: pool });
+            const pgSchema = await import("./src/database/schema/postgresql");
+            setActiveSchema(pgSchema);
+            setActiveDb(global.database);
             break;
         }
         default: {
@@ -156,39 +175,17 @@ async function prepare() {
             process.exit(0);
         }
     }
-
-    await load_methods();
-
-    let version: any = null;
-    try {
-        version = Number((await global.database.selectFrom("kasirku").select("v").where("k", "=", "version").executeTakeFirst())?.v ?? 0);
-    } catch(e) {
-        await global.database.schema
-            .createTable("kasirku")
-            .ifNotExists()
-            .addColumn("k", "text")
-            .addColumn("v", "text")
-        .execute();
-        
-        version = 0;
-    }
-
-    await migrate_up(global.database, version);
-
-    if (version === 0) {
-        await global.sql_dialect.insert_ignore(global.database.insertInto("kasirku")
-        .values({ k: "version", v: "2" }))
-        .execute();
-    } else {
-        await global.database
-        .updateTable("kasirku")
-        .set({ v: "2" })
-        .where("k", "=", "version")
-        .execute();
-    }
+    await load_methods("./src/method_function", "./src/method_function", global.method_cache);
+    await migrate_up(global.database, global.config.db_type);
     
     console.log("[LOG] All ready!");
 }
 
-await prepare();
-main();
+if (!check_env_file()) {
+    console.log("[LOG] Config File not found! Running Setup Page...");
+    setup_http_main();
+} else {
+    const { main } = await import("./src/server");
+    await prepare();
+    main();
+}

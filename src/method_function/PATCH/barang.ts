@@ -13,16 +13,18 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 import { check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, barang } = getSchema();
+    const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
@@ -43,7 +45,7 @@ export default async function(req: Request, token: string) {
     const now = Date.now();
     try {
         await db
-        .updateTable('barang')
+        .update(barang)
         .set({
             nama_barang,
             stok_barang,
@@ -53,7 +55,7 @@ export default async function(req: Request, token: string) {
             barcode_barang,
             modified_ms: now
         })
-        .where('id', '=', id)
+        .where(eq(barang.id, id))
         .execute();
     } catch(e) {
         if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});

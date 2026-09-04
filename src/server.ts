@@ -14,9 +14,11 @@
 */
 
 import { global } from "./global";
+import { getDb, getSchema } from "./database/schema";
 import * as Bun from "bun";
 import { user_session_interface } from "./user_session/user_session";
 import { parse_cookie, mime_types } from "./utils/utils";
+import { eq } from "drizzle-orm";
 
 let is_server_closed = false;
 let bun_serve: any;
@@ -43,7 +45,9 @@ async function stop_server() {
         bun_serve.stop();
         if (bun_serve2) bun_serve2.stop();
 
-        if (global.database) await global.database.destroy();
+        if (global.database) {
+            try { (global.database as any).destroy?.(); } catch(e) {}
+        }
 
         global.sse_clients.destroy();
         global.rate_limit.destroy();
@@ -158,9 +162,10 @@ export function main() {
             
                 const required_perm = protected_routes[pathname];
             
-                const db = global.database;
+                const db = getDb();
+                const { roles } = getSchema();
                 if (!db) return new Response("Internal Server Error", {status: 500});
-                const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst() as {permission_level: number};
+                const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1) as {permission_level: number}[];
 
                 if (required_perm && !(res_role.permission_level & required_perm)) {
                     for (const [key, value] of Object.entries(protected_routes)) {

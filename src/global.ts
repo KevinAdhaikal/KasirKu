@@ -17,7 +17,9 @@ import { user_session } from "./user_session/user_session";
 import { mutex } from "./utils/utils";
 import { sse_server } from "./sse_server/sse_server";
 import { rate_limit } from "./rate_limit/rate_limit";
-import { ColumnDefinitionBuilder, InsertQueryBuilder, InsertResult, Kysely } from "kysely";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import type { MySql2Database } from "drizzle-orm/mysql2";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 const current_date = new Date()
 
@@ -45,8 +47,8 @@ export const global = {
     // rate limit (max req 100/10 seconds. jail for 25 seconds)
     rate_limit: new rate_limit(10, 100, 5),
 
-    // Database
-    database: null as unknown as Kysely<any>,
+    // Database (Drizzle instance — one of the three dialects)
+    database: null as unknown as BaseSQLiteDatabase<any, any> | MySql2Database<any> | NodePgDatabase<any>,
 
     // static cache for file
     static_cache: new Map() as Map<string, {buffer: Uint8Array, last_modified: number}>,
@@ -56,9 +58,9 @@ export const global = {
         "listen_port": 443,
         "use_tls": true,
         "compile_html": false,
-        "db_type": "sqlite",
-        "db_name": "kasirku",
-        "tls_key_path": "cert/key.pem",
+        "db_type": "" as "sqlite" | "mysql" | "postgresql",
+        "db_name": "",
+        "tls_key_path": "cert",
         "tls_cert_path": "cert/cert.pem",
         "postgresql": {
             "host": "localhost",
@@ -72,7 +74,7 @@ export const global = {
             "user": "root",
             "password": ""
         }
-    },
+    } as Record<string, any>,
 
     // Permissions
     permissions: {
@@ -81,24 +83,6 @@ export const global = {
         KASIR: 1 << 2,
         MANAGE_PEMBUKUAN: 1 << 3,
         DASHBOARD: 1 << 4
-    },
-
-    // sql dialect function
-    sql_dialect: {
-        insert_ignore: (q: InsertQueryBuilder<any, any, InsertResult>): InsertQueryBuilder<any, any, InsertResult> => {
-            return q.ignore();
-        },
-        insert_return_id: async (db: Kysely<any>, table: string, values: {}): Promise<Number> => {
-            const result = await db
-                .insertInto(table)
-                .values(values)
-                .executeTakeFirstOrThrow()
-
-            return Number(result.insertId)
-        },
-        id_column: (col: ColumnDefinitionBuilder): ColumnDefinitionBuilder => {
-            return col;
-        },
     },
 
     method_cache: {} as Record<string, any>,
