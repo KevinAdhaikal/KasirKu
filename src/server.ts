@@ -16,9 +16,11 @@
 import { global } from "./global";
 import { getDb, getSchema } from "./database/schema";
 import * as Bun from "bun";
-import { user_session_interface } from "./user_session/user_session";
+import { user_session, user_session_interface } from "./user_session/user_session";
 import { parse_cookie, mime_types } from "./utils/utils";
 import { eq } from "drizzle-orm";
+import { sse_server } from "./sse_server/sse_server";
+import { rate_limit } from "./rate_limit/rate_limit";
 
 let is_server_closed = false;
 let bun_serve: any;
@@ -55,6 +57,12 @@ async function stop_server() {
 
         console.log("[LOG] Server has been stopped!");
     }
+}
+
+function init_global() {
+    global.user_sessions = new user_session(600, 60, 32); // user sessions
+    global.sse_clients = new sse_server(5000); // sse clients
+    global.rate_limit = new rate_limit(10, 100, 5); // rate limit (max req 100/10 seconds. jail for 25 seconds)
 }
 
 export function main() {

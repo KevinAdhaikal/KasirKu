@@ -1,12 +1,18 @@
 (() => {
     "use strict";
 
+    const DATABASE_STORAGE_KEY = "kasirku.setup.database";
+
+    const savedDatabase = localStorage.getItem(DATABASE_STORAGE_KEY);
+    const supportedDatabases = ["mysql", "postgresql", "sqlite"];
+
     const state = {
         currentStep: 1,
         totalSteps: 5,
-        database: "mysql",
+        database: supportedDatabases.includes(savedDatabase) ? savedDatabase : "mysql",
         processingTimer: null,
         finished: false,
+        connectionTested: false,
     };
     const elements = {
         progressBar: document.getElementById("progressBar"),
@@ -24,6 +30,12 @@
         connectionStatus: document.getElementById("connectionStatus"),
         connectionStatusTitle: document.getElementById("connectionStatusTitle"),
         connectionStatusMessage: document.getElementById("connectionStatusMessage"),
+        adminForm: document.getElementById("adminForm"),
+        adminFullName: document.getElementById("adminFullName"),
+        adminUsername: document.getElementById("adminUsername"),
+        adminPassword: document.getElementById("adminPassword"),
+        adminConfirmPassword: document.getElementById("adminConfirmPassword"),
+        adminValidationMessage: document.getElementById("adminValidationMessage"),
         processingScreen: document.getElementById("processingScreen"),
         processingProgressBar: document.getElementById("processingProgressBar"),
         successScreen: document.getElementById("successScreen"),
@@ -36,6 +48,19 @@
         databaseInputs: [...document.querySelectorAll('input[name="database"]')],
         componentInputs: [...document.querySelectorAll('input[name="components"]')],
     };
+
+    async function fileToBase64(file) {
+        const buffer = await file.arrayBuffer();
+
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+
+        for (const byte of bytes) {
+            binary += String.fromCharCode(byte);
+        }
+
+        return btoa(binary);
+    }
 
     function showStep(stepNumber) {
         if (state.finished) return;
@@ -65,6 +90,7 @@
             : 'Next <i class="bi bi-arrow-right"></i>';
 
         clearConnectionStatus();
+        updateNextButtonState();
     }
 
     function goNext() {
@@ -79,11 +105,6 @@
     function goBack() {
         if (state.currentStep > 1) showStep(state.currentStep - 1);
     }
-
-    /* =========================================================
-       Validation
-       Add new per-step validation here as the wizard grows.
-       ========================================================= */
     function validateStep(stepNumber) {
         if (stepNumber === 2) {
             const port = Number(elements.serverPort.value);
@@ -114,7 +135,22 @@
             }
         }
 
-        if (stepNumber === 4) return validateConnectionInputs();
+        if (stepNumber === 4) {
+            if (!validateConnectionInputs()) return false;
+
+            if ((state.database === "mysql" || state.database === "postgresql") && !state.connectionTested) {
+                showConnectionStatus(
+                    "error",
+                    "Test Connection required",
+                    "Berhasil melewati konfigurasi belum cukup. Jalankan Test Connection sampai berhasil terlebih dahulu."
+                );
+                return false;
+            }
+
+            return true;
+        }
+
+        if (stepNumber === 5) return validateAdminInputs();
         return true;
     }
 
@@ -203,22 +239,22 @@
                     })}
                     ${inputField({
                         label: "Username",
-                        name: "username",
+                        name: "user",
                         value: "root",
                         required: true,
                         col: "col-md-6",
                     })}
                     ${inputField({
                         label: "Password",
-                        name: "password",
+                        name: "pass",
                         value: "",
                         type: "password",
-                        required: true,
+                        required: false,
                         col: "col-md-6",
                     })}
                     ${inputField({
                         label: "Database Name",
-                        name: "databaseName",
+                        name: "name",
                         value: "kasirku",
                         required: true,
                         col: "col-md-12",
@@ -246,22 +282,22 @@
                     })}
                     ${inputField({
                         label: "Username",
-                        name: "username",
+                        name: "user",
                         value: "postgres",
                         required: true,
                         col: "col-md-6",
                     })}
                     ${inputField({
                         label: "Password",
-                        name: "password",
+                        name: "pass",
                         value: "",
                         type: "password",
-                        required: true,
+                        required: false,
                         col: "col-md-6",
                     })}
                     ${inputField({
                         label: "Database Name",
-                        name: "databaseName",
+                        name: "name",
                         value: "kasirku",
                         required: true,
                         col: "col-md-12",
@@ -273,12 +309,12 @@
                 defaultPort: null,
                 fields: `
                     ${inputField({
-                        label: "Database File",
-                        name: "sqlitePath",
-                        value: "./database/kasirku.db",
+                        label: "Database Name",
+                        name: "name",
+                        value: "kasirku",
                         required: true,
                         col: "col-md-12",
-                        placeholder: "./database/kasirku.db",
+                        placeholder: "kasirku",
                     })}
                 `,
             },
@@ -288,6 +324,7 @@
         if (!config) return;
 
         const canTest = database === "mysql" || database === "postgresql";
+        state.connectionTested = false;
 
         elements.connectionForm.innerHTML = `
             <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
@@ -295,7 +332,6 @@
                     <div class="text-muted" style="font-size: 11px;">Selected database</div>
                     <strong>${config.badge}</strong>
                 </div>
-                <span class="component-badge">${canTest ? "Test available" : "Local file"}</span>
             </div>
 
             <div class="row g-3">
@@ -308,11 +344,7 @@
                         <i class="bi bi-plug me-1"></i>
                         Test Connection
                     </button>
-                ` : `
-                    <div class="small text-muted align-self-center">
-                        SQLite tidak membutuhkan remote connection test.
-                    </div>
-                `}
+                ` : ""}
             </div>
         `;
 
@@ -322,15 +354,7 @@
         }
     }
 
-    function inputField({
-        label,
-        name,
-        value = "",
-        type = "text",
-        required = false,
-        col = "col-md-12",
-        placeholder = "",
-    }) {
+    function inputField({label, name, value = "", type = "text", required = false, col = "col-md-12", placeholder = ""}) {
         return `
             <div class="${col}">
                 <label class="form-label" for="connection-${name}">${label}</label>
@@ -349,53 +373,60 @@
 
     async function testConnection() {
         if (!validateConnectionInputs()) {
+            state.connectionTested = false;
             showConnectionStatus(
                 "error",
                 "Invalid configuration",
                 "Lengkapi semua field connection terlebih dahulu."
             );
+            updateNextButtonState();
             return;
         }
 
         const button = document.getElementById("testConnectionButton");
+        if (!button) return;
+
         const originalButtonHtml = button.innerHTML;
+
+        state.connectionTested = false;
+        updateNextButtonState();
 
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Testing...';
 
-        showConnectionStatus(
-            "info",
-            "Testing connection...",
-            `Mencoba terhubung ke ${state.database}.`
-        );
+        try {
+            const response = await fetch('/test_connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(collectConnectionData()),
+            });
 
-        const response = await fetch('/api/setup/database/test', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(collectConnectionData()),
-        });
-        const result = await response.json();
+            const res_text = await response.text();
+            state.connectionTested = response.status === 200;
 
-        button.disabled = false;
-        button.innerHTML = originalButtonHtml;
-
-        showConnectionStatus(
-            "success",
-            "Connection successful",
-            "Placeholder test selesai. Ganti bagian testConnection() dengan request ke backend kamu."
-        );
+            showConnectionStatus(
+                state.connectionTested ? "success" : "error",
+                state.connectionTested ? "Connection successful" : "Connection failed",
+                res_text || (state.connectionTested ? "Database connection berhasil." : "Database connection gagal.")
+            );
+        } catch (error) {
+            state.connectionTested = false;
+            showConnectionStatus(
+                "error",
+                "Connection failed",
+                error instanceof Error ? error.message : "Tidak dapat menghubungi server."
+            );
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalButtonHtml;
+            updateNextButtonState();
+        }
     }
 
     function showConnectionStatus(type, title, message) {
         elements.connectionStatus.classList.remove("d-none", "is-success", "is-error");
-
-        if (type === "success") {
-            elements.connectionStatus.classList.add("is-success");
-        }
-
-        if (type === "error") {
-            elements.connectionStatus.classList.add("is-error");
-        }
+        if (type === "success") elements.connectionStatus.classList.add("is-success");
+        if (type === "error") elements.connectionStatus.classList.add("is-error");
 
         elements.connectionStatusTitle.textContent = title;
         elements.connectionStatusMessage.textContent = message;
@@ -406,21 +437,136 @@
         elements.connectionStatus.classList.remove("is-success", "is-error");
     }
 
-    /* =========================================================
-       Finish / Processing
-       The delay is only a UI placeholder for your backend setup call.
-       ========================================================= */
-    function startProcessing() {
-        // Once Finish is pressed, the wizard is locked and every step is completed.
-        state.finished = true;
+    function updateNextButtonState() {
+        if (state.currentStep !== 4) {
+            elements.nextButton.disabled = false;
+            return;
+        }
 
-        // Mark every component as selected so the final state is fully checked.
+        const requiresTest = state.database === "mysql" || state.database === "postgresql";
+        elements.nextButton.disabled = requiresTest && !state.connectionTested;
+    }
+
+    function validateAdminInputs() {
+        const fields = [
+            elements.adminFullName,
+            elements.adminUsername,
+            elements.adminPassword,
+            elements.adminConfirmPassword,
+        ];
+
+        let valid = true;
+
+        fields.forEach((input) => {
+            if (!input) return;
+            const fieldValid = Boolean(input.value.trim());
+            input.classList.toggle("is-invalid", !fieldValid);
+            if (!fieldValid) valid = false;
+        });
+
+        if (elements.adminPassword?.value && elements.adminConfirmPassword?.value) {
+            const passwordsMatch = elements.adminPassword.value === elements.adminConfirmPassword.value;
+            elements.adminPassword.classList.toggle("is-invalid", !passwordsMatch);
+            elements.adminConfirmPassword.classList.toggle("is-invalid", !passwordsMatch);
+
+            if (!passwordsMatch) {
+                valid = false;
+                elements.adminValidationMessage.textContent = "Password dan Confirm Password harus sama.";
+                elements.adminValidationMessage.classList.remove("d-none");
+            } else {
+                elements.adminValidationMessage.classList.add("d-none");
+            }
+        } else {
+            elements.adminValidationMessage.classList.add("d-none");
+        }
+
+        const firstInvalid = fields.find((input) => input?.classList.contains("is-invalid"));
+        firstInvalid?.focus();
+
+        return valid;
+    }
+
+    async function checkOldDB() {
+        const response = await fetch('/check_old_db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(collectConnectionData()),
+        });
+
+        if (response.status === 403) {
+            await Swal.fire({
+                icon: "error",
+                title: "Database Error",
+                text: await response.text(),
+                confirmButtonText: "OK",
+            });
+            return -1;
+        }
+
+        return response.status === 200;
+    }
+
+    function backToComponents() {
+        clearInterval(state.processingTimer);
+
+        state.finished = false;
+        state.currentStep = 5;
+        state.connectionTested = false;
+
+        elements.processingScreen.classList.add("d-none");
+        elements.successScreen.classList.add("d-none");
+
+        elements.progressWrapper?.classList.remove("d-none");
+        elements.wizardFooter.classList.remove("d-none");
+
+        elements.stepItems.forEach((item) => {
+            item.disabled = false;
+            item.removeAttribute("aria-disabled");
+            item.classList.remove("active", "completed");
+        });
+
+        elements.wizardSteps.forEach((step) => {
+            step.classList.remove("active");
+        });
+
+        showStep(5);
+    }
+
+    function setProgress(start, target, duration = 1000) {
+        return new Promise(resolve => {
+            target = Math.max(0, Math.min(target, 100));
+
+            const startTime = performance.now();
+
+            cancelAnimationFrame(state.processingTimer);
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - t, 3);
+                const current = start + (target - start) * eased;
+
+                elements.processingProgressBar.style.width = `${current}%`;
+
+                if (t < 1) {
+                    state.processingTimer = requestAnimationFrame(animate);
+                } else {
+                    elements.processingProgressBar.style.width = `${target}%`;
+                    state.processingTimer = null;
+                    resolve();
+                }
+            }
+
+            state.processingTimer = requestAnimationFrame(animate);
+        });
+    }
+
+    async function startProcessing() {
+        state.finished = true;
         elements.componentInputs.forEach((input) => {
             input.checked = true;
             input.dispatchEvent(new Event("change", { bubbles: true }));
         });
-
-        // Mark every sidebar step as completed, including Step 5 / Components.
         elements.stepItems.forEach((item) => {
             item.classList.remove("active");
             item.classList.add("completed");
@@ -437,20 +583,160 @@
         elements.stepItems.forEach((item) => item.classList.remove("active"));
         elements.processingScreen.classList.remove("d-none");
 
-        let progress = 0;
         elements.processingProgressBar.style.width = "0%";
 
-        clearInterval(state.processingTimer);
-        state.processingTimer = setInterval(() => {
-            progress += Math.floor(Math.random() * 17) + 8;
-            progress = Math.min(progress, 100);
-            elements.processingProgressBar.style.width = `${progress}%`;
+        let db_new_migrate = await checkOldDB();
+        if (db_new_migrate === -1) return backToComponents();
+        else if (db_new_migrate === true) {
+            const res_swal = await Swal.fire({
+                icon: "question",
+                title: "Database Lama Ditemukan",
+                html: `
+                    <p class="mb-2">
+                        KasirKu menemukan database dari versi sebelumnya.
+                        Apakah Anda ingin memigrasikan data tersebut?
+                    </p>
+                    <div class="alert alert-warning text-start mb-0" style="font-size: 14px;">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        <strong>Perhatian:</strong>
+                        Jika memilih <strong>Tidak</strong>, data dari database lama
+                        tidak akan dimigrasikan dan tidak dapat dipulihkan melalui KasirKu.
+                    </div>
+                `,
+                showCancelButton: true,
+                cancelButtonText: "Tidak",
+                confirmButtonText: "Ya",
+                reverseButtons: true
+            });
 
-            if (progress >= 100) {
-                clearInterval(state.processingTimer);
-                setTimeout(showSuccess, 450);
-            }
-        }, 350);
+            db_new_migrate = res_swal.isConfirmed
+        }
+
+        setProgress(0, 25, 7000);
+
+        const res_db = await fetch('/setup_db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(collectConnectionData()),
+        });
+
+        if (res_db.status === 403) {
+            await Swal.fire({
+                icon: "error",
+                title: "Database Error",
+                text: await res_db.text(),
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+        else if (res_db.status === 400) {
+            await Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong! Please try again later",
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+        setProgress(25, 50, 7000);
+
+        const res_store = await fetch('/setup_store', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                
+            }),
+        });
+
+        if (res_store.status === 403) {
+            await Swal.fire({
+                icon: "error",
+                title: "Database Error",
+                text: await res_store.text(),
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+        else if (res_store.status === 400) {
+            await Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong! Please try again later",
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+
+        setProgress(50, 75, 10000);
+        const res_server = await fetch('/setup_server', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                protocol: getCheckedValue("protocol"),
+                port: Number(elements.serverPort.value),
+                tls: {
+                    mode: getCheckedValue("tlsMode"),
+                    certificate: fileToBase64(document.getElementById("tlsCertificate")?.files?.[0]) ?? null,
+                    key: fileToBase64(document.getElementById("tlsKey")?.files?.[0]) ?? null,
+                },
+                compile_html: getCheckedValue("compileHtml") === "yes",
+            }),
+        });
+
+        if (res_server.status === 403) {
+            await Swal.fire({
+                icon: "error",
+                title: "Server Error",
+                text: await res_server.text(),
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+        else if (res_server.status === 400) {
+            await Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong! Please try again later",
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+
+        setProgress(75, 95, 10000);
+        const res_final = await fetch('/setup_final', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                admin: collectAdminData(),
+            }),
+        });
+
+        if (res_final.status === 400) {
+            await Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong! Please try again later",
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+        
+        await setProgress(95, 100, 1000);
+        showSuccess();
     }
 
     function showSuccess() {
@@ -458,10 +744,15 @@
         elements.successScreen.classList.remove("d-none");
     }
 
-    /* =========================================================
-       Data collection
-       Gives you one object ready to send to the backend.
-       ========================================================= */
+    function collectAdminData() {
+        return {
+            full_name: elements.adminFullName?.value.trim() ?? "",
+            username: elements.adminUsername?.value.trim() ?? "",
+            password: elements.adminPassword?.value ?? "",
+            confirm_password: elements.adminConfirmPassword?.value ?? "",
+        };
+    }
+
     function collectConfiguration() {
         return {
             server: {
@@ -472,87 +763,43 @@
                     certificate: document.getElementById("tlsCertificate")?.files?.[0]?.name ?? null,
                     key: document.getElementById("tlsKey")?.files?.[0]?.name ?? null,
                 },
-                compileHtml: getCheckedValue("compileHtml") === "yes",
+                compile_html: getCheckedValue("compileHtml") === "yes",
             },
-            database: {
-                type: state.database,
-                connection: collectConnectionData(),
-            },
-            components: elements.componentInputs
-                .filter((input) => input.checked)
-                .map((input) => input.value),
+            database: collectConnectionData(),
+            admin: collectAdminData(),
         };
     }
 
     function collectConnectionData() {
         const formData = new FormData(elements.connectionForm);
-        return Object.fromEntries(formData.entries());
+
+        return {
+            type: state.database,
+            ...Object.fromEntries(formData.entries()),
+        };
     }
 
-    /* =========================================================
-       Database event handling
-       ========================================================= */
     function handleDatabaseChange(event) {
         state.database = event.target.value;
+        localStorage.setItem(DATABASE_STORAGE_KEY, state.database);
 
         elements.databaseInputs.forEach((input) => {
             input.closest(".database-card")?.classList.toggle("selected", input.checked);
         });
 
         renderConnectionForm(state.database);
+        updateNextButtonState();
     }
-
-    /* =========================================================
-       Stepper clicks
-       ========================================================= */
-    function handleStepperClick(event) {
-        if (state.finished) {
-            event.preventDefault();
-            return;
-        }
-
-        const targetStep = Number(event.currentTarget.dataset.stepTarget);
-
-        // Allow jumping back to already-visited steps.
-        if (targetStep < state.currentStep) {
-            showStep(targetStep);
-            return;
-        }
-
-        // Allow moving forward only through validation.
-        if (targetStep === state.currentStep + 1 && validateStep(state.currentStep)) {
-            showStep(targetStep);
-        }
-    }
-
-    /* =========================================================
-       Helpers
-       ========================================================= */
     function getCheckedValue(name) {
         return document.querySelector(`input[name="${name}"]:checked`)?.value ?? null;
     }
 
-    function sleep(ms) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
     function escapeHtmlAttribute(value) {
-        return value
-            .replaceAll("&", "&amp;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;");
+        return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
-
-    /* =========================================================
-       Event bindings
-       ========================================================= */
     elements.nextButton.addEventListener("click", goNext);
     elements.backButton.addEventListener("click", goBack);
 
-    elements.stepItems.forEach((item) => {
-        item.addEventListener("click", handleStepperClick);
-    });
 
     elements.protocolInputs.forEach((input) => {
         input.addEventListener("change", handleProtocolChange);
@@ -582,19 +829,29 @@
         });
     });
 
+    elements.connectionForm.addEventListener("input", () => {
+        if (state.database === "mysql" || state.database === "postgresql") {
+            state.connectionTested = false;
+            clearConnectionStatus();
+            updateNextButtonState();
+        }
+    });
+
+    elements.adminForm?.addEventListener("input", (event) => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement) {
+            target.classList.remove("is-invalid");
+        }
+        elements.adminValidationMessage?.classList.add("d-none");
+    });
+
     elements.openAppButton.addEventListener("click", () => {
-        // Change this to your actual application route.
         window.location.href = "/";
     });
 
     document.querySelectorAll(".alert-example-button").forEach((button) => {
         button.addEventListener("click", handleAlertExample);
     });
-
-    /* =========================================================
-       Alert examples
-       These demos use SweetAlert2 and can be copied for components.
-       ========================================================= */
     async function handleAlertExample(event) {
         const type = event.currentTarget.dataset.alertType;
         let result;
@@ -674,11 +931,14 @@
             }
         }
     }
+    
+    elements.databaseInputs.forEach((input) => {
+        input.checked = input.value === state.database;
+        input.closest(".database-card")?.classList.toggle("selected", input.checked);
+    });
 
-    /* =========================================================
-       Initial render
-       ========================================================= */
     renderConnectionForm(state.database);
     updateTlsFields();
+    updateNextButtonState();
     showStep(1);
 })();

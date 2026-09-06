@@ -4,26 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>KasirKu Setup Wizard</title>
-
-    <!-- Bootstrap -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
-
-    <!-- Bootstrap Icons -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet"
-    >
-
-    <!-- Application styles -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <main class="setup-shell">
         <section class="setup-card">
-            <!-- Sidebar / Stepper -->
             <aside class="setup-sidebar">
                 <div class="brand-block">
                     <div class="brand-icon">
@@ -34,71 +21,55 @@
                         <div class="brand-subtitle">Setup Wizard</div>
                     </div>
                 </div>
-
                 <nav class="stepper" aria-label="Setup steps">
-                    <button class="stepper-item active" type="button" data-step-target="1">
+                    <div class="stepper-item active" data-step-target="1">
                         <span class="stepper-number">1</span>
                         <span class="stepper-content">
                             <span class="stepper-title">Welcome</span>
                             <span class="stepper-description">Get started</span>
                         </span>
-                    </button>
-
-                    <button class="stepper-item" type="button" data-step-target="2">
+                    </div>
+                    <div class="stepper-item" data-step-target="2">
                         <span class="stepper-number">2</span>
                         <span class="stepper-content">
                             <span class="stepper-title">Server</span>
                             <span class="stepper-description">Server configuration</span>
                         </span>
-                    </button>
-
-                    <button class="stepper-item" type="button" data-step-target="3">
+                    </div>
+                    <div class="stepper-item" data-step-target="3">
                         <span class="stepper-number">3</span>
                         <span class="stepper-content">
                             <span class="stepper-title">Database</span>
                             <span class="stepper-description">Choose database</span>
                         </span>
-                    </button>
-
-                    <button class="stepper-item" type="button" data-step-target="4">
+                    </div>
+                    <div class="stepper-item" data-step-target="4">
                         <span class="stepper-number">4</span>
                         <span class="stepper-content">
                             <span class="stepper-title">Connection</span>
                             <span class="stepper-description">Database connection</span>
                         </span>
-                    </button>
-
-                    <button class="stepper-item" type="button" data-step-target="5">
+                    </div>
+                    <div class="stepper-item" data-step-target="5">
                         <span class="stepper-number">5</span>
                         <span class="stepper-content">
-                            <span class="stepper-title">Components</span>
-                            <span class="stepper-description">Optional components</span>
+                            <span class="stepper-title">Admin User</span>
+                            <span class="stepper-description">Create administrator</span>
                         </span>
-                    </button>
+                    </div>
                 </nav>
-
                 <div class="sidebar-footer">
-                    <span>KasirKu</span>
-                    <span class="dot">•</span>
-                    <span>Installer</span>
+                    <span>KasirKu Installer</span>
                 </div>
             </aside>
-
-            <!-- Main content -->
             <section class="setup-content">
-                <!-- Progress bar stays fixed at the top of the card body. -->
                 <div class="progress-wrapper" aria-hidden="true">
                     <div class="progress">
                         <div id="progressBar" class="progress-bar" role="progressbar" style="width: 20%"></div>
                     </div>
                 </div>
-
-                <!-- Only this area is allowed to scroll. -->
                 <div class="setup-content-inner">
                     <div class="wizard-body">
-                        <!-- =========================
-                         STEP 1: WELCOME
-                         ========================= -->
                     <section class="wizard-step active" data-step="1">
                         <div class="step-heading">
                             <div class="step-kicker">Step 1 of 5</div>
@@ -122,43 +93,13 @@
                                 </p>
                             </div>
                         </div>
-
-                        <div class="info-grid">
-                            <div class="info-card">
-                                <i class="bi bi-hdd-stack"></i>
-                                <div>
-                                    <strong>Server</strong>
-                                    <span>HTTP / HTTPS dan TLS</span>
-                                </div>
-                            </div>
-                            <div class="info-card">
-                                <i class="bi bi-database"></i>
-                                <div>
-                                    <strong>Database</strong>
-                                    <span>MySQL, PostgreSQL, atau SQLite</span>
-                                </div>
-                            </div>
-                            <div class="info-card">
-                                <i class="bi bi-puzzle"></i>
-                                <div>
-                                    <strong>Components</strong>
-                                    <span>Atur fitur tambahan</span>
-                                </div>
-                            </div>
-                        </div>
                     </section>
-
-                    <!-- =========================
-                         STEP 2: SERVER
-                         ========================= -->
                     <section class="wizard-step" data-step="2">
                         <div class="step-heading">
                             <div class="step-kicker">Step 2 of 5</div>
                             <h1>Server Configuration</h1>
                             <p>Atur protokol, port, TLS certificate, dan opsi compile HTML.</p>
                         </div>
-
-                        <!-- Protocol -->
                         <div class="section-block">
                             <label class="form-label section-label">Protocol</label>
                             <div class="option-grid option-grid-2">
@@ -171,7 +112,6 @@
                                         <small>Standard HTTP connection</small>
                                     </span>
                                 </label>
-
                                 <label class="radio-card">
                                     <input type="radio" name="protocol" value="https">
                                     <span class="radio-card-check"></span>
@@ -183,8 +123,6 @@
                                 </label>
                             </div>
                         </div>
-
-                        <!-- Port -->
                         <div class="section-block">
                             <label for="serverPort" class="form-label section-label">Port</label>
                             <input
@@ -197,8 +135,6 @@
                             >
                             <div class="form-text">Port akan otomatis menyesuaikan protocol yang dipilih dan masih bisa diubah secara manual.</div>
                         </div>
-
-                        <!-- TLS -->
                         <div id="tlsSection" class="section-block tls-section">
                             <label class="form-label section-label">TLS Certificate &amp; Key</label>
                             <div class="option-grid option-grid-2">
@@ -250,8 +186,6 @@
                                 <div class="file-upload-hint">Upload the certificate and private key used by your HTTPS server.</div>
                             </div>
                         </div>
-
-                        <!-- Compile -->
                         <div class="section-block">
                             <label class="form-label section-label">Compile HTML</label>
                             <div class="option-grid option-grid-2">
@@ -277,10 +211,6 @@
                             </div>
                         </div>
                     </section>
-
-                    <!-- =========================
-                         STEP 3: DATABASE
-                         ========================= -->
                     <section class="wizard-step" data-step="3">
                         <div class="step-heading">
                             <div class="step-kicker">Step 3 of 5</div>
@@ -292,7 +222,7 @@
                             <label class="database-card">
                                 <input type="radio" name="database" value="mysql" checked>
                                 <span class="database-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="database-logo mysql-logo">MY</span>
+                                <span class="database-logo mysql-logo"><img src="img/mysql.png"></span>
                                 <strong>MySQL</strong>
                                 <small>Popular relational database</small>
                             </label>
@@ -300,7 +230,7 @@
                             <label class="database-card">
                                 <input type="radio" name="database" value="postgresql">
                                 <span class="database-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="database-logo postgres-logo">PG</span>
+                                <span class="database-logo postgres-logo"><img src="img/postgresql.svg"></span>
                                 <strong>PostgreSQL</strong>
                                 <small>Advanced open-source database</small>
                             </label>
@@ -308,27 +238,19 @@
                             <label class="database-card">
                                 <input type="radio" name="database" value="sqlite">
                                 <span class="database-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="database-logo sqlite-logo">SQ</span>
+                                <span class="database-logo sqlite-logo"><img src="img/sqlite.png"></span>
                                 <strong>SQLite</strong>
                                 <small>Embedded file-based database</small>
                             </label>
                         </div>
                     </section>
-
-                    <!-- =========================
-                         STEP 4: CONNECTION
-                         ========================= -->
                     <section class="wizard-step" data-step="4">
                         <div class="step-heading">
                             <div class="step-kicker">Step 4 of 5</div>
                             <h1>Database Connection</h1>
                             <p>Isi konfigurasi koneksi database, kemudian gunakan Test Connection.</p>
                         </div>
-
-                        <form id="connectionForm" class="connection-form" novalidate>
-                            <!-- Rendered by JS -->
-                        </form>
-
+                        <form id="connectionForm" class="connection-form" novalidate></form>
                         <div id="connectionStatus" class="status-box d-none" role="status" aria-live="polite">
                             <div class="status-box-icon">
                                 <i class="bi bi-info-circle"></i>
@@ -340,101 +262,39 @@
                         </div>
                     </section>
 
-                    <!-- =========================
-                         STEP 5: COMPONENTS
-                         ========================= -->
                     <section class="wizard-step" data-step="5">
                         <div class="step-heading">
                             <div class="step-kicker">Step 5 of 5</div>
-                            <h1>Components</h1>
-                            <p>
-                                Contoh component selector yang bisa kamu duplikasi dan modifikasi sendiri.
-                            </p>
+                            <h1>Create Admin User</h1>
+                            <p>Buat akun administrator yang akan digunakan untuk masuk ke aplikasi KasirKu.</p>
                         </div>
 
-                        <!--
-                            COMPONENT EXAMPLE
-                            -----------------
-                            Untuk membuat component lain, cukup copy blok .component-card,
-                            ubah icon/title/description, lalu sesuaikan value input-nya.
-                        -->
-                        <div class="component-list">
-                            <label class="component-card">
-                                <input type="checkbox" name="components" value="telegram" checked>
-                                <span class="component-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="component-icon"><i class="bi bi-send"></i></span>
-                                <span class="component-body">
-                                    <strong>Telegram Integration</strong>
-                                    <small>Enable Telegram notifications and bot integration.</small>
-                                </span>
-                                <span class="component-badge">Example</span>
-                            </label>
-
-                            <label class="component-card">
-                                <input type="checkbox" name="components" value="reports">
-                                <span class="component-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="component-icon"><i class="bi bi-bar-chart"></i></span>
-                                <span class="component-body">
-                                    <strong>Advanced Reports</strong>
-                                    <small>Enable additional reporting and analytics modules.</small>
-                                </span>
-                                <span class="component-badge muted">Optional</span>
-                            </label>
-
-                            <label class="component-card">
-                                <input type="checkbox" name="components" value="backup">
-                                <span class="component-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="component-icon"><i class="bi bi-cloud-arrow-up"></i></span>
-                                <span class="component-body">
-                                    <strong>Backup Service</strong>
-                                    <small>Enable automatic database backup tasks.</small>
-                                </span>
-                                <span class="component-badge muted">Optional</span>
-                            </label>
-
-                            <label class="component-card">
-                                <input type="checkbox" name="components" value="alerts">
-                                <span class="component-check"><i class="bi bi-check-lg"></i></span>
-                                <span class="component-icon"><i class="bi bi-bell"></i></span>
-                                <span class="component-body">
-                                    <strong>Alert Dialogs</strong>
-                                    <small>Example SweetAlert2 dialogs for confirmations and actions.</small>
-                                </span>
-                                <span class="component-badge">Example</span>
-                            </label>
-                        </div>
-
-                        <div class="alert-example-panel">
-                            <div class="alert-example-heading">
-                                <div>
-                                    <div class="section-label mb-1">Alert Examples</div>
-                                    <p class="alert-example-description mb-0">
-                                        Contoh dialog interaktif untuk component atau action di aplikasi.
-                                    </p>
+                        <form id="adminForm" class="admin-form" novalidate>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label" for="adminFullName">Full Name</label>
+                                    <input id="adminFullName" name="full_name" class="form-control" type="text"
+                                           autocomplete="name" required>
                                 </div>
-                                <span class="component-badge">SweetAlert2</span>
+                                <div class="col-md-12">
+                                    <label class="form-label" for="adminUsername">Username</label>
+                                    <input id="adminUsername" name="username" class="form-control" type="text"
+                                           autocomplete="username" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="adminPassword">Password</label>
+                                    <input id="adminPassword" name="password" class="form-control" type="password"
+                                           autocomplete="new-password" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="adminConfirmPassword">Confirm Password</label>
+                                    <input id="adminConfirmPassword" name="confirm_password" class="form-control"
+                                           type="password" autocomplete="new-password" required>
+                                </div>
                             </div>
-
-                            <div class="alert-example-grid">
-                                <button type="button" class="btn btn-outline-secondary alert-example-button" data-alert-type="info">
-                                    <i class="bi bi-info-circle me-1"></i> Info
-                                </button>
-                                <button type="button" class="btn btn-outline-primary alert-example-button" data-alert-type="confirm">
-                                    <i class="bi bi-question-circle me-1"></i> Yes / No
-                                </button>
-                                <button type="button" class="btn btn-outline-warning alert-example-button" data-alert-type="cancel">
-                                    <i class="bi bi-exclamation-triangle me-1"></i> Yes / No / Cancel
-                                </button>
-                                <button type="button" class="btn btn-outline-danger alert-example-button" data-alert-type="delete">
-                                    <i class="bi bi-trash me-1"></i> Delete Confirm
-                                </button>
-                            </div>
-                        </div>
+                            <div id="adminValidationMessage" class="form-text admin-validation-message d-none"></div>
+                        </form>
                     </section>
-
-                    <!-- =========================
-                         PROCESSING
-                         ========================= -->
                     <section id="processingScreen" class="processing-screen d-none">
                         <div class="processing-spinner spinner-border" role="status" aria-hidden="true"></div>
                         <div class="processing-kicker">SETUP</div>
@@ -446,10 +306,6 @@
                             <div id="processingProgressBar"></div>
                         </div>
                     </section>
-
-                    <!-- =========================
-                         SUCCESS
-                         ========================= -->
                     <section id="successScreen" class="success-screen d-none">
                         <div class="success-icon">
                             <i class="bi bi-check-lg"></i>
@@ -466,8 +322,6 @@
                     </section>
                     </div>
                 </div>
-
-                <!-- Footer navigation -->
                 <footer id="wizardFooter" class="wizard-footer">
                     <button id="backButton" type="button" class="btn btn-light btn-navigation" disabled>
                         <i class="bi bi-arrow-left"></i>
@@ -487,13 +341,8 @@
         </section>
     </main>
 
-    <!-- SweetAlert2 (component alert examples) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Application script -->
     <script src="script.js"></script>
 </body>
 </html>

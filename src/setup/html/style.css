@@ -111,20 +111,7 @@ select {
     border-radius: 12px;
     background: transparent;
     color: inherit;
-    transition: background-color 160ms ease, transform 160ms ease;
-}
-
-.stepper-item:hover:not(:disabled) {
-    background: #f1f2f8;
-}
-
-.stepper-item:disabled {
     cursor: default;
-    opacity: 1;
-}
-
-.stepper-item:disabled:hover {
-    background: transparent;
 }
 
 .stepper-item.active {
@@ -135,17 +122,19 @@ select {
     color: #fff;
     background: var(--setup-primary);
     border-color: var(--setup-primary);
+
+    font-size: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stepper-item.completed .stepper-number::before {
     content: "✓";
-    font-size: 13px;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
 }
-
-.stepper-item.completed .stepper-number {
-    font-size: 0;
-}
-
 .stepper-number {
     width: 32px;
     height: 32px;
@@ -716,16 +705,22 @@ select {
     letter-spacing: -0.04em;
 }
 
+.database-logo img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
 .mysql-logo {
-    background: #00758f;
+    background: #e5bd61;
 }
 
 .postgres-logo {
-    background: #336791;
+    background: #8fa9bf;
 }
 
 .sqlite-logo {
-    background: #0f8b8d;
+    background: #6b7280;
 }
 
 .database-card strong {
@@ -977,6 +972,26 @@ select {
         align-items: flex-start;
         flex-direction: column;
     }
+}
+
+/* =========================
+   Admin user
+   ========================= */
+.admin-form {
+    max-width: 760px;
+    padding: 22px;
+    border: 1px solid var(--setup-border);
+    border-radius: 16px;
+    background: #fff;
+}
+
+.admin-form .form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.admin-validation-message {
+    color: #dc3545;
+    margin-top: 12px;
 }
 
 /* =========================

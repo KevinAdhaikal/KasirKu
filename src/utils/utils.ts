@@ -14,6 +14,9 @@
 */
 
 import { Database } from "bun:sqlite";
+import { Connection, createConnection } from "mysql2/promise";
+import { Client } from "pg";
+import { mkdir } from "node:fs/promises";
 
 // mime types
 export const mime_types: Record<string, string> = {
@@ -307,4 +310,136 @@ export function check_sql_is_duplicate_error(error: any): boolean {
         error?.code === "SQLITE_CONSTRAINT_PRIMARYKEY" ||
         error?.code === "SQLITE_CONSTRAINT"
     );
+}
+
+export async function generate_cert() {
+    const forge = (await import("node-forge")).default
+
+    await mkdir("cert", { recursive: true });
+
+    const pki = forge.pki;
+    const keys = pki.rsa.generateKeyPair(4096);
+    const cert = pki.createCertificate();
+
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = "01";
+
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setDate(cert.validity.notBefore.getDate() + 36500);
+
+    const attrs = [
+        { name: "commonName", value: "localhost" },
+    ];
+
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+
+    cert.setExtensions([
+        {
+            name: "basicConstraints",
+            cA: true,
+        },
+        {
+            name: "keyUsage",
+            digitalSignature: true,
+            keyEncipherment: true,
+            dataEncipherment: true,
+        },
+        {
+            name: "subjectAltName",
+            altNames: [
+                {
+                    type: 2, // DNS
+                    value: "localhost",
+                },
+            ],
+        },
+    ]);
+
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+
+    await Bun.write("cert/key.pem", pki.privateKeyToPem(keys.privateKey));
+    await Bun.write("cert/cert.pem", pki.certificateToPem(cert));
+
+    console.log("[LOG] Certificate SSL/TLS has been created!");
+}
+
+// SQL Connection (PostgreSQL, MySQL, SQLite)
+export async function sql_connection(db_type: string, db_host: string, db_port: number, db_name: string | null, db_user: string, db_pass: string): Promise<{
+    pg_conn: Client | null,
+    ms_conn: Connection | null,
+    sl_conn: Database | null,
+    message: string | null
+}> {
+    let pg_conn = null;
+    let ms_conn = null;
+    let sl_conn = null;
+
+    switch(db_type) {
+        case "mysql": {
+            try {
+                ms_conn = await createConnection({
+                    host: db_host,
+                    port: db_port,
+                    user: db_user,
+                    password: db_pass,
+                    ...(db_name ? { database: db_name } : {})
+                });
+            } catch (err) {
+                return {
+                    message: err instanceof Error && err.message !== "" ? err.message : `Cannot connect to ${db_host}:${db_port}`,
+                    pg_conn: null,
+                    ms_conn: null,
+                    sl_conn: null
+                }
+            }
+            break;
+        }
+        case "postgresql": {
+            try {
+                const conn = new Client({
+                    host: db_host,
+                    port: db_port,
+                    user: db_user,
+                    password: db_pass,
+                    ...(db_name ? { database: db_name } : { database: "postgres" })
+                });
+                await conn.connect();
+                pg_conn = conn;
+            } catch (err) {
+                return {
+                    message: err instanceof Error && err.message !== "" ? err.message : `Cannot connect to ${db_host}:${db_port}`,
+                    pg_conn: null,
+                    ms_conn: null,
+                    sl_conn: null
+                }
+            }
+            break;
+        }
+        case "sqlite": {
+            try {
+                const conn = new Database(`database/${db_name}.db`);
+                sl_conn = conn;
+            } catch (err) {
+                return {
+                    message: err instanceof Error && err.message !== "" ? err.message : `Cannot load database ${db_name}`,
+                    pg_conn: null,
+                    ms_conn: null,
+                    sl_conn: null
+                }
+            }
+            break;
+        }
+        default: {
+            return {
+                "message": "Invalid DB!",
+                pg_conn: null,
+                ms_conn: null,
+                sl_conn: null
+            }
+        }
+    }
+
+    return {"message": null, pg_conn, ms_conn, sl_conn};
 }

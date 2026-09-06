@@ -205,7 +205,7 @@ async function check_config() {
                 let conn_success = false;
 
                 let db_type = await user_input("[LOG] Pilih database (sqlite / mysql / postgresql): ");
-    if (db_type) global.config.db_type = db_type.toLowerCase() as "sqlite" | "mysql" | "postgresql";
+                if (db_type) global.config.db_type = db_type.toLowerCase() as "sqlite" | "mysql" | "postgresql";
                 if (!["sqlite", "mysql", "postgresql"].includes(db_type)) {
                     console.log(`[ERROR] Databse "${db_type}" tidak ada`)
                     continue;

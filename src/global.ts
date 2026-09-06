@@ -14,7 +14,6 @@
 */
 
 import { user_session } from "./user_session/user_session";
-import { mutex } from "./utils/utils";
 import { sse_server } from "./sse_server/sse_server";
 import { rate_limit } from "./rate_limit/rate_limit";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
@@ -30,22 +29,15 @@ export const global = {
         return current_date
     },
 
-    // user sessions
-    user_sessions: new user_session(600, 60, 32),
-
-    // sse clients
-    sse_clients: new sse_server(5000),
+    user_sessions: null as unknown as user_session,
+    sse_clients: null as unknown as sse_server,
 
     // password hash variable
     ph_memorycost: 1024,
     ph_timecost: 2,
     ph_text: `$argon2id$v=19$m=1024,t=2,p=`,
 
-    // mutex (mutual expression)
-    mutex: new mutex(),
-
-    // rate limit (max req 100/10 seconds. jail for 25 seconds)
-    rate_limit: new rate_limit(10, 100, 5),
+    rate_limit: null as unknown as rate_limit,
 
     // Database (Drizzle instance — one of the three dialects)
     database: null as unknown as BaseSQLiteDatabase<any, any> | MySql2Database<any> | NodePgDatabase<any>,
@@ -60,7 +52,7 @@ export const global = {
         "compile_html": false,
         "db_type": "" as "sqlite" | "mysql" | "postgresql",
         "db_name": "",
-        "tls_key_path": "cert",
+        "tls_key_path": "cert/cert.key",
         "tls_cert_path": "cert/cert.pem",
         "postgresql": {
             "host": "localhost",
@@ -98,5 +90,4 @@ export const global = {
     <path style="&st0;" d="M49.998,75V53.872c0-8.497-6.889-15.385-15.385-15.385H15.384c-8.496,0-15.386,6.888-15.386,15.385V75H49.998
         z"/>
     </svg>`, // https://upload.wikimedia.org/wikipedia/commons/4/4b/User-Pict-Profil.svg
-    
 }
