@@ -14,7 +14,7 @@
             <aside class="setup-sidebar">
                 <div class="brand-block">
                     <div class="brand-icon">
-                        <i class="bi bi-shop"></i>
+                        <img src="img/kasirku.png">
                     </div>
                     <div>
                         <div class="brand-name">KasirKu</div>
@@ -57,6 +57,13 @@
                             <span class="stepper-description">Create administrator</span>
                         </span>
                     </div>
+                    <div class="stepper-item" data-step-target="6">
+                        <span class="stepper-number">6</span>
+                        <span class="stepper-content">
+                            <span class="stepper-title">Informasi Toko</span>
+                            <span class="stepper-description">Optional store details</span>
+                        </span>
+                    </div>
                 </nav>
                 <div class="sidebar-footer">
                     <span>KasirKu Installer</span>
@@ -65,14 +72,14 @@
             <section class="setup-content">
                 <div class="progress-wrapper" aria-hidden="true">
                     <div class="progress">
-                        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 20%"></div>
+                        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 16.6667%"></div>
                     </div>
                 </div>
                 <div class="setup-content-inner">
                     <div class="wizard-body">
                     <section class="wizard-step active" data-step="1">
                         <div class="step-heading">
-                            <div class="step-kicker">Step 1 of 5</div>
+                            <div class="step-kicker">Step 1 of 6</div>
                             <h1>Welcome to KasirKu</h1>
                             <p>
                                 Terima kasih sudah menggunakan KasirKu. Wizard ini akan membantu
@@ -96,7 +103,7 @@
                     </section>
                     <section class="wizard-step" data-step="2">
                         <div class="step-heading">
-                            <div class="step-kicker">Step 2 of 5</div>
+                            <div class="step-kicker">Step 2 of 6</div>
                             <h1>Server Configuration</h1>
                             <p>Atur protokol, port, TLS certificate, dan opsi compile HTML.</p>
                         </div>
@@ -213,7 +220,7 @@
                     </section>
                     <section class="wizard-step" data-step="3">
                         <div class="step-heading">
-                            <div class="step-kicker">Step 3 of 5</div>
+                            <div class="step-kicker">Step 3 of 6</div>
                             <h1>Choose Database</h1>
                             <p>Pilih database yang akan digunakan oleh instalasi KasirKu.</p>
                         </div>
@@ -246,7 +253,7 @@
                     </section>
                     <section class="wizard-step" data-step="4">
                         <div class="step-heading">
-                            <div class="step-kicker">Step 4 of 5</div>
+                            <div class="step-kicker">Step 4 of 6</div>
                             <h1>Database Connection</h1>
                             <p>Isi konfigurasi koneksi database, kemudian gunakan Test Connection.</p>
                         </div>
@@ -264,7 +271,7 @@
 
                     <section class="wizard-step" data-step="5">
                         <div class="step-heading">
-                            <div class="step-kicker">Step 5 of 5</div>
+                            <div class="step-kicker">Step 5 of 6</div>
                             <h1>Create Admin User</h1>
                             <p>Buat akun administrator yang akan digunakan untuk masuk ke aplikasi KasirKu.</p>
                         </div>
@@ -274,25 +281,65 @@
                                 <div class="col-md-12">
                                     <label class="form-label" for="adminFullName">Full Name</label>
                                     <input id="adminFullName" name="full_name" class="form-control" type="text"
-                                           autocomplete="name" required>
+                                           value="Administrator" autocomplete="name" required>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label" for="adminUsername">Username</label>
                                     <input id="adminUsername" name="username" class="form-control" type="text"
-                                           autocomplete="username" required>
+                                           value="admin" autocomplete="username" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label" for="adminPassword">Password</label>
-                                    <input id="adminPassword" name="password" class="form-control" type="password"
-                                           autocomplete="new-password" required>
+                                    <div class="password-input-group">
+                                        <input id="adminPassword" name="password" class="form-control" type="password"
+                                               value="admin" autocomplete="new-password" required>
+                                        <button class="password-toggle" type="button" data-password-toggle="adminPassword" aria-label="Show password" aria-pressed="false">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label" for="adminConfirmPassword">Confirm Password</label>
-                                    <input id="adminConfirmPassword" name="confirm_password" class="form-control"
-                                           type="password" autocomplete="new-password" required>
+                                    <div class="password-input-group">
+                                        <input id="adminConfirmPassword" name="confirm_password" class="form-control"
+                                               type="password" value="admin" autocomplete="new-password" required>
+                                        <button class="password-toggle" type="button" data-password-toggle="adminConfirmPassword" aria-label="Show password" aria-pressed="false">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div id="adminValidationMessage" class="form-text admin-validation-message d-none"></div>
+                        </form>
+                    </section>
+
+                    <section class="wizard-step" data-step="6">
+                        <div class="step-heading">
+                            <div class="step-kicker">Step 6 of 6</div>
+                            <h1>Informasi Toko</h1>
+                            <p>Opsional. Informasi ini dapat digunakan sebagai variabel untuk mencetak struk penjualan.</p>
+                        </div>
+
+                        <form id="storeForm" class="store-form" novalidate>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label" for="storeName">Nama</label>
+                                    <input id="storeName" name="store_name" class="form-control" type="text" autocomplete="organization">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label" for="storeDescription">Deskripsi</label>
+                                    <textarea id="storeDescription" name="store_desc" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label" for="storeAddress">Alamat</label>
+                                    <textarea id="storeAddress" name="store_address" class="form-control" rows="3" autocomplete="street-address"></textarea>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label" for="storePhoneNum">Nomor Telepon</label>
+                                    <input id="storePhoneNum" name="store_phone_num" class="form-control" type="tel" autocomplete="tel">
+                                </div>
+                            </div>
+                            <div class="form-text mt-3">Semua field pada bagian ini bersifat opsional.</div>
                         </form>
                     </section>
                     <section id="processingScreen" class="processing-screen d-none">
@@ -329,7 +376,7 @@
                     </button>
 
                     <div class="footer-step-indicator">
-                        <span id="currentStepLabel">1</span> / 5
+                        <span id="currentStepLabel">1</span> / 6
                     </div>
 
                     <button id="nextButton" type="button" class="btn btn-primary btn-navigation">

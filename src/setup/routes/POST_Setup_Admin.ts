@@ -15,8 +15,9 @@ export async function POST_Setup_Admin(req: Request) {
     const username = typeof req_json.username === "string" ? req_json.username.trim() : "";
     const full_name = typeof req_json.full_name === "string" ? req_json.full_name.trim() : "";
     const password = typeof req_json.password === "string" ? req_json.password : "";
+    const confirm_password = typeof req_json.confirm_password === "string" ? req_json.confirm_password : "";
 
-    if (!username || !full_name || !password) {
+    if (!username || !full_name || !password || password !== confirm_password) {
         current_config.temp.setup_done = [0, 0, 0, 0];
         return new Response("Bad Request", { status: 400 });
     }
@@ -76,7 +77,6 @@ export async function POST_Setup_Admin(req: Request) {
         return new Response(err instanceof Error ? err.message : "Failed to create admin user", { status: 403 });
     }
 
-    return new Response("", {
-        status: 200,
-    });
+    current_config.temp.setup_done[3] = 1;
+    return new Response("", {status: 200});
 }

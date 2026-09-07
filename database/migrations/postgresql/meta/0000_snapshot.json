@@ -1,0 +1,826 @@
+{
+  "id": "422bc1cd-dc5a-465c-8827-78ee25a4f5c7",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.barang": {
+      "name": "barang",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "barang_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nama_barang": {
+          "name": "nama_barang",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stok_barang": {
+          "name": "stok_barang",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kategori_barang_id": {
+          "name": "kategori_barang_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "harga_modal": {
+          "name": "harga_modal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "harga_jual": {
+          "name": "harga_jual",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barcode_barang": {
+          "name": "barcode_barang",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "barang_kategori_barang_id_kategori_barang_id_fk": {
+          "name": "barang_kategori_barang_id_kategori_barang_id_fk",
+          "tableFrom": "barang",
+          "tableTo": "kategori_barang",
+          "columnsFrom": [
+            "kategori_barang_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "barang_barcode_barang_unique": {
+          "name": "barang_barcode_barang_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "barcode_barang"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.barang_masuk": {
+      "name": "barang_masuk",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "barang_masuk_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "barang_id": {
+          "name": "barang_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deskripsi": {
+          "name": "deskripsi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jumlah_barang": {
+          "name": "jumlah_barang",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tanggal_key": {
+          "name": "tanggal_key",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "barang_masuk_barang_id_barang_id_fk": {
+          "name": "barang_masuk_barang_id_barang_id_fk",
+          "tableFrom": "barang_masuk",
+          "tableTo": "barang",
+          "columnsFrom": [
+            "barang_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.kategori_barang": {
+      "name": "kategori_barang",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "kategori_barang_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nama_kategori": {
+          "name": "nama_kategori",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "kategori_barang_nama_kategori_unique": {
+          "name": "kategori_barang_nama_kategori_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nama_kategori"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pembukuan": {
+      "name": "pembukuan",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "pembukuan_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "tipe": {
+          "name": "tipe",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deskripsi": {
+          "name": "deskripsi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jumlah_uang": {
+          "name": "jumlah_uang",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "referensi_id": {
+          "name": "referensi_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tanggal_key": {
+          "name": "tanggal_key",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.penjualan": {
+      "name": "penjualan",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "penjualan_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "kasir_id": {
+          "name": "kasir_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "no_struk": {
+          "name": "no_struk",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_barang": {
+          "name": "total_barang",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_harga_modal": {
+          "name": "total_harga_modal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_harga_jual": {
+          "name": "total_harga_jual",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tanggal_key": {
+          "name": "tanggal_key",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "penjualan_kasir_id_users_id_fk": {
+          "name": "penjualan_kasir_id_users_id_fk",
+          "tableFrom": "penjualan",
+          "tableTo": "users",
+          "columnsFrom": [
+            "kasir_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.penjualan_item": {
+      "name": "penjualan_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "penjualan_item_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "penjualan_id": {
+          "name": "penjualan_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barang_id": {
+          "name": "barang_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nama_barang": {
+          "name": "nama_barang",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jumlah": {
+          "name": "jumlah",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "harga_modal": {
+          "name": "harga_modal",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_harga_modal": {
+          "name": "total_harga_modal",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "harga_jual": {
+          "name": "harga_jual",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_harga_jual": {
+          "name": "total_harga_jual",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tanggal_key": {
+          "name": "tanggal_key",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "penjualan_item_penjualan_id_penjualan_id_fk": {
+          "name": "penjualan_item_penjualan_id_penjualan_id_fk",
+          "tableFrom": "penjualan_item",
+          "tableTo": "penjualan",
+          "columnsFrom": [
+            "penjualan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.retur_barang": {
+      "name": "retur_barang",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "retur_barang_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "tanggal_key": {
+          "name": "tanggal_key",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barang_id": {
+          "name": "barang_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deskripsi": {
+          "name": "deskripsi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jumlah_barang": {
+          "name": "jumlah_barang",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "retur_barang_barang_id_barang_id_fk": {
+          "name": "retur_barang_barang_id_barang_id_fk",
+          "tableFrom": "retur_barang",
+          "tableTo": "barang",
+          "columnsFrom": [
+            "barang_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.roles": {
+      "name": "roles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "roles_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permission_level": {
+          "name": "permission_level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "roles_name_unique": {
+          "name": "roles_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.settings": {
+      "name": "settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "settings_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "users_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profile_img": {
+          "name": "profile_img",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_ms": {
+          "name": "created_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modified_ms": {
+          "name": "modified_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_role_id_roles_id_fk": {
+          "name": "users_role_id_roles_id_fk",
+          "tableFrom": "users",
+          "tableTo": "roles",
+          "columnsFrom": [
+            "role_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

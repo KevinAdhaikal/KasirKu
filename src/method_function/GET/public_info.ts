@@ -14,19 +14,27 @@
 */
 
 import { user_session_interface } from "../../user_session/user_session";
-import { global } from "../../global";
 import { getDb, getSchema } from "../../database/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = getDb();
-    const { store_settings } = getSchema();
+    const { settings } = getSchema();
 
-    const [toko_res] = await db
-        .select()
-        .from(store_settings)
-        .where(eq(store_settings.id, 1))
-        .limit(1);
+    const toko_settings = await db
+        .select({
+            key: settings.key,
+            value: settings.value,
+        })
+        .from(settings)
+        .where(
+            inArray(settings.key, [
+                "store_name",
+                "store_desc",
+                "store_address",
+                "store_phone_num",
+            ])
+        );
 
-    return new Response(JSON.stringify({store: toko_res}), {status: 200});
+    return new Response(JSON.stringify({store: toko_settings}), {status: 200});
 }

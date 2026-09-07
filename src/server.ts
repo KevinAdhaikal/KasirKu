@@ -66,8 +66,9 @@ function init_global() {
 }
 
 export function main() {
-    const protocol = global.config.use_tls ? "HTTPS" : "HTTP";
-    console.log(`[LOG] ${protocol} Server running in port ${global.config.listen_port}`);
+    init_global();
+    const protocol = Bun.env.APP_USE_TLS ? "HTTPS" : "HTTP";
+    console.log(`[LOG] ${protocol} Server running in port ${Bun.env.APP_LISTEN_PORT}`);
 
     const fetch_handler = async (req: Request, server: any) => {
         const url = new URL(req.url);
@@ -185,7 +186,7 @@ export function main() {
             let cached = global.static_cache.get(pathname);
 
             if (!cached) {
-                const path = global.config.compile_html ? `./html_build${pathname}` : `./html${pathname}`
+                const path = Bun.env.APP_COMPILE_HTML ? `./html_build${pathname}` : `./html${pathname}`
                 let file = Bun.file(path);
 
                 if (!(await file.exists())) {
@@ -231,7 +232,7 @@ export function main() {
                     "Cache-Control": is_asset
                     ? "public, max-age=31536000"
                     : "no-cache",
-                    "Content-Encoding": global.config.compile_html ? "br" : "none"
+                    "Content-Encoding": Bun.env.APP_COMPILE_HTML ? "br" : "none"
                 },
             });
         }
@@ -251,12 +252,12 @@ export function main() {
         else return new Response("Bad Request", {status: 400});
     };
 
-    if (global.config.use_tls) {
+    if (Bun.env.APP_USE_TLS && Bun.env.TLS_KEY_PATH !== undefined && Bun.env.TLS_CERT_PATH !== undefined) {
         bun_serve = Bun.serve({
-            port: global.config.listen_port,
+            port: Bun.env.APP_LISTEN_PORT,
             tls: {
-                key: Bun.file(global.config.tls_key_path),
-                cert: Bun.file(global.config.tls_cert_path)
+                key: Bun.file(Bun.env.TLS_KEY_PATH),
+                cert: Bun.file(Bun.env.TLS_CERT_PATH)
             },
             fetch: fetch_handler,
             error(err: Error) {
@@ -271,14 +272,14 @@ export function main() {
                 const url = new URL(req.url);
 
                 url.protocol = "https:";
-                url.port = String(global.config.listen_port);
+                url.port = String(Bun.env.APP_LISTEN_PORT);
 
                 return Response.redirect(url.toString(), 302);
             }
         });
     } else {
         bun_serve = Bun.serve({
-            port: global.config.listen_port,
+            port: Bun.env.APP_LISTEN_PORT,
             fetch: fetch_handler,
             error(err: Error) {
                 console.log(err);

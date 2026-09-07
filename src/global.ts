@@ -45,29 +45,6 @@ export const global = {
     // static cache for file
     static_cache: new Map() as Map<string, {buffer: Uint8Array, last_modified: number}>,
 
-    // config file
-    config: {
-        "listen_port": 443,
-        "use_tls": true,
-        "compile_html": false,
-        "db_type": "" as "sqlite" | "mysql" | "postgresql",
-        "db_name": "",
-        "tls_key_path": "cert/cert.key",
-        "tls_cert_path": "cert/cert.pem",
-        "postgresql": {
-            "host": "localhost",
-            "port": 5432,
-            "user": "postgres",
-            "password": ""
-        },
-        "mysql": {
-            "host": "localhost",
-            "port": 3306,
-            "user": "root",
-            "password": ""
-        }
-    } as Record<string, any>,
-
     // Permissions
     permissions: {
         ADMINISTRATOR: 1 << 0,

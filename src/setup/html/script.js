@@ -8,7 +8,7 @@
 
     const state = {
         currentStep: 1,
-        totalSteps: 5,
+        totalSteps: 6,
         database: supportedDatabases.includes(savedDatabase) ? savedDatabase : "mysql",
         processingTimer: null,
         finished: false,
@@ -36,6 +36,11 @@
         adminPassword: document.getElementById("adminPassword"),
         adminConfirmPassword: document.getElementById("adminConfirmPassword"),
         adminValidationMessage: document.getElementById("adminValidationMessage"),
+        storeForm: document.getElementById("storeForm"),
+        storeName: document.getElementById("storeName"),
+        storeDescription: document.getElementById("storeDescription"),
+        storeAddress: document.getElementById("storeAddress"),
+        storePhoneNum: document.getElementById("storePhoneNum"),
         processingScreen: document.getElementById("processingScreen"),
         processingProgressBar: document.getElementById("processingProgressBar"),
         successScreen: document.getElementById("successScreen"),
@@ -251,6 +256,7 @@
                         type: "password",
                         required: false,
                         col: "col-md-6",
+                        showPassword: true,
                     })}
                     ${inputField({
                         label: "Database Name",
@@ -294,6 +300,7 @@
                         type: "password",
                         required: false,
                         col: "col-md-6",
+                        showPassword: true,
                     })}
                     ${inputField({
                         label: "Database Name",
@@ -352,21 +359,34 @@
         if (testButton) {
             testButton.addEventListener("click", testConnection);
         }
+
+        bindPasswordToggles(elements.connectionForm);
     }
 
-    function inputField({label, name, value = "", type = "text", required = false, col = "col-md-12", placeholder = ""}) {
+    function inputField({label, name, value = "", type = "text", required = false, col = "col-md-12", placeholder = "", showPassword = false}) {
+        const input = `
+            <input
+                id="connection-${name}"
+                class="form-control"
+                name="${name}"
+                type="${type}"
+                value="${escapeHtmlAttribute(String(value))}"
+                ${required ? "data-required" : ""}
+                placeholder="${escapeHtmlAttribute(placeholder)}"
+            >
+        `;
+
         return `
             <div class="${col}">
                 <label class="form-label" for="connection-${name}">${label}</label>
-                <input
-                    id="connection-${name}"
-                    class="form-control"
-                    name="${name}"
-                    type="${type}"
-                    value="${escapeHtmlAttribute(String(value))}"
-                    ${required ? "data-required" : ""}
-                    placeholder="${escapeHtmlAttribute(placeholder)}"
-                >
+                ${showPassword ? `
+                    <div class="password-input-group">
+                        ${input}
+                        <button class="password-toggle" type="button" data-password-toggle="connection-${name}" aria-label="Show password" aria-pressed="false">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                ` : input}
             </div>
         `;
     }
@@ -585,6 +605,7 @@
 
         elements.processingProgressBar.style.width = "0%";
 
+        // STEP 1: Setup Database dulu loh ya
         let db_new_migrate = await checkOldDB();
         if (db_new_migrate === -1) return backToComponents();
         else if (db_new_migrate === true) {
@@ -612,8 +633,7 @@
             db_new_migrate = res_swal.isConfirmed
         }
 
-        setProgress(0, 25, 7000);
-
+        setProgress(0, 50, 7000);
         const res_db = await fetch('/setup_db', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -642,14 +662,11 @@
             cancelAnimationFrame(state.processingTimer);
             return backToComponents();
         }
-        setProgress(25, 50, 7000);
 
         const res_store = await fetch('/setup_store', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                
-            }),
+            body: JSON.stringify(collectStoreData()),
         });
 
         if (res_store.status === 403) {
@@ -675,7 +692,36 @@
             return backToComponents();
         }
 
-        setProgress(50, 75, 10000);
+        const res_admin = await fetch("/setup_admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(collectAdminData())
+        });
+
+        if (res_admin.status === 403) {
+            await Swal.fire({
+                icon: "error",
+                title: "Database Error",
+                text: await res_admin.text(),
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+        else if (res_admin.status === 400) {
+            await Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong! Please try again later",
+                confirmButtonText: "OK",
+            });
+
+            cancelAnimationFrame(state.processingTimer);
+            return backToComponents();
+        }
+
+        setProgress(50, 75, 7000);
         const res_server = await fetch('/setup_server', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -717,10 +763,6 @@
         setProgress(75, 95, 10000);
         const res_final = await fetch('/setup_final', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                admin: collectAdminData(),
-            }),
         });
 
         if (res_final.status === 400) {
@@ -753,6 +795,15 @@
         };
     }
 
+    function collectStoreData() {
+        return {
+            store_name: elements.storeName?.value.trim() ?? "",
+            store_desc: elements.storeDescription?.value.trim() ?? "",
+            store_address: elements.storeAddress?.value.trim() ?? "",
+            store_phone_num: elements.storePhoneNum?.value.trim() ?? "",
+        };
+    }
+
     function collectConfiguration() {
         return {
             server: {
@@ -767,6 +818,7 @@
             },
             database: collectConnectionData(),
             admin: collectAdminData(),
+            store: collectStoreData(),
         };
     }
 
@@ -836,6 +888,30 @@
             updateNextButtonState();
         }
     });
+
+    function bindPasswordToggles(root = document) {
+        root.querySelectorAll("[data-password-toggle]:not([data-password-toggle-bound])").forEach((button) => {
+            button.dataset.passwordToggleBound = "true";
+            button.addEventListener("click", () => {
+                const inputId = button.dataset.passwordToggle;
+                const input = inputId ? document.getElementById(inputId) : null;
+                if (!input) return;
+
+                const showing = input.type === "text";
+                input.type = showing ? "password" : "text";
+                button.setAttribute("aria-pressed", String(!showing));
+                button.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+
+                const icon = button.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("bi-eye", showing);
+                    icon.classList.toggle("bi-eye-slash", !showing);
+                }
+            });
+        });
+    }
+
+    bindPasswordToggles();
 
     elements.adminForm?.addEventListener("input", (event) => {
         const target = event.target;

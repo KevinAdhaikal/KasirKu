@@ -120,8 +120,6 @@ export async function POST_Setup_DB(req: Request) {
             current_config.mysql.password = db_pass;
 
             current_config.temp.ms_conn = sql_conn.ms_conn!;
-
-            current_config.temp.setup_done[1] = 1;
         } else {
             if (db_new_migrate) {
                 try {
@@ -181,8 +179,6 @@ export async function POST_Setup_DB(req: Request) {
             current_config.postgresql.password = db_pass;
 
             current_config.temp.pg_conn = sql_conn.pg_conn!;
-
-            current_config.temp.setup_done[1] = 1;
         }
     }
     else if (db_type === "sqlite") {
@@ -200,13 +196,12 @@ export async function POST_Setup_DB(req: Request) {
         current_config.db_type = "sqlite";
         current_config.db_name = db_name;
         current_config.temp.sqlite_conn = sql_conn;
-        
-        current_config.temp.setup_done[1] = 1;
     }
     else {
         current_config.temp.setup_done = [0, 0, 0, 0];
         return new Response("Bad Request", {status: 400});
     }
 
+    current_config.temp.setup_done[1] = 1;
     return new Response("", {status: 200});
 }

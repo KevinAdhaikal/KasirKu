@@ -27,16 +27,15 @@ export async function migrate_up(
     try {
         switch (db_type) {
             case "sqlite":
-                migrate(db as BaseSQLiteDatabase<any, any>, { migrationsFolder: "./drizzle" });
+                migrate(db as BaseSQLiteDatabase<any, any>, { migrationsFolder: "./database/migrations/sqlite" });
                 break;
             case "mysql":
-                await migrateMysql(db as MySql2Database<any>, { migrationsFolder: "./drizzle" });
+                await migrateMysql(db as MySql2Database<any>, { migrationsFolder: "./database/migrations/mysql" });
                 break;
             case "postgresql":
-                await migratePostgres(db as NodePgDatabase<any>, { migrationsFolder: "./drizzle" });
+                await migratePostgres(db as NodePgDatabase<any>, { migrationsFolder: "./database/migrations/postgresql" });
                 break;
         }
-        console.log("[INFO] Drizzle migrations completed successfully.");
     } catch (error) {
         console.error("[ERROR] Drizzle migration failed.", error);
         throw error;

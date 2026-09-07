@@ -15,10 +15,10 @@
 
 import { migrate_up } from "./src/database/migrate"
 import { setActiveSchema, setActiveDb } from "./src/database/schema";
-import { mkdir } from "node:fs/promises";
 import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { setup_http_main } from "./src/setup";
+import { loadEnvFile } from "node:process";
 
 async function load_methods(baseDir: string, rootDir: string, cache: Record<string, any>) {
     const entries = readdirSync(baseDir);
@@ -35,27 +35,16 @@ async function load_methods(baseDir: string, rootDir: string, cache: Record<stri
         if (!entry.endsWith(".ts")) continue;
 
         const relative = path.relative(rootDir, fullPath).replaceAll("\\", "/");
-
         const parts = relative.split("/");
-
         const method = parts.shift();
         const route = "/" + parts.join("/").slice(0, -3);
-
         const key = `${method}:${route}`;
-
         const mod = await import(path.resolve(fullPath));
 
         if (!mod.default) continue;
 
         cache[key] = mod.default;
     }
-}
-
-function get_env_value(key: string): string | undefined {
-    const value = Bun.env[key] ?? process.env[key];
-    if (value === undefined) return undefined;
-    const trimmed = String(value).trim();
-    return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function check_env_file() {
@@ -77,9 +66,7 @@ function check_env_file() {
         "TLS_CERT_PATH",
     ];
 
-    for (const key of keys) {
-        if (!get_env_value(key)) return false;
-    }
+    for (const key of keys) if (Bun.env[key] === undefined) return false;
 
     return true;
 }
@@ -88,104 +75,84 @@ async function prepare() {
     const global = (await import("./src/global")).global;
     await Bun.$`bun src/prepare.ts`;
 
-    global.config = Bun.env as unknown as Record<string, any>;
-
-    switch(global.config.db_type) {
+    switch(Bun.env.DB_TYPE) {
         case "sqlite": {
+            if (!(await Bun.file(`database/${Bun.env.DB_NAME}.db`).exists())) {
+                throw new Error(
+                    "Database configuration is invalid or the database file was not found. " +
+                    "Please remove the .env file and restart the server to open the setup page."
+                );
+            }
+
             const { Database } = await import("bun:sqlite");
             const { drizzle } = await import("drizzle-orm/bun-sqlite");
 
-            if (!(await Bun.file(`database/${global.config.db_name}.db`).exists())) {
-                try {
-                    await mkdir("database");
-                } catch(e) {
-                    console.log("[WARNING]:", e)
-                }
-            }
-
-            const sqlite = new Database(`database/${global.config.db_name}.db`);
+            const sqlite = new Database(`database/${Bun.env.DB_NAME}.db`);
             global.database = drizzle({ client: sqlite });
             const sqliteSchema = await import("./src/database/schema/sqlite");
             setActiveSchema(sqliteSchema);
             setActiveDb(global.database);
+
             break;
         }
         case "mysql": {
             const mysql = await import("mysql2/promise");
             const { drizzle } = await import("drizzle-orm/mysql2");
 
-            const tmp_conn = await mysql.createConnection({
-                host: global.config.mysql.host,
-                user: global.config.mysql.user,
-                password: global.config.mysql.password
-            });
-            await tmp_conn.query(`CREATE DATABASE IF NOT EXISTS \`${global.config.db_name}\``);
-            await tmp_conn.end();
-
             const pool = mysql.createPool({
-                host: global.config.mysql.host,
-                port: global.config.mysql.port,
-                user: global.config.mysql.user,
-                password: global.config.mysql.password,
-                database: global.config.db_name
+                host: Bun.env.MYSQL_HOST,
+                port: Number(Bun.env.MYSQL_PORT),
+                user: Bun.env.MYSQL_USER,
+                password: Bun.env.MYSQL_PASSWORD,
+                database: Bun.env.DB_NAME
             });
+
             global.database = drizzle({ client: pool });
             const mysqlSchema = await import("./src/database/schema/mysql");
             setActiveSchema(mysqlSchema);
             setActiveDb(global.database);
+
             break;
         }
         case "postgresql": {
-            const { Client, Pool } = await import("pg");
+            const { Pool } = await import("pg");
             const { drizzle } = await import("drizzle-orm/node-postgres");
 
-            const client = new Client({
-                host: global.config.postgresql.host,
-                port: global.config.postgresql.port,
-                user: global.config.postgresql.user,
-                password: global.config.postgresql.password,
-                database: "postgres"
-            });
-
-            await client.connect();
-
-            const check = await client.query(
-                `SELECT 1 FROM pg_database WHERE datname = $1`,
-                [global.config.db_name]
-            );
-            if (check.rowCount === 0) await client.query(`CREATE DATABASE "${global.config.db_name}"`);
-
-            await client.end();
-
             const pool = new Pool({
-                host: global.config.postgresql.host,
-                port: global.config.postgresql.port,
-                user: global.config.postgresql.user,
-                password: global.config.postgresql.password,
-                database: global.config.db_name
+                host: Bun.env.POSTGRESQL_HOST,
+                port: Number(Bun.env.POSTGRESQL_PORT),
+                user: Bun.env.POSTGRESQL_USER,
+                password: Bun.env.POSTGRESQL_PASSWORD,
+                database: Bun.env.DB_NAME
             });
             global.database = drizzle({ client: pool });
+
             const pgSchema = await import("./src/database/schema/postgresql");
             setActiveSchema(pgSchema);
             setActiveDb(global.database);
+
             break;
         }
         default: {
-            console.log("[ERROR] Unknown database type:", global.config.db_type);
+            console.log("[ERROR] Unknown database type:", Bun.env.DB_TYPE);
             process.exit(0);
         }
     }
     await load_methods("./src/method_function", "./src/method_function", global.method_cache);
-    await migrate_up(global.database, global.config.db_type);
+    await migrate_up(global.database, Bun.env.DB_TYPE);
     
     console.log("[LOG] All ready!");
 }
 
 if (!check_env_file()) {
     console.log("[LOG] Config File not found! Running Setup Page...");
-    setup_http_main();
-} else {
-    const { main } = await import("./src/server");
-    await prepare();
-    main();
+    const sig = await setup_http_main();
+    await sig.wait();
+
+    try {loadEnvFile();} catch(_) {process.exit(0)}
+    if (!check_env_file()) process.exit(0); // kita cek lagi dua kali
 }
+
+const { main } = await import("./src/server");
+await prepare();
+main();

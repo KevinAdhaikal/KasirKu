@@ -77,9 +77,14 @@ select {
     display: grid;
     place-items: center;
     color: #fff;
-    background: var(--setup-primary);
     border-radius: 12px;
     font-size: 20px;
+}
+
+.brand-icon img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
 }
 
 .brand-name {
@@ -135,6 +140,7 @@ select {
     font-weight: 800;
     line-height: 1;
 }
+
 .stepper-number {
     width: 32px;
     height: 32px;
@@ -989,9 +995,61 @@ select {
     border-color: #dc3545;
 }
 
+
+.password-input-group {
+    position: relative;
+}
+
+.password-input-group .form-control {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: .75rem;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: var(--bs-secondary-color);
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: .5rem;
+}
+
+.password-toggle:hover {
+    color: var(--bs-body-color);
+    background: rgba(0, 0, 0, .04);
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
 .admin-validation-message {
     color: #dc3545;
     margin-top: 12px;
+}
+
+/* =========================
+   Store information
+   ========================= */
+.store-form {
+    max-width: 760px;
+    padding: 22px;
+    border: 1px solid var(--setup-border);
+    border-radius: 16px;
+    background: #fff;
+}
+
+.store-form textarea {
+    resize: vertical;
+    min-height: 96px;
 }
 
 /* =========================
@@ -1117,7 +1175,7 @@ select {
 
     .stepper {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 6px;
     }
 

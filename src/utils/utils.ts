@@ -443,3 +443,16 @@ export async function sql_connection(db_type: string, db_host: string, db_port: 
 
     return {"message": null, pg_conn, ms_conn, sl_conn};
 }
+
+export function create_signal() {
+    let resolve: () => void;
+
+    const promise = new Promise<void>((r) => {
+        resolve = r;
+    });
+
+    return {
+        wait: () => promise,
+        done: () => resolve()
+    };
+}

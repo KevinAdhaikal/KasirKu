@@ -14,7 +14,7 @@
 */
 
 import * as Bun from "bun";
-import { mime_types } from "../utils/utils";
+import { create_signal, mime_types } from "../utils/utils";
 import { Connection } from "mysql2/promise";
 import { Client } from "pg";
 import { Database } from "bun:sqlite";
@@ -28,6 +28,7 @@ import { POST_Setup_Store } from "./routes/POST_Setup_Store";
 import { POST_Setup_Final } from "./routes/POST_Setup_Final";
 import { POST_Setup_Admin } from "./routes/POST_Setup_Admin";
 
+export const setup_signal = create_signal();
 let is_server_closed = false;
 let bun_serve: any;
 
@@ -82,10 +83,12 @@ export async function stop_server() {
         console.log("[SETUP PAGE LOG] Stopping Server...");
         bun_serve.stop();
         console.log("[SETUP PAGE LOG] Server has been stopped!");
+
+        setup_signal.done();
     }
 }
 
-export function setup_http_main() {
+export async function setup_http_main() {
     console.log(`[SETUP PAGE LOG] HTTP Server running in port 80`);
 
     const fetch_handler = async (req: Request) => {
@@ -156,4 +159,6 @@ export function setup_http_main() {
     
     process.on("SIGINT", async () => {await stop_server()});
     process.on("SIGTERM", async () => {await stop_server()});
+
+    return setup_signal;
 }
