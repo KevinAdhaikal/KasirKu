@@ -96,7 +96,7 @@ export async function POST_Setup_DB(req: Request) {
             const { migrate } = await import("drizzle-orm/mysql2/migrator");
             const db = drizzle(sql_conn.ms_conn!);
             await migrate(db, {
-                migrationsFolder: "./database/migrations/postgresql",
+                migrationsFolder: "./database/migrations/mysql",
             });
 
             if (db_new_migrate && migrated_data) {

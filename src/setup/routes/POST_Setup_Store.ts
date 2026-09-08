@@ -44,8 +44,38 @@ export async function POST_Setup_Store(req: Request) {
         const conn = current_config.temp.ms_conn;
 
         await conn.query(
-            `INSERT INTO settings (\`key\`, \`value\`, \`type\`, \`created_ms\`, \`modified_ms\`) VALUES (?, ?, ?, ?, ?)`,
-            settings.map((setting) => [setting.key, setting.value, setting.type, now, now])
+            `INSERT INTO settings
+            (\`key\`, \`value\`, \`type\`, \`created_ms\`, \`modified_ms\`)
+            VALUES
+            (?, ?, ?, ?, ?),
+            (?, ?, ?, ?, ?),
+            (?, ?, ?, ?, ?),
+            (?, ?, ?, ?, ?)`,
+            [
+                settings[0].key,
+                settings[0].value,
+                settings[0].type,
+                now,
+                now,
+
+                settings[1].key,
+                settings[1].value,
+                settings[1].type,
+                now,
+                now,
+
+                settings[2].key,
+                settings[2].value,
+                settings[2].type,
+                now,
+                now,
+
+                settings[3].key,
+                settings[3].value,
+                settings[3].type,
+                now,
+                now,
+            ]
         );
     }
     else if (current_config.db_type === "postgresql") {

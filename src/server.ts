@@ -271,6 +271,16 @@ export function main() {
             async fetch(req: Request) {
                 const url = new URL(req.url);
 
+                if (url.pathname === "/ping") {
+                    return new Response("", {
+                        headers: {
+                            "Access-Control-Allow-Origin": "*"
+                        },
+                        status: 200,
+
+                    });
+                }
+
                 url.protocol = "https:";
                 url.port = String(Bun.env.APP_LISTEN_PORT);
 

@@ -13,7 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { mysqlTable, int, varchar, bigint, text, mysqlSchema } from "drizzle-orm/mysql-core";
+import { mysqlTable, int, varchar, bigint, text } from "drizzle-orm/mysql-core";
 
 export const roles = mysqlTable("roles", {
     id: int("id").primaryKey().autoincrement(),

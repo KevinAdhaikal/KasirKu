@@ -27,6 +27,7 @@ import { POST_Setup_Server } from "./routes/POST_Setup_Server";
 import { POST_Setup_Store } from "./routes/POST_Setup_Store";
 import { POST_Setup_Final } from "./routes/POST_Setup_Final";
 import { POST_Setup_Admin } from "./routes/POST_Setup_Admin";
+import { sse_server } from "../sse_server/sse_server";
 
 export const setup_signal = create_signal();
 let is_server_closed = false;
@@ -56,7 +57,8 @@ export const current_config = {
         "pg_conn": null as unknown as Client,
         "ms_conn": null as unknown as Connection,
         "sqlite_conn": null as unknown as Database,
-        "setup_done": [0, 0, 0, 0]
+        "setup_done": [0, 0, 0, 0],
+        "sse_clients": new sse_server(5000)
     }
 };
 
@@ -82,6 +84,7 @@ export async function stop_server() {
 
         console.log("[SETUP PAGE LOG] Stopping Server...");
         bun_serve.stop();
+        current_config.temp.sse_clients.destroy();
         console.log("[SETUP PAGE LOG] Server has been stopped!");
 
         setup_signal.done();

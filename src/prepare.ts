@@ -128,20 +128,22 @@ async function scan_html_file(startDir: string) {
     await Promise.all(tasks)
 }
 
+export async function compile_html() {
+    try {
+        await mkdir("./html_build");
+    } catch(e) {}
+
+    future_import.minifyHTML = (await import("html-minifier-terser")).minify;
+    future_import.minifyJS = (await import("terser")).minify;
+    future_import.CleanCSS = (await import("clean-css")).default;
+    future_import.brotliCompressSync = (await import("node:zlib")).brotliCompressSync;
+    await scan_html_file("html");
+}
+
 async function prepare() {
     console.log("[LOG] Preparing Server...");
 
-    if (Bun.env.APP_COMPILE_HTML) {
-       try {
-            await mkdir("./html_build");
-        } catch(e) {}
-
-        future_import.minifyHTML = (await import("html-minifier-terser")).minify;
-        future_import.minifyJS = (await import("terser")).minify;
-        future_import.CleanCSS = (await import("clean-css")).default;
-        future_import.brotliCompressSync = (await import("node:zlib")).brotliCompressSync;
-        await scan_html_file("html");
-    }
+    if (Bun.env.APP_COMPILE_HTML) await compile_html();
 
     // Preapre Profile Image Folder
     if (!(await Bun.file("profile_img/default.svg").exists())) {

@@ -27,7 +27,8 @@ TLS_CERT_PATH=${current_config.tls_cert_path}`;
         }
         
         await Bun.write(".env", env);
-        setTimeout(() => { stop_server() }, 100);
+        stop_server();
+        
         return new Response("", { status: 200 });
     } else {
         current_config.temp.setup_done = [0, 0, 0, 0];

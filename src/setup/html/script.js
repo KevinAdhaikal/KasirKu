@@ -761,24 +761,38 @@
         }
 
         setProgress(75, 95, 10000);
-        const res_final = await fetch('/setup_final', {
-            method: 'POST',
-        });
 
-        if (res_final.status === 400) {
-            await Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Something went wrong! Please try again later",
-                confirmButtonText: "OK",
+        try {
+            const res_final = await fetch("/setup_final", {
+                method: "POST",
             });
 
-            cancelAnimationFrame(state.processingTimer);
-            return backToComponents();
+            if (res_final.status !== 200) {
+                await Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Something went wrong! Please try again later",
+                    confirmButtonText: "OK",
+                });
+
+                cancelAnimationFrame(state.processingTimer);
+                return backToComponents();
+            }
+        } catch (_) {}
+
+        while (true) {
+            try {
+                await fetch("/ping", {
+                    method: "GET",
+                    signal: AbortSignal.timeout(1000),
+                });
+                await setProgress(95, 100, 1000);
+                showSuccess();
+                break;
+            } catch (_) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
-        
-        await setProgress(95, 100, 1000);
-        showSuccess();
     }
 
     function showSuccess() {
