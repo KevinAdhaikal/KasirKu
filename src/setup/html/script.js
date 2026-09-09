@@ -605,7 +605,26 @@
 
         elements.processingProgressBar.style.width = "0%";
 
-        // STEP 1: Setup Database dulu loh ya
+        if (getCheckedValue("tlsMode") === "upload") {
+            const cert_res = await fetch("/check_certificate", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(await collectCertificate())
+            })
+
+            if (cert_res.status !== 200) {
+                await Swal.fire({
+                    icon: "error",
+                    title: "Certificate Error",
+                    text: "Sertifikat TLS tidak valid! Silakan coba lagi nanti.",
+                    confirmButtonText: "OK",
+                });
+
+                cancelAnimationFrame(state.processingTimer);
+                return backToComponents();
+            }
+        }
+
         let db_new_migrate = await checkOldDB();
         if (db_new_migrate === -1) return backToComponents();
         else if (db_new_migrate === true) {
@@ -730,8 +749,7 @@
                 port: Number(elements.serverPort.value),
                 tls: {
                     mode: getCheckedValue("tlsMode"),
-                    certificate: fileToBase64(document.getElementById("tlsCertificate")?.files?.[0]) ?? null,
-                    key: fileToBase64(document.getElementById("tlsKey")?.files?.[0]) ?? null,
+                    ...(getCheckedValue("tlsMode") === "upload" ? await collectCertificate() : {})
                 },
                 compile_html: getCheckedValue("compileHtml") === "yes",
             }),
@@ -818,6 +836,13 @@
         };
     }
 
+    async function collectCertificate() {
+        return {
+            cert: await fileToBase64(document.getElementById("tlsCertificate")?.files?.[0]) ?? null,
+            key: await fileToBase64(document.getElementById("tlsKey")?.files?.[0]) ?? null,
+        }
+    }
+    
     function collectConfiguration() {
         return {
             server: {
@@ -825,7 +850,7 @@
                 port: Number(elements.serverPort.value),
                 tls: {
                     mode: getCheckedValue("tlsMode"),
-                    certificate: document.getElementById("tlsCertificate")?.files?.[0]?.name ?? null,
+                    cert: document.getElementById("tlsCertificate")?.files?.[0]?.name ?? null,
                     key: document.getElementById("tlsKey")?.files?.[0]?.name ?? null,
                 },
                 compile_html: getCheckedValue("compileHtml") === "yes",

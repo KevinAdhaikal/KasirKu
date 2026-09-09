@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { current_config } from "..";
 import { generate_cert } from "../../utils/utils";
 
@@ -33,13 +34,18 @@ export async function POST_Setup_Server(req: Request) {
     if (current_config.use_tls) {
         if (tls_mode === "generate") await generate_cert();
         else {
-            const tls_key = typeof req_json.tls.key === "string" ? req_json.tls.key.trim() : "";
-            const tls_cert = typeof req_json.tls.certificate === "string" ? req_json.tls.certificate.trim() : "";
+            let tls_key = typeof req_json.tls.key === "string" ? req_json.tls.key.trim() : "";
+            let tls_cert = typeof req_json.tls.cert === "string" ? req_json.tls.cert.trim() : "";
 
             if (!tls_key || !tls_cert) {
                 current_config.temp.setup_done = [0, 0, 0, 0];
                 return new Response("Bad Request", {status: 400});
             }
+
+            await mkdir("cert", { recursive: true });
+
+            await Bun.write("cert/key.pem", Buffer.from(tls_key, "base64").toString("utf8"));
+            await Bun.write("cert/cert.pem", Buffer.from(tls_cert, "base64").toString("utf8"));
         }
 
         current_config.tls_key_path = "cert/key.pem";

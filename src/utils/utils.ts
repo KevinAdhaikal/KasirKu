@@ -17,6 +17,7 @@ import { Database } from "bun:sqlite";
 import { Connection, createConnection } from "mysql2/promise";
 import { Client } from "pg";
 import { mkdir } from "node:fs/promises";
+import forge from "node-forge";
 
 // mime types
 export const mime_types: Record<string, string> = {
@@ -455,4 +456,26 @@ export function create_signal() {
         wait: () => promise,
         done: () => resolve()
     };
+}
+
+// check TLS certificate
+export function check_certificate(cert_data: string, key_data: string) {
+    try {
+        const cert_text = Buffer.from(cert_data, "base64").toString("utf8");
+        const key_text = Buffer.from(key_data, "base64").toString("utf8");
+
+        const cert = forge.pki.certificateFromPem(cert_text);
+        const private_key = forge.pki.privateKeyFromPem(key_text);
+
+        if (!("n" in cert.publicKey) || !("e" in cert.publicKey)) return false;
+
+        const public_key = cert.publicKey as forge.pki.rsa.PublicKey;
+
+        return (
+            public_key.n.compareTo(private_key.n) === 0 &&
+            public_key.e.compareTo(private_key.e) === 0
+        );
+    } catch {
+        return false;
+    }
 }

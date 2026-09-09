@@ -17,7 +17,7 @@ import { migrate_up } from "./src/database/migrate"
 import { setActiveSchema, setActiveDb } from "./src/database/schema";
 import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { setup_http_main } from "./src/setup";
+
 import { loadEnvFile } from "node:process";
 
 async function load_methods(baseDir: string, rootDir: string, cache: Record<string, any>) {
@@ -145,6 +145,7 @@ async function prepare() {
 }
 
 if (!check_env_file()) {
+    const { setup_http_main } = await import("./src/setup");
     console.log("[LOG] Config File not found! Running Setup Page...");
     const sig = await setup_http_main();
     await sig.wait();

@@ -28,6 +28,7 @@ import { POST_Setup_Store } from "./routes/POST_Setup_Store";
 import { POST_Setup_Final } from "./routes/POST_Setup_Final";
 import { POST_Setup_Admin } from "./routes/POST_Setup_Admin";
 import { sse_server } from "../sse_server/sse_server";
+import { POST_Check_Cert } from "./routes/POST_Check_Cert";
 
 export const setup_signal = create_signal();
 let is_server_closed = false;
@@ -124,6 +125,9 @@ export async function setup_http_main() {
             switch(url.pathname) {
                 case "/test_connection": {
                     return POST_Test_Connection(req);
+                }
+                case "/check_certificate": {
+                    return POST_Check_Cert(req);
                 }
                 case "/check_old_db": {
                     return POST_Check_Old_DB(req);
