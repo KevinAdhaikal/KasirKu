@@ -13,15 +13,17 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
             
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const schema = getSchema();
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
@@ -33,27 +35,36 @@ export default async function(req: Request, token: string) {
 
     if (isNaN(id) || isNaN(tanggal_key) || !id || !tanggal_key) return new Response("", {status: 400});
 
-    let res;
     try {
-        res = await db
-        .deleteFrom('pembukuan')
-        .where('id', '=', id)
-        .where('tanggal_key', '=', tanggal_key)
-        .where('tipe', '=', 1)
-        .executeTakeFirst();
+        const res = await db
+        .select({id: schema.pembukuan.id})
+        .from(schema.pembukuan)
+        .where(eq(schema.pembukuan.id, id))
+        .where(eq(schema.pembukuan.tanggal_key, tanggal_key))
+        .where(eq(schema.pembukuan.tipe, 1))
+        .limit(1);
+
+        if (res.length > 0) {
+            await db
+            .delete(schema.pembukuan)
+            .where(eq(schema.pembukuan.id, id))
+            .where(eq(schema.pembukuan.tanggal_key, tanggal_key))
+            .where(eq(schema.pembukuan.tipe, 1))
+            .execute();
+
+            global.sse_clients.broadcast(JSON.stringify({
+                type: 5,
+                code: "DELETE_PENGELUARAN",
+                data: {
+                    id,
+                    tanggal_key
+                }
+            }));
+        }
     } catch(e) {
         console.log("An error occured in delete_method.ts at /pengeluaran:", e);
         return new Response("Internal Server Error", {status: 500});
     }
-
-    if (res.numDeletedRows > 0n) global.sse_clients.broadcast(JSON.stringify({
-        type: 5,
-        code: "DELETE_PENGELUARAN",
-        data: {
-            id,
-            tanggal_key
-        }
-    }));
             
     return new Response("", {status: 200});
 }

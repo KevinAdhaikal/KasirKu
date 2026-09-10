@@ -13,16 +13,18 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
 import { check_sql_is_duplicate_error, get_password_hash_only } from "../../utils/utils";
+import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const schema = getSchema();
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -50,17 +52,14 @@ export default async function(req: Request, token: string) {
             }),
         );
         
-        await db
-        .insertInto('users')
-        .values({
+        await db.insert(schema.users).values({
             username,
             full_name,
             password_hash: passwordHash,
             role_id,
             created_ms: now,
             modified_ms: now
-        })
-        .execute();
+        });
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
         console.log("Unexpected error in post_method.ts at /user:", e);

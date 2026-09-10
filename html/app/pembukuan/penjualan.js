@@ -129,13 +129,14 @@ async function sse_handler(e) {
 }
 
 function format(data) {
+    console.log(data)
     const res = data.map(item => `
         <tr>
             <td style="width:400px; white-space:normal; word-break:break-word;">
                 ${item.nama_barang}
             </td>
             <td>${format_thousand_separator.format(item.jumlah)}</td>
-            <td>Rp${money_format_bigint(BigInt(item.harga_jual))}</td>
+            <td>Rp${money_format_bigint(BigInt(item.total_harga_jual))}</td>
         </tr>
     `).join("");
 

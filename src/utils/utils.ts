@@ -14,7 +14,10 @@
 */
 
 import { Database } from "bun:sqlite";
-import { CompiledQuery, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler, type DatabaseConnection, type Dialect, type Driver, type QueryResult } from 'kysely';
+import { Connection, createConnection } from "mysql2/promise";
+import { Client } from "pg";
+import { mkdir } from "node:fs/promises";
+import forge from "node-forge";
 
 // mime types
 export const mime_types: Record<string, string> = {
@@ -293,93 +296,6 @@ export function check_image_type(buffer: Uint8Array | Buffer): 'jpg' | 'png' | f
     return false;
 }
 
-// bun:sqlite wrapper
-class BunSqliteConnection implements DatabaseConnection {
-  readonly #db: Database;
-  constructor(db: Database) { this.#db = db; }
-
-  async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
-    const stmt = this.#db.prepare(compiledQuery.sql);
-    const parameters = compiledQuery.parameters as any[];
-
-    if (compiledQuery.sql.trimStart().toUpperCase().startsWith('SELECT') || 
-        compiledQuery.sql.trimStart().toUpperCase().startsWith('PRAGMA')) {
-      const rows = stmt.all(...parameters) as R[];
-      return { rows };
-    } else {
-      const info = stmt.run(...parameters);
-      return {
-        rows: [],
-        insertId: BigInt(info.lastInsertRowid),
-        numAffectedRows: BigInt(info.changes),
-      };
-    }
-  }
-
-  async *streamQuery<R>(compiledQuery: CompiledQuery, chunkSize: number): AsyncIterableIterator<QueryResult<R>> {
-    const stmt = this.#db.prepare(compiledQuery.sql);
-    const iter = stmt.iterate(...(compiledQuery.parameters as any[]));
-
-    let rows: R[] = [];
-
-    for (const row of iter) {
-      rows.push(row as R);
-
-      if (rows.length >= chunkSize) {
-        yield { rows };
-        rows = [];
-      }
-    }
-
-    if (rows.length > 0) yield { rows };
-  }
-}
-
-class BunSqliteDriver implements Driver {
-  readonly #db: Database;
-  constructor(db: Database) { this.#db = db; }
-
-  async init(): Promise<void> {
-    this.#db.run("PRAGMA journal_mode = WAL;");
-    this.#db.run("PRAGMA synchronous = NORMAL;");
-    this.#db.run("PRAGMA foreign_keys = ON;");
-  }
-  
-  async acquireConnection(): Promise<DatabaseConnection> {
-    return new BunSqliteConnection(this.#db);
-  }
-  
-  async beginTransaction(conn: DatabaseConnection): Promise<void> {
-    await conn.executeQuery(CompiledQuery.raw("BEGIN"));
-  }
-  
-  async commitTransaction(conn: DatabaseConnection): Promise<void> {
-    await conn.executeQuery(CompiledQuery.raw("COMMIT"));
-  }
-  
-  async rollbackTransaction(conn: DatabaseConnection): Promise<void> {
-    await conn.executeQuery(CompiledQuery.raw("ROLLBACK"));
-  }
-  
-  async releaseConnection(): Promise<void> {}
-  
-  async destroy(): Promise<void> { 
-    this.#db.close(); 
-  }
-}
-
-export class BunSqliteDialect implements Dialect {
-  readonly #db: Database;
-  constructor(config: { database: Database }) {
-    this.#db = config.database;
-  }
-
-  createAdapter() { return new SqliteAdapter(); }
-  createDriver() { return new BunSqliteDriver(this.#db); }
-  createIntrospector(db: any) { return new SqliteIntrospector(db); }
-  createQueryCompiler() { return new SqliteQueryCompiler(); }
-}
-
 // check sql errors
 export function check_sql_is_duplicate_error(error: any): boolean {
     return (
@@ -395,4 +311,171 @@ export function check_sql_is_duplicate_error(error: any): boolean {
         error?.code === "SQLITE_CONSTRAINT_PRIMARYKEY" ||
         error?.code === "SQLITE_CONSTRAINT"
     );
+}
+
+export async function generate_cert() {
+    const forge = (await import("node-forge")).default
+
+    await mkdir("cert", { recursive: true });
+
+    const pki = forge.pki;
+    const keys = pki.rsa.generateKeyPair(4096);
+    const cert = pki.createCertificate();
+
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = "01";
+
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setDate(cert.validity.notBefore.getDate() + 36500);
+
+    const attrs = [
+        { name: "commonName", value: "localhost" },
+    ];
+
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+
+    cert.setExtensions([
+        {
+            name: "basicConstraints",
+            cA: true,
+        },
+        {
+            name: "keyUsage",
+            digitalSignature: true,
+            keyEncipherment: true,
+            dataEncipherment: true,
+        },
+        {
+            name: "subjectAltName",
+            altNames: [
+                {
+                    type: 2, // DNS
+                    value: "localhost",
+                },
+            ],
+        },
+    ]);
+
+    cert.sign(keys.privateKey, forge.md.sha256.create());
+
+    await Bun.write("cert/key.pem", pki.privateKeyToPem(keys.privateKey));
+    await Bun.write("cert/cert.pem", pki.certificateToPem(cert));
+
+    console.log("[LOG] Certificate SSL/TLS has been created!");
+}
+
+// SQL Connection (PostgreSQL, MySQL, SQLite)
+export async function sql_connection(db_type: string, db_host: string, db_port: number, db_name: string | null, db_user: string, db_pass: string): Promise<{
+    pg_conn: Client | null,
+    ms_conn: Connection | null,
+    sl_conn: Database | null,
+    message: string | null
+}> {
+    let pg_conn = null;
+    let ms_conn = null;
+    let sl_conn = null;
+
+    switch(db_type) {
+        case "mysql": {
+            try {
+                ms_conn = await createConnection({
+                    host: db_host,
+                    port: db_port,
+                    user: db_user,
+                    password: db_pass,
+                    ...(db_name ? { database: db_name } : {})
+                });
+            } catch (err) {
+                return {
+                    message: err instanceof Error && err.message !== "" ? err.message : `Cannot connect to ${db_host}:${db_port}`,
+                    pg_conn: null,
+                    ms_conn: null,
+                    sl_conn: null
+                }
+            }
+            break;
+        }
+        case "postgresql": {
+            try {
+                const conn = new Client({
+                    host: db_host,
+                    port: db_port,
+                    user: db_user,
+                    password: db_pass,
+                    ...(db_name ? { database: db_name } : { database: "postgres" })
+                });
+                await conn.connect();
+                pg_conn = conn;
+            } catch (err) {
+                return {
+                    message: err instanceof Error && err.message !== "" ? err.message : `Cannot connect to ${db_host}:${db_port}`,
+                    pg_conn: null,
+                    ms_conn: null,
+                    sl_conn: null
+                }
+            }
+            break;
+        }
+        case "sqlite": {
+            try {
+                const conn = new Database(`database/${db_name}.db`);
+                sl_conn = conn;
+            } catch (err) {
+                return {
+                    message: err instanceof Error && err.message !== "" ? err.message : `Cannot load database ${db_name}`,
+                    pg_conn: null,
+                    ms_conn: null,
+                    sl_conn: null
+                }
+            }
+            break;
+        }
+        default: {
+            return {
+                "message": "Invalid DB!",
+                pg_conn: null,
+                ms_conn: null,
+                sl_conn: null
+            }
+        }
+    }
+
+    return {"message": null, pg_conn, ms_conn, sl_conn};
+}
+
+export function create_signal() {
+    let resolve: () => void;
+
+    const promise = new Promise<void>((r) => {
+        resolve = r;
+    });
+
+    return {
+        wait: () => promise,
+        done: () => resolve()
+    };
+}
+
+// check TLS certificate
+export function check_certificate(cert_data: string, key_data: string) {
+    try {
+        const cert_text = Buffer.from(cert_data, "base64").toString("utf8");
+        const key_text = Buffer.from(key_data, "base64").toString("utf8");
+
+        const cert = forge.pki.certificateFromPem(cert_text);
+        const private_key = forge.pki.privateKeyFromPem(key_text);
+
+        if (!("n" in cert.publicKey) || !("e" in cert.publicKey)) return false;
+
+        const public_key = cert.publicKey as forge.pki.rsa.PublicKey;
+
+        return (
+            public_key.n.compareTo(private_key.n) === 0 &&
+            public_key.e.compareTo(private_key.e) === 0
+        );
+    } catch {
+        return false;
+    }
 }

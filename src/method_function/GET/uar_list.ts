@@ -15,11 +15,13 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
+import { getDb, getSchema } from "../../database/schema";
+import { eq } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, users } = getSchema();
+    const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -31,10 +33,12 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .selectFrom('users')
-    .select(['username', 'full_name'])
-    .where('role_id', '=', id)
-    .execute();
+    .select({
+        username: users.username,
+        full_name: users.full_name
+    })
+    .from(users)
+    .where(eq(users.role_id, id));
 
     if (!res) return new Response("Not Found", {status: 404});
                 

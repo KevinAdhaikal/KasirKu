@@ -15,11 +15,13 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
+import { getDb, getSchema } from "../../database/schema";
+import { sql, eq, and, gte, lte } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, penjualan_item } = getSchema();
+    const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     const user_input = url.searchParams;
@@ -29,15 +31,13 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (isNaN(tanggal_start) || isNaN(tanggal_end) || !tanggal_start || !tanggal_end) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .selectFrom('penjualan_item')
-    .select([
-        'nama_barang',
-        ({ fn }) => fn.sum('jumlah').as('jumlah')
-    ])
-    .where('tanggal_key', '>=', tanggal_start)
-    .where('tanggal_key', '<=', tanggal_end)
-    .groupBy('nama_barang')
-    .execute();
+    .select({
+        nama_barang: penjualan_item.nama_barang,
+        jumlah: sql<number>`sum(${penjualan_item.jumlah})`.as('jumlah')
+    })
+    .from(penjualan_item)
+    .where(and(gte(penjualan_item.tanggal_key, tanggal_start), lte(penjualan_item.tanggal_key, tanggal_end)))
+    .groupBy(penjualan_item.nama_barang);
 
     return new Response(JSON.stringify(res), {status: 200});
 }

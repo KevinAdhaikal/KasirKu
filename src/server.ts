@@ -14,9 +14,13 @@
 */
 
 import { global } from "./global";
+import { getDb, getSchema } from "./database/schema";
 import * as Bun from "bun";
-import { user_session_interface } from "./user_session/user_session";
+import { user_session, user_session_interface } from "./user_session/user_session";
 import { parse_cookie, mime_types } from "./utils/utils";
+import { eq } from "drizzle-orm";
+import { sse_server } from "./sse_server/sse_server";
+import { rate_limit } from "./rate_limit/rate_limit";
 
 let is_server_closed = false;
 let bun_serve: any;
@@ -43,7 +47,9 @@ async function stop_server() {
         bun_serve.stop();
         if (bun_serve2) bun_serve2.stop();
 
-        if (global.database) await global.database.destroy();
+        if (global.database) {
+            try { (global.database as any).destroy?.(); } catch(e) {}
+        }
 
         global.sse_clients.destroy();
         global.rate_limit.destroy();
@@ -53,9 +59,16 @@ async function stop_server() {
     }
 }
 
+function init_global() {
+    global.user_sessions = new user_session(600, 60, 32); // user sessions
+    global.sse_clients = new sse_server(5000); // sse clients
+    global.rate_limit = new rate_limit(10, 100, 5); // rate limit (max req 100/10 seconds. jail for 25 seconds)
+}
+
 export function main() {
-    const protocol = global.config.use_tls ? "HTTPS" : "HTTP";
-    console.log(`[LOG] ${protocol} Server running in port ${global.config.listen_port}`);
+    init_global();
+    const protocol = Bun.env.APP_USE_TLS ? "HTTPS" : "HTTP";
+    console.log(`[LOG] ${protocol} Server running in port ${Bun.env.APP_LISTEN_PORT}`);
 
     const fetch_handler = async (req: Request, server: any) => {
         const url = new URL(req.url);
@@ -158,9 +171,10 @@ export function main() {
             
                 const required_perm = protected_routes[pathname];
             
-                const db = global.database;
+                const db = getDb();
+                const { roles } = getSchema();
                 if (!db) return new Response("Internal Server Error", {status: 500});
-                const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst() as {permission_level: number};
+                const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1) as {permission_level: number}[];
 
                 if (required_perm && !(res_role.permission_level & required_perm)) {
                     for (const [key, value] of Object.entries(protected_routes)) {
@@ -172,7 +186,7 @@ export function main() {
             let cached = global.static_cache.get(pathname);
 
             if (!cached) {
-                const path = global.config.compile_html ? `./html_build${pathname}` : `./html${pathname}`
+                const path = Bun.env.APP_COMPILE_HTML ? `./html_build${pathname}` : `./html${pathname}`
                 let file = Bun.file(path);
 
                 if (!(await file.exists())) {
@@ -218,7 +232,7 @@ export function main() {
                     "Cache-Control": is_asset
                     ? "public, max-age=31536000"
                     : "no-cache",
-                    "Content-Encoding": global.config.compile_html ? "br" : "none"
+                    "Content-Encoding": Bun.env.APP_COMPILE_HTML ? "br" : "none"
                 },
             });
         }
@@ -238,12 +252,12 @@ export function main() {
         else return new Response("Bad Request", {status: 400});
     };
 
-    if (global.config.use_tls) {
+    if (Bun.env.APP_USE_TLS && Bun.env.TLS_KEY_PATH !== undefined && Bun.env.TLS_CERT_PATH !== undefined) {
         bun_serve = Bun.serve({
-            port: global.config.listen_port,
+            port: Bun.env.APP_LISTEN_PORT,
             tls: {
-                key: Bun.file(global.config.tls_key_path),
-                cert: Bun.file(global.config.tls_cert_path)
+                key: Bun.file(Bun.env.TLS_KEY_PATH),
+                cert: Bun.file(Bun.env.TLS_CERT_PATH)
             },
             fetch: fetch_handler,
             error(err: Error) {
@@ -257,15 +271,25 @@ export function main() {
             async fetch(req: Request) {
                 const url = new URL(req.url);
 
+                if (url.pathname === "/ping") {
+                    return new Response("", {
+                        headers: {
+                            "Access-Control-Allow-Origin": "*"
+                        },
+                        status: 200,
+
+                    });
+                }
+
                 url.protocol = "https:";
-                url.port = String(global.config.listen_port);
+                url.port = String(Bun.env.APP_LISTEN_PORT);
 
                 return Response.redirect(url.toString(), 302);
             }
         });
     } else {
         bun_serve = Bun.serve({
-            port: global.config.listen_port,
+            port: Bun.env.APP_LISTEN_PORT,
             fetch: fetch_handler,
             error(err: Error) {
                 console.log(err);

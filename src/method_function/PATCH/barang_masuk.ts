@@ -13,16 +13,17 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { sql } from "kysely";
+import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, barang_masuk, barang } = getSchema();
+    const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
@@ -43,34 +44,35 @@ export default async function(req: Request, token: string) {
 
     const now = Date.now();
     
-    const res = await db.selectFrom("barang_masuk")
-    .select(["jumlah_barang", "barang_id"])
-    .where("id", '=', id)
-    .where("tanggal_key", '=', tanggal_key)
-    .executeTakeFirst();
+    const res = await db.select({ jumlah_barang: barang_masuk.jumlah_barang, barang_id: barang_masuk.barang_id })
+    .from(barang_masuk)
+    .where(eq(barang_masuk.id, id))
+    .where(eq(barang_masuk.tanggal_key, tanggal_key))
+    .limit(1)
+.then((r: any) => r[0]);
 
     if (!res) return new Response("Not Found", {status: 404});
 
     let stok_barang;
     try {
-        stok_barang = await db.transaction().execute(async (trx) => {
+        stok_barang = await db.transaction(async (trx: any) => {
             await trx
-            .updateTable("barang_masuk")
+            .update(barang_masuk)
             .set({
                 deskripsi,
                 jumlah_barang,
                 modified_ms: now
             })
-            .where("id", "=", id)
-            .where("tanggal_key", "=", tanggal_key)
+            .where(eq(barang_masuk.id, id))
+            .where(eq(barang_masuk.tanggal_key, tanggal_key))
             .execute();
             
             await trx
-            .updateTable("barang")
+            .update(barang)
             .set({
-                stok_barang: sql`stok_barang + ${jumlah_barang - res.jumlah_barang}`
+                stok_barang: sql`${barang.stok_barang} + ${jumlah_barang - res.jumlah_barang}`
             })
-            .where("id", "=", res.barang_id)
+            .where(eq(barang.id, res.barang_id))
             .execute();
         });
     }

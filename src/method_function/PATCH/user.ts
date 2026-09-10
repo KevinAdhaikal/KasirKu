@@ -13,17 +13,18 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { sql } from "kysely";
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
+import { getSchema, getDb } from "../../database/schema";
 import { check_sql_is_duplicate_error, get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const db = getDb();
+    const { roles, users } = getSchema();
+    const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
             
     if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
@@ -52,26 +53,27 @@ export default async function(req: Request, token: string) {
     else new_password = null;
             
     const res = await db
-    .selectFrom('users')
-    .select('role_id')
-    .where('id', '=', id)
-    .executeTakeFirst();
+    .select({ role_id: users.role_id })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1)
+    .then((r: any) => r[0]);
 
     if (!res) return new Response("Not Found", { status: 404 });
 
     try {
-        await db
-        .updateTable('users')
-        .set({
+        const updateData: any = {
             username: new_username,
             full_name: new_full_name,
             role_id: new_role_id,
-            password_hash: new_password 
-                ? new_password 
-                : sql`password_hash`, 
             modified_ms: Date.now()
-        })
-        .where('id', '=', id)
+        };
+        if (new_password) updateData.password_hash = new_password;
+
+        await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
         .execute();
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("3", {status: 403});
