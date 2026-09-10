@@ -36,5 +36,10 @@ export default async function(req: Request, url: URL, user_info: user_session_in
             ])
         );
 
-    return new Response(JSON.stringify({store: toko_settings}), {status: 200});
+    return new Response(JSON.stringify({store: toko_settings}), {
+        status: 200,
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
 }

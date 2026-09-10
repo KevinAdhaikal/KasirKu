@@ -1,0 +1,334 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * KasirKu design tokens
+ *
+ * Keep application colors here. Components should consume these tokens or
+ * Tailwind's mapped palette below instead of embedding color values.
+ */
+:root {
+  --brand: #3f91ad;
+  --brand-hover: #347e98;
+  --brand-action: #348eaa;
+  --brand-action-hover: #2e7d96;
+  --brand-action-border: #2d819a;
+  --brand-soft: #eaf5f8;
+  --brand-soft-hover: #dceef3;
+  --brand-ink: #245f73;
+
+  --bg-canvas: #f5f9fb;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f0f5f7;
+  --bg-hover: #e9f3f6;
+  --border-subtle: #d9e4e9;
+  --border-contrast: #bcced6;
+  --text-primary: #18262d;
+  --text-secondary: #5b6a72;
+  --text-muted: #87959c;
+
+  --accent: var(--brand-action);
+  --accent-fg: #ffffff;
+  --accent-fg-muted: #d4e9ef;
+  --focus-ring: rgba(52, 142, 170, 0.28);
+  --shadow-color: rgba(31, 72, 84, 0.12);
+
+  --success: #15956f;
+  --warning: #d88a16;
+  --danger: #dc4856;
+  --info: #338ea7;
+
+  /* Tailwind palette aliases: keeps existing utility classes theme-aware. */
+  --palette-white: #ffffff;
+  --palette-black: #0f1a20;
+  --neutral-50: #f6fafb;
+  --neutral-100: #edf4f6;
+  --neutral-200: #dfe8ec;
+  --neutral-300: #c8d5da;
+  --neutral-400: #8b99a0;
+  --neutral-500: #6c7a82;
+  --neutral-600: #596970;
+  --neutral-700: #45545c;
+  --neutral-800: #303f46;
+  --neutral-900: #18262d;
+  --neutral-950: #101a1f;
+
+  --red-50: #fef2f3;
+  --red-200: #f6c5c9;
+  --red-400: #ef7d87;
+  --red-500: #e45f6b;
+  --red-600: #dc4856;
+  --red-700: #c93b49;
+  --red-800: #a9323e;
+  --red-900: #852a34;
+  --red-950: #4a171d;
+
+  --emerald-50: #edf9f5;
+  --emerald-200: #b9e7d6;
+  --emerald-400: #39b88e;
+  --emerald-500: #1fa77a;
+  --emerald-600: #15956f;
+  --emerald-700: #117d5e;
+  --emerald-800: #0e634c;
+  --emerald-950: #08352a;
+
+  --amber-50: #fff8e8;
+  --amber-200: #f5d899;
+  --amber-400: #eeb24e;
+  --amber-500: #df9d2e;
+  --amber-600: #d88a16;
+  --amber-700: #b56d0d;
+  --amber-800: #905613;
+  --amber-900: #704212;
+  --amber-950: #40250a;
+}
+
+.dark {
+  --brand: #357f97;
+  --brand-hover: #3f8fa8;
+  --brand-action: #2c7188;
+  --brand-action-hover: #347e96;
+  --brand-action-border: #347b92;
+  --brand-soft: #10272f;
+  --brand-soft-hover: #16343e;
+  --brand-ink: #a9d9e5;
+
+  --bg-canvas: #0b151a;
+  --bg-surface: #101d24;
+  --bg-subtle: #14252d;
+  --bg-hover: #19333d;
+  --border-subtle: #213640;
+  --border-contrast: #34515d;
+  --text-primary: #edf7fa;
+  --text-secondary: #a8bbc3;
+  --text-muted: #788d96;
+
+  --accent: var(--brand-action);
+  --accent-fg: #f5fbfd;
+  --accent-fg-muted: #b6d7df;
+  --focus-ring: rgba(53, 127, 151, 0.34);
+  --shadow-color: rgba(0, 0, 0, 0.28);
+
+  --palette-white: #f3f8fa;
+  --palette-black: #050c10;
+  --neutral-50: #f2f9fb;
+  --neutral-100: #e2f0f4;
+  --neutral-200: #c9dce2;
+  --neutral-300: #acc3ca;
+  --neutral-400: #8faab3;
+  --neutral-500: #748a94;
+  --neutral-600: #617983;
+  --neutral-700: #4a626c;
+  --neutral-800: #29434d;
+  --neutral-900: #101d24;
+  --neutral-950: #0b151a;
+
+  --red-50: #3a191e;
+  --red-200: #6f2d36;
+  --red-400: #f18b94;
+  --red-500: #ec727c;
+  --red-600: #e45a66;
+  --red-700: #d54a57;
+  --red-800: #b23946;
+  --red-900: #8b2a35;
+  --red-950: #4a171d;
+
+  --emerald-50: #0d352a;
+  --emerald-200: #1c6a54;
+  --emerald-400: #55c9a3;
+  --emerald-500: #39b991;
+  --emerald-600: #2eaa84;
+  --emerald-700: #249272;
+  --emerald-800: #1c735c;
+  --emerald-950: #092b22;
+
+  --amber-50: #402b0d;
+  --amber-200: #705018;
+  --amber-400: #f2c56a;
+  --amber-500: #e9ae45;
+  --amber-600: #df9e2f;
+  --amber-700: #c48422;
+  --amber-800: #9f671b;
+  --amber-900: #794c14;
+  --amber-950: #40250a;
+}
+
+/* Existing Tailwind color utilities resolve through the same theme tokens. */
+@theme inline {
+  --color-white: var(--palette-white);
+  --color-black: var(--palette-black);
+
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-950: var(--neutral-950);
+
+  --color-red-50: var(--red-50);
+  --color-red-200: var(--red-200);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-red-700: var(--red-700);
+  --color-red-800: var(--red-800);
+  --color-red-900: var(--red-900);
+  --color-red-950: var(--red-950);
+
+  --color-emerald-50: var(--emerald-50);
+  --color-emerald-200: var(--emerald-200);
+  --color-emerald-400: var(--emerald-400);
+  --color-emerald-500: var(--emerald-500);
+  --color-emerald-600: var(--emerald-600);
+  --color-emerald-700: var(--emerald-700);
+  --color-emerald-800: var(--emerald-800);
+  --color-emerald-950: var(--emerald-950);
+
+  --color-amber-50: var(--amber-50);
+  --color-amber-200: var(--amber-200);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+  --color-amber-600: var(--amber-600);
+  --color-amber-700: var(--amber-700);
+  --color-amber-800: var(--amber-800);
+  --color-amber-900: var(--amber-900);
+  --color-amber-950: var(--amber-950);
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, input, select, textarea {
+    vertical-align: middle;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    accent-color: var(--brand);
+  }
+
+  select option {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 8px, 0) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  .animate-toast-in {
+    animation: toast-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-toast-in {
+      animation: none;
+    }
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .font-mono, code, pre, kbd {
+    font-family: "JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Custom Scrollbar ───────────────────────────────────── */
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-contrast) transparent;
+    transition: scrollbar-color 0.2s ease;
+  }
+  *:hover {
+    scrollbar-color: var(--text-muted) transparent;
+  }
+
+  /* Chromium / Safari */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.2s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Tampilkan scrollbar saat elemen di-hover */
+  *:hover::-webkit-scrollbar-thumb {
+    background: var(--border-contrast);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+}
+
+
+@media print {
+  /* Thermal receipt print isolation */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #thermal-receipt, #thermal-receipt * {
+    visibility: visible;
+  }
+  #thermal-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}

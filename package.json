@@ -5,6 +5,11 @@
   "author": "KevinAdhaikal",
   "homepage": "https://github.com/kevinadhaikal/kasirku",
   "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts",
+    "build": "cd frontend && bun install && bun run build",
+    "frontend:dev": "cd frontend && bun run dev",
+    "frontend:build": "cd frontend && bun run build",
     "drizzle:generate": "bun run scripts/drizzle/generate.ts"
   },
   "dependencies": {

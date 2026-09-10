@@ -43,7 +43,7 @@ export default async function(req: Request, token: string) {
     return new Response(session_id, {
         status: 200,
         headers: {
-            "set-cookie": `token=${session_id}; Path=/; HttpOnly; SameSite=Strict; Secure`
+            "set-cookie": `token=${session_id}; Path=/; HttpOnly; SameSite=Lax${Bun.env.APP_USE_TLS ? "; Secure" : ""}`
         }
     });
 }

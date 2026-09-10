@@ -21,7 +21,7 @@ export default async function(req: Request, token: string) {
     global.user_sessions.remove(token);
     global.sse_clients.remove(token);
     
-    return new Response("", {status: 302, headers: {
+    return new Response("", {status: 200, headers: {
         "set-cookie": "token=; Path=/; Max-Age=0"
     }});
 }
