@@ -47,7 +47,6 @@
 <Modal
   bind:open
   title="Struk Penjualan"
-  description="Pratinjau nota belanja transaksi selesai."
   size="md"
 >
   <div class="space-y-4">

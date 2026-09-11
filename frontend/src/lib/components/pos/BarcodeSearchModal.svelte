@@ -38,10 +38,16 @@
   let isSearchingRemote = $state(false);
   let searchInputEl = $state<HTMLInputElement | null>(null);
 
+  // Pagination & Limit
+  const LIMIT_OPTIONS = [5, 10, 100];
+  let pageSize = $state(5);
+  let currentPage = $state(1);
+
   $effect(() => {
     if (open) {
       localResults = [...results];
       filterQuery = searchQuery || '';
+      currentPage = 1;
       tick().then(() => {
         searchInputEl?.focus();
         searchInputEl?.select();
@@ -57,6 +63,17 @@
       (p.barcode_barang && p.barcode_barang.toLowerCase().includes(q))
     );
   });
+
+  const totalPages = $derived(Math.ceil(displayedProducts.length / pageSize) || 1);
+
+  $effect(() => {
+    void filterQuery;
+    currentPage = 1;
+  });
+
+  const paginatedProducts = $derived(
+    displayedProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
 
   async function handleRemoteSearch() {
     const q = filterQuery.trim();
@@ -170,7 +187,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-          {#each displayedProducts as product}
+          {#each paginatedProducts as product}
             {@const isOutOfStock = product.stok_barang <= 0}
             <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
               <td class="px-5 py-2.5 text-center font-medium text-neutral-900 dark:text-neutral-100">
@@ -214,8 +231,61 @@
   {/if}
 
   {#snippet footer()}
-    <Button variant="secondary" size="sm" onclick={() => (open = false)}>
-      Tutup (Esc)
-    </Button>
+    <div class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-500">
+      <div class="flex items-center gap-3">
+        <div>
+          Menampilkan <strong class="text-neutral-900 dark:text-neutral-100 tabular-nums">{paginatedProducts.length}</strong> dari <span class="tabular-nums font-medium text-neutral-900 dark:text-neutral-100">{displayedProducts.length}</span> produk
+        </div>
+        {#if displayedProducts.length > 5}
+          <div class="flex items-center gap-1.5 border-l border-neutral-200 dark:border-neutral-800 pl-3">
+            <span class="text-neutral-500 font-medium">Limit:</span>
+            <div class="inline-flex rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 p-0.5" role="group" aria-label="Batas per halaman">
+              {#each LIMIT_OPTIONS as limitOpt}
+                <button
+                  type="button"
+                  onclick={() => { pageSize = limitOpt; currentPage = 1; }}
+                  class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition-colors {pageSize === limitOpt
+                    ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-2xs font-bold'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100'}"
+                  aria-pressed={pageSize === limitOpt}
+                  aria-label={`Tampilkan ${limitOpt} produk`}
+                >
+                  {limitOpt}
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <div class="flex items-center gap-2">
+        {#if totalPages > 1}
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={currentPage <= 1}
+            onclick={() => (currentPage -= 1)}
+            aria-label="Halaman sebelumnya"
+          >
+            Sebelumnya
+          </Button>
+          <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300 tabular-nums px-1">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={currentPage >= totalPages}
+            onclick={() => (currentPage += 1)}
+            aria-label="Halaman berikutnya"
+          >
+            Berikutnya
+          </Button>
+        {/if}
+        <Button variant="secondary" size="sm" onclick={() => (open = false)}>
+          Tutup (Esc)
+        </Button>
+      </div>
+    </div>
   {/snippet}
 </Modal>

@@ -14,6 +14,7 @@
   import Modal from '../../components/ui/Modal.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
   import DatePicker from '../../components/ui/DatePicker.svelte';
+  import TablePagination from '../../components/ui/TablePagination.svelte';
   import {
     formatRupiah,
     formatIDR,
@@ -262,7 +263,7 @@
 
   // Pagination
   let currentPage = $state(1);
-  const pageSize = 10;
+  let pageSize = $state(10);
   const paginatedList = $derived(
     filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   );
@@ -297,14 +298,13 @@
 <div class="space-y-6">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
-    <div>
-      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-        <TrendingDown class="w-5 h-5 text-red-500" />
-        <span>Pengeluaran</span>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+        Pengeluaran
       </h1>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Pencatatan beban operasional toko, belanja perlengkapan, dan pelaporan kas keluar.
-      </p>
+      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+        {formatNumber(totalCatatan)} Catatan
+      </span>
     </div>
 
     <div class="flex items-center gap-2">
@@ -329,59 +329,6 @@
       </Button>
     </div>
   </div>
-
-  <!-- Summary Metric Cards (4 KPI Cards) -->
-  <!--
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Total Catatan</span>
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums mt-1">
-          {formatNumber(totalCatatan)} <span class="text-xs font-normal text-neutral-400">transaksi</span>
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
-        <Receipt class="w-4 h-4" />
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Total Beban Keluar</span>
-        <div class="text-xl font-bold font-mono text-red-600 dark:text-red-400 tabular-nums mt-1">
-          -{formatRupiah(totalNominal)}
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-500/20 flex items-center justify-center text-red-600 dark:text-red-400">
-        <TrendingDown class="w-4 h-4" />
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Rata-rata Pengeluaran</span>
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums mt-1">
-          {formatRupiah(avgNominal)}
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
-        <DollarSign class="w-4 h-4" />
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Nominal Terbesar</span>
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums mt-1">
-          {formatRupiah(maxNominal)}
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
-        <AlertCircle class="w-4 h-4" />
-      </div>
-    </div>
-  </div>
-  -->
 
   <!-- Filter & Controls Toolbar -->
   <div class="space-y-3">
@@ -580,34 +527,15 @@
       </table>
     </div>
 
-    <!-- Pagination & Total Indicator -->
-    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-      <div>
-        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedList.length}</strong> dari {filteredList.length} pengeluaran
-      </div>
-
-      <div class="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage <= 1}
-          onclick={() => (currentPage -= 1)}
-        >
-          Sebelumnya
-        </Button>
-        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-          {currentPage} / {totalPages}
-        </span>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onclick={() => (currentPage += 1)}
-        >
-          Berikutnya
-        </Button>
-      </div>
-    </div>
+    <!-- Pagination & Total Indicator with Limit -->
+    <TablePagination
+      bind:currentPage
+      bind:pageSize
+      totalItems={filteredList.length}
+      currentItemsCount={paginatedList.length}
+      itemLabel="pengeluaran"
+      storageKey="pengeluaran_limit"
+    />
   </div>
 </div>
 
@@ -615,7 +543,6 @@
 <Modal
   open={isModalOpen}
   title={isEditing ? 'Ubah Catatan Pengeluaran' : 'Catat Pengeluaran Baru'}
-  description="Masukkan rincian biaya operasional yang dikeluarkan kasir / toko."
   size="lg"
   onclose={() => (isModalOpen = false)}
 >

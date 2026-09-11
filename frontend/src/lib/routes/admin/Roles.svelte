@@ -14,6 +14,7 @@
   import Modal from '../../components/ui/Modal.svelte';
   import Badge from '../../components/ui/Badge.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
+  import TablePagination from '../../components/ui/TablePagination.svelte';
   import { formatDateTime } from '../../utils/format';
   import {
     ShieldAlert,
@@ -426,7 +427,7 @@
 
   // Pagination
   let currentPage = $state(1);
-  const pageSize = 10;
+  let pageSize = $state(10);
   const paginatedRoles = $derived(
     filteredRoles.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   );
@@ -465,17 +466,14 @@
 
 <div class="space-y-6">
   <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
-    <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-          <ShieldAlert class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-          <span>Roles</span>
-        </h1>
-      </div>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Kelola nama role, atur Permissions, dan pantau daftar pengguna pada setiap role.
-      </p>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-4">
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+        Roles
+      </h1>
+      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+        {roleList.length} Hak Akses
+      </span>
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
@@ -663,34 +661,15 @@
       </table>
     </div>
     
-    <!-- Pagination & Total Indicator -->
-    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-      <div>
-        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedRoles.length}</strong> dari {filteredRoles.length} role
-      </div>
-
-      <div class="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage <= 1}
-          onclick={() => (currentPage -= 1)}
-        >
-          Sebelumnya
-        </Button>
-        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-          {currentPage} / {totalPages}
-        </span>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onclick={() => (currentPage += 1)}
-        >
-          Berikutnya
-        </Button>
-      </div>
-    </div>
+    <!-- Pagination & Total Indicator with Limit -->
+    <TablePagination
+      bind:currentPage
+      bind:pageSize
+      totalItems={filteredRoles.length}
+      currentItemsCount={paginatedRoles.length}
+      itemLabel="role"
+      storageKey="roles_limit"
+    />
   </div>
 </div>
 

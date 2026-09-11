@@ -73,7 +73,6 @@
 <Modal
   bind:open
   title="Catat Pengeluaran Toko"
-  description="Tambahkan pengeluaran operasional toko yang akan dicatat pada pembukuan hari ini."
   size="lg"
 >
   <form novalidate onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">

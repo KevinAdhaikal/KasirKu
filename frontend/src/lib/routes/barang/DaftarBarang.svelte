@@ -15,6 +15,7 @@
   import Modal from '../../components/ui/Modal.svelte';
   import Badge from '../../components/ui/Badge.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
+  import TablePagination from '../../components/ui/TablePagination.svelte';
   import {
     formatRupiah,
     formatRupiahInput,
@@ -121,7 +122,7 @@
 
   // Pagination
   let currentPage = $state(1);
-  const pageSize = 20;
+  let pageSize = $state(10);
 
   async function loadData() {
     loading = true;
@@ -588,17 +589,10 @@
 
 <div class="space-y-6">
   <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
-    <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-          <Package class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-          Daftar Barang
-        </h1>
-      </div>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Katalog produk, manajemen stok, penetapan harga modal & jual, dan kalkulasi margin keuntungan.
-      </p>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+    <div class="flex items-baseline gap-2.5">
+      <h1 class="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Daftar Barang</h1>
+      <span class="text-xs text-neutral-400 font-mono tabular-nums">{barangList.length} SKU</span>
     </div>
 
     <div class="flex items-center gap-2">
@@ -623,62 +617,6 @@
       </Button>
     </div>
   </div>
-
-  <!-- Summary Metric Strip -->
-  <!--
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Total Produk</span>
-        <Package class="w-4 h-4 text-neutral-400" />
-      </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
-          {formatNumber(summaryMetrics.totalItems)}
-        </span>
-        <span class="text-xs text-neutral-500">item</span>
-      </div>
-    </div>
-
-    <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Stok Fisik</span>
-        <Boxes class="w-4 h-4 text-neutral-400" />
-      </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
-          {formatNumber(summaryMetrics.totalUnits)}
-        </span>
-        <span class="text-xs text-neutral-500">unit</span>
-      </div>
-    </div>
-
-    <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Nilai Modal Aset</span>
-        <DollarSign class="w-4 h-4 text-neutral-400" />
-      </div>
-      <div class="mt-2">
-        <span class="text-lg font-bold font-mono tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums truncate block">
-          {formatRupiah(summaryMetrics.totalModalValue)}
-        </span>
-      </div>
-    </div>
-
-    <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Stok Kritis</span>
-        <AlertTriangle class="w-4 h-4 text-amber-500" />
-      </div>
-      <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-xl font-bold font-mono tracking-tight {summaryMetrics.lowStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-900 dark:text-neutral-100'} tabular-nums">
-          {formatNumber(summaryMetrics.lowStockCount)}
-        </span>
-        <span class="text-xs text-neutral-500">perlu restock</span>
-      </div>
-    </div>
-  </div>
-  -->
 
   <!-- Filters Toolbar -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -968,34 +906,15 @@
       </table>
     </div>
 
-    <!-- Pagination & Total Indicator -->
-    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-      <div>
-        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedBarang.length}</strong> dari {filteredBarang.length} produk
-      </div>
-
-      <div class="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage <= 1}
-          onclick={() => (currentPage -= 1)}
-        >
-          Sebelumnya
-        </Button>
-        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-          {currentPage} / {totalPages}
-        </span>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onclick={() => (currentPage += 1)}
-        >
-          Berikutnya
-        </Button>
-      </div>
-    </div>
+    <!-- Pagination & Total Indicator with Limit -->
+    <TablePagination
+      bind:currentPage
+      bind:pageSize
+      totalItems={filteredBarang.length}
+      currentItemsCount={paginatedBarang.length}
+      itemLabel="produk"
+      storageKey="daftar_barang_limit"
+    />
   </div>
 </div>
 
@@ -1003,7 +922,6 @@
 <Modal
   open={isModalOpen}
   title={isEditing ? 'Ubah Informasi Produk' : 'Tambah Produk ke Inventaris'}
-  description="Lengkapi rincian produk, nomor barcode, jumlah stok, dan kalkulasi margin harga."
   size="xl"
   onclose={() => (isModalOpen = false)}
 >

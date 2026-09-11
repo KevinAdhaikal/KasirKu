@@ -14,6 +14,7 @@
   import Badge from '../../components/ui/Badge.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
   import DatePicker from '../../components/ui/DatePicker.svelte';
+  import TablePagination from '../../components/ui/TablePagination.svelte';
   import {
     formatNumber,
     formatThousandSeparator,
@@ -354,7 +355,7 @@
 
   // Pagination
   let currentPage = $state(1);
-  const pageSize = 10;
+  let pageSize = $state(10);
   const paginatedList = $derived(
     filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   );
@@ -369,17 +370,10 @@
 
 <div class="space-y-4">
   <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
-    <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-          <ArrowDownToLine class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-          <span>Barang Masuk</span>
-        </h1>
-      </div>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Pencatatan pasokan produk dari distributor, histori restock harian, dan peningkatan stok otomatis.
-      </p>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+    <div class="flex items-baseline gap-2.5">
+      <h1 class="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Barang Masuk</h1>
+      <span class="text-xs text-neutral-400 font-mono tabular-nums">{filteredList.length} pasokan</span>
     </div>
 
     <div class="flex items-center gap-2">
@@ -594,34 +588,15 @@
       </tbody>
     </table>
 
-    <!-- Pagination & Total Indicator -->
-    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-      <div>
-        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedList.length}</strong> dari {filteredList.length} data masuk
-      </div>
-
-      <div class="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage <= 1}
-          onclick={() => (currentPage -= 1)}
-        >
-          Sebelumnya
-        </Button>
-        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-          {currentPage} / {totalPages}
-        </span>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onclick={() => (currentPage += 1)}
-        >
-          Berikutnya
-        </Button>
-      </div>
-    </div>
+    <!-- Pagination & Total Indicator with Limit -->
+    <TablePagination
+      bind:currentPage
+      bind:pageSize
+      totalItems={filteredList.length}
+      currentItemsCount={paginatedList.length}
+      itemLabel="data masuk"
+      storageKey="barang_masuk_limit"
+    />
   </div>
 </div>
 
@@ -629,7 +604,6 @@
 <Modal
   open={isAddModalOpen}
   title="Catat Pasokan Barang Masuk"
-  description="Pilih produk dari katalog, masukkan kuantitas restock, dan stok gudang akan bertambah secara otomatis."
   size="xl"
   onclose={() => (isAddModalOpen = false)}
 >
@@ -810,7 +784,6 @@
 <Modal
   open={isEditModalOpen}
   title="Ubah Data Barang Masuk"
-  description="Perbarui jumlah kuantitas pasokan atau keterangan. Selisih stok akan otomatis disinkronkan ke gudang."
   size="lg"
   onclose={() => (isEditModalOpen = false)}
 >

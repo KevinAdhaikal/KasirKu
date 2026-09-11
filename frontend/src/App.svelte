@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { auth, Permissions } from './lib/stores/auth.svelte';
   import { router } from './lib/stores/router.svelte';
   import { sse } from './lib/stores/sse.svelte';
@@ -38,20 +38,25 @@
     }
   });
 
-  // Watch route & authentication
+  // Watch route & authentication strictly (untracking SSE status & router reads)
   $effect(() => {
-    if (!auth.isLoading) {
-      if (!auth.isAuthenticated) {
-        sse.disconnect();
-        if (router.currentPath !== '/login') {
-          router.navigate('/login', true);
+    const isAuth = auth.isAuthenticated;
+    const loading = auth.isLoading;
+
+    if (!loading) {
+      untrack(() => {
+        if (!isAuth) {
+          sse.disconnect();
+          if (router.currentPath !== '/login') {
+            router.navigate('/login', true);
+          }
+        } else {
+          sse.connect();
+          if (router.currentPath === '/login') {
+            router.navigate('/', true);
+          }
         }
-      } else {
-        sse.connect();
-        if (router.currentPath === '/login') {
-          router.navigate('/', true);
-        }
-      }
+      });
     }
   });
 </script>

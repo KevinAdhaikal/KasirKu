@@ -15,6 +15,7 @@
   import QuickExpenseModal from '../components/pos/QuickExpenseModal.svelte';
   import Rupiah from '../components/ui/Rupiah.svelte';
   import DatePicker from '../components/ui/DatePicker.svelte';
+  import TablePagination from '../components/ui/TablePagination.svelte';
   import { formatRupiah, formatNumber, formatDate } from '../utils/format';
   import {
     LayoutDashboard,
@@ -98,10 +99,6 @@
   let labaBersih = $derived(labaKotor - pengeluaran);
   let marginPersen = $derived(omzet > 0 ? ((labaKotor / omzet) * 100).toFixed(1) : '0.0');
 
-  // Breakdown bar percentages (relative to Omzet)
-  let modalPct = $derived(omzet > 0 ? Math.min(100, Math.round((totalModal / omzet) * 100)) : 0);
-  let pengeluaranPct = $derived(omzet > 0 ? Math.min(100, Math.round((pengeluaran / omzet) * 100)) : 0);
-  let bersihPct = $derived(Math.max(0, 100 - modalPct - pengeluaranPct));
 
   // Filtered lists
   let filteredBarangKosong = $derived(
@@ -119,6 +116,19 @@
   let totalBarangTerjualPeriode = $derived(
     barangTerjualList.reduce((acc, curr) => acc + (Number(curr.jumlah) || 0), 0)
   );
+
+  let terjualPage = $state(1);
+  let terjualPageSize = $state(5);
+  let paginatedBarangTerjual = $derived(
+    filteredBarangTerjual.slice((terjualPage - 1) * terjualPageSize, terjualPage * terjualPageSize)
+  );
+
+  $effect(() => {
+    void filterTerjualQuery;
+    void startDate;
+    void endDate;
+    terjualPage = 1;
+  });
 
   function getTodayKey(): number {
     const d = new Date();
@@ -261,72 +271,56 @@
   </div>
 
   <!-- Financial Overview Panel (50% Left / 50% Right Split & Collapsible) -->
-  <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
-    <!-- Panel Header with Toggle -->
-    <div class="px-5 py-3.5 border-b border-neutral-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50/60 dark:bg-neutral-900/40">
-      <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-md bg-[var(--brand)]/10 text-[var(--brand)] flex items-center justify-center shrink-0">
-          <Wallet class="w-4 h-4" />
-        </div>
-        <div>
-          <h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Overview Finansial</h2>
-          <p class="text-[11px] text-neutral-500 dark:text-neutral-400">Ringkasan performa omzet, beban, margin, dan laba operasional hari ini</p>
-        </div>
+  <div class="rounded-xl border border-neutral-200/90 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
+    <!-- Header with Action -->
+    <div class="px-5 py-3 border-b border-neutral-200/90 dark:border-neutral-800 flex items-center justify-between gap-3 bg-neutral-50/60 dark:bg-neutral-900/40">
+      <div class="flex items-center gap-2">
+        <h2 class="text-xs font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider">Overview Finansial</h2>
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Sinkron aktif"></span>
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- Compact summary pills when collapsed or at glance -->
         {#if !showFinancialOverview && !loading}
-          <div class="hidden sm:flex items-center gap-2 text-xs font-medium tabular-nums text-neutral-600 dark:text-neutral-400">
-            <span>Omzet: <strong class="text-neutral-900 dark:text-neutral-100"><Rupiah value={omzet} /></strong></span>
-            <span class="text-neutral-300 dark:text-neutral-700">•</span>
-            <span>Laba Bersih: <strong class={labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}><Rupiah value={labaBersih} /></strong></span>
+          <div class="hidden sm:flex items-center gap-3 text-xs font-medium tabular-nums text-neutral-600 dark:text-neutral-400">
+            <span>Omzet <strong class="text-neutral-900 dark:text-neutral-100"><Rupiah value={omzet} /></strong></span>
+            <span class="text-neutral-300 dark:text-neutral-700">/</span>
+            <span>Bersih <strong class={labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}><Rupiah value={labaBersih} /></strong></span>
           </div>
-        {:else if !loading && omzet > 0}
-          <span class="hidden sm:inline-flex text-xs text-neutral-600 dark:text-neutral-300 font-medium px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 tabular-nums">
-            Margin Kotor: <strong class="ml-1 text-emerald-600 dark:text-emerald-400">{marginPersen}%</strong>
-          </span>
         {/if}
 
-        <!-- Hide / Show Toggle Button -->
         <button
           type="button"
           onclick={toggleFinancialOverview}
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors border border-neutral-200 dark:border-neutral-700"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/80 hover:bg-neutral-100 dark:hover:bg-neutral-700/60 shadow-2xs transition-colors cursor-pointer"
           aria-expanded={showFinancialOverview}
         >
           <span>{showFinancialOverview ? 'Sembunyikan' : 'Tampilkan'}</span>
-          <ChevronDown class="w-3.5 h-3.5 transition-transform duration-200 {showFinancialOverview ? 'rotate-180' : ''}" />
+          <ChevronDown class="w-3.5 h-3.5 transition-transform duration-150 {showFinancialOverview ? 'rotate-180' : ''}" />
         </button>
       </div>
     </div>
 
-    <!-- Collapsible 50% / 50% Split Grid -->
+    <!-- 50% / 50% Ledger Grid -->
     {#if showFinancialOverview}
-      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-200/80 dark:divide-neutral-800">
-        <!-- Kolom Kiri (50%): Laba Kotor, Beban Pengeluaran, Volume Terjual -->
-        <div class="divide-y divide-neutral-200/70 dark:divide-neutral-800">
+      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-200/90 dark:divide-neutral-800">
+        <!-- Kolom Kiri (50%): Laba Kotor & Beban Pengeluaran -->
+        <div class="divide-y divide-neutral-200/80 dark:divide-neutral-800/80">
           <!-- Kiri 1: Laba Kotor -->
-          <div class="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-neutral-50/40 dark:hover:bg-neutral-800/20 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <Percent class="w-4 h-4" />
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <TrendingUp class="w-4 h-4" />
               </div>
               <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Laba Kotor</span>
-                  <span class="text-[11px] tabular-nums font-semibold px-1.5 py-0.2 rounded border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30">
-                    {marginPersen}% Margin
-                  </span>
-                </div>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">Omzet dikurangi harga modal HPP</p>
+                <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Laba Kotor</span>
+                <span class="text-[11px] text-neutral-500 dark:text-neutral-400 tabular-nums">Margin {marginPersen}% · Omzet dikurangi HPP</span>
               </div>
             </div>
-            <div class="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
+            <div class="text-right shrink-0">
               {#if loading}
-                <Skeleton class="h-7 w-32 ml-auto" />
+                <Skeleton class="h-6 w-28 ml-auto" />
               {:else}
-                <div class="text-lg sm:text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap">
+                <div class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap tracking-tight">
                   <Rupiah value={labaKotor} prefixClass="text-[0.72em] font-semibold text-emerald-600/70 dark:text-emerald-400/70 mr-0.5" />
                 </div>
               {/if}
@@ -334,77 +328,46 @@
           </div>
 
           <!-- Kiri 2: Beban Pengeluaran -->
-          <div class="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-neutral-50/40 dark:hover:bg-neutral-800/20 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+              <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex items-center justify-center shrink-0">
                 <TrendingDown class="w-4 h-4" />
               </div>
               <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Beban Pengeluaran</span>
-                  <span class="text-[11px] px-1.5 py-0.2 rounded border border-red-500/30 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30">Kas Keluar</span>
-                </div>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">Total biaya operasional kas toko hari ini</p>
+                <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Beban Pengeluaran</span>
+                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Operasional kas & beban toko</span>
               </div>
             </div>
-            <div class="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
+            <div class="text-right shrink-0">
               {#if loading}
-                <Skeleton class="h-7 w-32 ml-auto" />
+                <Skeleton class="h-6 w-28 ml-auto" />
               {:else}
-                <div class="text-lg sm:text-xl font-bold tracking-tight text-red-600 dark:text-red-400 tabular-nums whitespace-nowrap">
+                <div class="text-lg sm:text-xl font-bold text-red-600 dark:text-red-400 tabular-nums whitespace-nowrap tracking-tight">
                   <Rupiah value={pengeluaran} prefixClass="text-[0.72em] font-semibold text-red-600/70 dark:text-red-400/70 mr-0.5" />
-                </div>
-              {/if}
-            </div>
-          </div>
-
-          <!-- Kiri 3: Volume Terjual -->
-          <div class="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-neutral-50/40 dark:hover:bg-neutral-800/20 transition-colors">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 flex items-center justify-center shrink-0">
-                <ShoppingBag class="w-4 h-4" />
-              </div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Volume Terjual</span>
-                  <span class="text-[11px] px-1.5 py-0.2 rounded border border-neutral-200 dark:border-neutral-750 text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-900/50">Unit Produk</span>
-                </div>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">Total kuantitas barang terjual hari ini</p>
-              </div>
-            </div>
-            <div class="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
-              {#if loading}
-                <Skeleton class="h-7 w-24 ml-auto" />
-              {:else}
-                <div class="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums whitespace-nowrap">
-                  {formatNumber(totalInfo.total_barang ?? 0)} <span class="text-xs font-normal text-neutral-500 dark:text-neutral-400">unit</span>
                 </div>
               {/if}
             </div>
           </div>
         </div>
 
-        <!-- Kolom Kanan (50%): Total Omzet, Laba Bersih, Komposisi Arus Kas -->
-        <div class="divide-y divide-neutral-200/70 dark:divide-neutral-800">
+        <!-- Kolom Kanan (50%): Total Omzet & Laba Bersih -->
+        <div class="divide-y divide-neutral-200/80 dark:divide-neutral-800/80">
           <!-- Kanan 1: Total Omzet -->
-          <div class="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-neutral-50/40 dark:hover:bg-neutral-800/20 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <TrendingUp class="w-4 h-4" />
+              <div class="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700/80 flex items-center justify-center shrink-0">
+                <DollarSign class="w-4 h-4" />
               </div>
               <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Total Omzet</span>
-                  <span class="text-[11px] px-1.5 py-0.2 rounded border border-neutral-200 dark:border-neutral-750 text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-900/50">Penjualan Kotor</span>
-                </div>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">Total penerimaan kotor transaksi kasir hari ini</p>
+                <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Total Omzet</span>
+                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Penerimaan kotor transaksi</span>
               </div>
             </div>
-            <div class="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
+            <div class="text-right shrink-0">
               {#if loading}
-                <Skeleton class="h-7 w-36 ml-auto" />
+                <Skeleton class="h-6 w-32 ml-auto" />
               {:else}
-                <div class="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums whitespace-nowrap">
+                <div class="text-lg sm:text-xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums whitespace-nowrap tracking-tight">
                   <Rupiah value={omzet} />
                 </div>
               {/if}
@@ -412,74 +375,48 @@
           </div>
 
           <!-- Kanan 2: Laba Bersih -->
-          <div class="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 {labaBersih >= 0 ? 'bg-emerald-50/25 dark:bg-emerald-950/15' : 'bg-red-50/25 dark:bg-red-950/15'} hover:bg-neutral-50/40 dark:hover:bg-neutral-800/20 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg {labaBersih >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'} flex items-center justify-center shrink-0">
+              <div class="w-8 h-8 rounded-lg {labaBersih >= 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'} border flex items-center justify-center shrink-0">
                 <Wallet class="w-4 h-4" />
               </div>
               <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Laba Bersih</span>
-                  <span class="text-[11px] font-semibold px-1.5 py-0.2 rounded border {labaBersih >= 0 ? 'border-emerald-500/30 text-emerald-700 dark:text-emerald-300 bg-emerald-100/50 dark:bg-emerald-950/40' : 'border-red-500/30 text-red-700 dark:text-red-300 bg-red-100/50 dark:bg-red-950/40'}">
-                    Net Profit
-                  </span>
-                </div>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">Keuntungan riil setelah dikurangi seluruh beban</p>
+                <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Laba Bersih</span>
+                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Setelah seluruh beban operasional</span>
               </div>
             </div>
-            <div class="text-left sm:text-right shrink-0 mt-1 sm:mt-0">
+            <div class="text-right shrink-0">
               {#if loading}
-                <Skeleton class="h-7 w-36 ml-auto" />
+                <Skeleton class="h-6 w-32 ml-auto" />
               {:else}
-                <div class="text-lg sm:text-xl font-bold tracking-tight {labaBersih >= 0 ? 'text-neutral-900 dark:text-neutral-100' : 'text-red-600 dark:text-red-400'} tabular-nums whitespace-nowrap">
+                <div class="text-lg sm:text-xl font-bold tabular-nums whitespace-nowrap tracking-tight {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
                   <Rupiah value={labaBersih} />
                 </div>
               {/if}
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Kanan 3: Komposisi Arus Kas Mini Bar -->
-          <div class="px-5 py-3 flex flex-col justify-center gap-1.5 hover:bg-neutral-50/40 dark:hover:bg-neutral-800/20 transition-colors">
-            <div class="flex items-center justify-between text-xs font-medium">
-              <span class="text-neutral-700 dark:text-neutral-300">Komposisi Arus Kas</span>
-              <span class="text-[11px] text-neutral-500 tabular-nums">Modal: {modalPct}% • Beban: {pengeluaranPct}% • Bersih: {bersihPct}%</span>
-            </div>
-
-            <!-- Segmented Bar -->
-            <div class="h-2 w-full rounded-full bg-neutral-100 dark:bg-neutral-800 flex overflow-hidden">
-              <div
-                class="bg-neutral-400 dark:bg-neutral-600 transition-all duration-300"
-                style:width={`${modalPct}%`}
-                title={`Harga Modal: ${formatRupiah(totalModal)} (${modalPct}%)`}
-              ></div>
-              <div
-                class="bg-red-500 transition-all duration-300"
-                style:width={`${pengeluaranPct}%`}
-                title={`Pengeluaran: ${formatRupiah(pengeluaran)} (${pengeluaranPct}%)`}
-              ></div>
-              <div
-                class="bg-emerald-500 transition-all duration-300"
-                style:width={`${bersihPct}%`}
-                title={`Laba Bersih: ${formatRupiah(labaBersih)} (${bersihPct}%)`}
-              ></div>
-            </div>
-
-            <!-- Legend with colored dots -->
-            <div class="flex items-center gap-3 text-[10px] text-neutral-500">
-              <div class="flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600"></span>
-                <span>Modal: {formatRupiah(totalModal)}</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                <span>Beban: {formatRupiah(pengeluaran)}</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>Bersih: {formatRupiah(labaBersih)}</span>
-              </div>
-            </div>
+      <!-- Bottom Row: Volume Terjual -->
+      <div class="px-5 py-3.5 border-t border-neutral-200/80 dark:border-neutral-800/80 flex items-center justify-between bg-neutral-50/30 dark:bg-neutral-900/20 hover:bg-neutral-50/60 dark:hover:bg-neutral-900/40 transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700/80 flex items-center justify-center shrink-0">
+            <ShoppingBag class="w-4 h-4" />
           </div>
+          <div class="min-w-0">
+            <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Volume Terjual</span>
+            <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Total unit barang yang laku terjual hari ini</span>
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          {#if loading}
+            <Skeleton class="h-6 w-20 ml-auto" />
+          {:else}
+            <div class="text-lg sm:text-xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums whitespace-nowrap tracking-tight">
+              {formatNumber(totalInfo.total_barang ?? 0)} <span class="text-xs font-normal text-neutral-400 dark:text-neutral-500">unit</span>
+            </div>
+          {/if}
         </div>
       </div>
     {/if}
@@ -491,7 +428,6 @@
     <div class="lg:col-span-1">
       <Card
         title="Stok Habis / Kritis"
-        description="Daftar produk yang memerlukan pasokan masuk segera"
       >
         {#snippet actions()}
           <Badge variant={barangKosong.length > 0 ? 'danger' : 'success'} class="whitespace-nowrap shrink-0">
@@ -576,7 +512,6 @@
     <div class="lg:col-span-2">
       <Card
         title="Analitik Penjualan Produk"
-        description="Pantau volume penjualan dan kontribusi tiap produk pada periode terpilih"
       >
         {#snippet actions()}
           <!-- Date Presets -->
@@ -673,12 +608,12 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-                {#each filteredBarangTerjual as row, idx}
+                {#each paginatedBarangTerjual as row, idx}
                   {@const rowJumlah = Number(row.jumlah) || 0}
                   {@const sharePct = totalBarangTerjualPeriode > 0 ? ((rowJumlah / totalBarangTerjualPeriode) * 100).toFixed(1) : '0.0'}
                   <tr class="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/30 transition-colors">
                     <td class="px-5 py-2.5 tabular-nums text-neutral-400 text-[11px]">
-                      {idx + 1}
+                      {(terjualPage - 1) * terjualPageSize + idx + 1}
                     </td>
                     <td class="px-5 py-2.5 font-medium text-neutral-900 dark:text-neutral-100">
                       {row.nama_barang}
@@ -698,6 +633,18 @@
                 {/each}
               </tbody>
             </table>
+          </div>
+
+          <!-- Pagination with Limit -->
+          <div class="-mx-5 -mb-5 mt-2">
+            <TablePagination
+              bind:currentPage={terjualPage}
+              bind:pageSize={terjualPageSize}
+              totalItems={filteredBarangTerjual.length}
+              currentItemsCount={paginatedBarangTerjual.length}
+              itemLabel="produk"
+              storageKey="dashboard_terjual_limit"
+            />
           </div>
         {/if}
 

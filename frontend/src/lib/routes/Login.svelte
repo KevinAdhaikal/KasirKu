@@ -107,9 +107,8 @@
 
       <div class="border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-6 sm:p-7 shadow-[0_8px_30px_var(--shadow-color)]">
         <div class="mb-6">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">Akses Sistem</p>
-          <h1 class="mt-1 text-lg font-semibold tracking-tight">Masuk ke KasirKu</h1>
-          <p class="text-xs text-[var(--text-secondary)] mt-1">Gunakan akun Anda untuk melanjutkan ke dashboard.</p>
+          <h1 class="text-lg font-semibold tracking-tight">Masuk ke KasirKu</h1>
+          <p class="text-xs text-[var(--text-secondary)] mt-1">Masukkan kredensial akun untuk mengakses sistem.</p>
         </div>
       <form novalidate onsubmit={(e) => { e.preventDefault(); handleLogin(); }} class="space-y-4">
         {#if errorMessage}
@@ -199,7 +198,7 @@
             class="w-full h-11 font-semibold"
             {loading}
           >
-            Masuk <span class="text-[var(--accent-fg-muted)]">· Enter</span>
+            Masuk
           </Button>
         </div>
       </form>

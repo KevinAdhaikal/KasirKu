@@ -9,7 +9,7 @@
 
   const dotStyles = {
     online: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]',
-    connecting: 'bg-amber-500 animate-ping',
+    connecting: 'bg-amber-500 animate-pulse',
     offline: 'bg-red-500',
   };
 

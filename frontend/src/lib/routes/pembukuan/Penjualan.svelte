@@ -14,6 +14,7 @@
   import Badge from '../../components/ui/Badge.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
   import DatePicker from '../../components/ui/DatePicker.svelte';
+  import TablePagination from '../../components/ui/TablePagination.svelte';
   import {
     formatRupiah,
     formatNumber,
@@ -221,7 +222,7 @@
 
   // Pagination
   let currentPage = $state(1);
-  const pageSize = 10;
+  let pageSize = $state(10);
   const paginatedList = $derived(
     filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   );
@@ -263,14 +264,13 @@
 <div class="space-y-6">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
-    <div>
-      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-        <ReceiptText class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-        <span>Penjualan</span>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+        Penjualan
       </h1>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Log transaksi invoice kasir, rincian barang per struk, dan opsi cetak ulang nota kasir.
-      </p>
+      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+        {formatNumber(totalTransaksi)} Transaksi
+      </span>
     </div>
 
     <div class="flex items-center gap-2">
@@ -286,59 +286,6 @@
       </Button>
     </div>
   </div>
-
-  <!-- Summary Metric Cards (3 KPI Cards) -->
-  <!--
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Total Transaksi</span>
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums mt-1">
-          {formatNumber(totalTransaksi)} <span class="text-xs font-normal text-neutral-400">struk</span>
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
-        <Receipt class="w-4 h-4" />
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Total Omzet Penjualan</span>
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums mt-1">
-          {formatRupiah(totalOmzet)}
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-        <DollarSign class="w-4 h-4" />
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Estimasi Laba Kotor</span>
-        <div class="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">
-          +{formatRupiah(totalLabaKotor)}
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-        <TrendingUp class="w-4 h-4" />
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex items-center justify-between">
-      <div>
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Rata-rata Transaksi</span>
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums mt-1">
-          {formatRupiah(avgTransaksi)}
-        </div>
-      </div>
-      <div class="w-9 h-9 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
-        <ShoppingBag class="w-4 h-4" />
-      </div>
-    </div>
-  </div>
-  -->
 
   <!-- Filter & Controls Toolbar -->
   <div class="space-y-3">
@@ -625,34 +572,15 @@
       </table>
     </div>
 
-    <!-- Pagination & Total Indicator -->
-    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-      <div>
-        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedList.length}</strong> dari {filteredList.length} transaksi
-      </div>
-
-      <div class="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage <= 1}
-          onclick={() => (currentPage -= 1)}
-        >
-          Sebelumnya
-        </Button>
-        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-          {currentPage} / {totalPages}
-        </span>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onclick={() => (currentPage += 1)}
-        >
-          Berikutnya
-        </Button>
-      </div>
-    </div>
+    <!-- Pagination & Total Indicator with Limit -->
+    <TablePagination
+      bind:currentPage
+      bind:pageSize
+      totalItems={filteredList.length}
+      currentItemsCount={paginatedList.length}
+      itemLabel="transaksi"
+      storageKey="penjualan_limit"
+    />
   </div>
 </div>
 

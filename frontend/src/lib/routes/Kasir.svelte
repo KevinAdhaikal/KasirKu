@@ -17,6 +17,7 @@
   import BarcodeSearchModal from '../components/pos/BarcodeSearchModal.svelte';
   import PaymentModal, { type ReceiptData } from '../components/pos/PaymentModal.svelte';
   import ReceiptModal from '../components/pos/ReceiptModal.svelte';
+  import TablePagination from '../components/ui/TablePagination.svelte';
   import {
     ShoppingBag,
     ScanBarcode,
@@ -43,6 +44,43 @@
 
   let searchInputElement = $state<HTMLInputElement | null>(null);
 
+  // Pagination & Page Size Limit for Cart Items
+  const LIMIT_OPTIONS = [5, 10, 100];
+  let pageSize = $state(5);
+  let currentPage = $state(1);
+
+  const totalPages = $derived(Math.ceil(cart.items.length / pageSize) || 1);
+
+  $effect(() => {
+    if (currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+    if (currentPage < 1) {
+      currentPage = 1;
+    }
+  });
+
+  const paginatedCartItems = $derived(
+    cart.items.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
+
+  function setPageSize(newSize: number) {
+    pageSize = newSize;
+    currentPage = 1;
+    try {
+      localStorage.setItem('kasir_table_limit', String(newSize));
+    } catch (_) {}
+  }
+
+  function jumpToItem(id: number) {
+    tick().then(() => {
+      const idx = cart.items.findIndex((item) => item.id === id);
+      if (idx !== -1) {
+        currentPage = Math.floor(idx / pageSize) + 1;
+      }
+    });
+  }
+
   function focusSearchInput() {
     tick().then(() => {
       searchInputElement?.focus();
@@ -52,6 +90,10 @@
 
   onMount(() => {
     focusSearchInput();
+    const savedLimit = localStorage.getItem('kasir_table_limit');
+    if (savedLimit && LIMIT_OPTIONS.includes(Number(savedLimit))) {
+      pageSize = Number(savedLimit);
+    }
   });
 
   async function handleSearch() {
@@ -78,6 +120,7 @@
         const addRes = cart.addItem(item, 1);
         if (addRes.success) {
           toast.success(`"${item.nama_barang}" ditambahkan.`);
+          jumpToItem(item.id);
         } else {
           toast.error(addRes.message || 'Gagal menambahkan produk');
         }
@@ -123,6 +166,22 @@
       }
     } else if (e.key === 'Escape') {
       focusSearchInput();
+    } else if (e.key === 'PageDown') {
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+      if (activeTag !== 'textarea') {
+        if (currentPage < totalPages) {
+          e.preventDefault();
+          currentPage += 1;
+        }
+      }
+    } else if (e.key === 'PageUp') {
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+      if (activeTag !== 'textarea') {
+        if (currentPage > 1) {
+          e.preventDefault();
+          currentPage -= 1;
+        }
+      }
     }
   }
 
@@ -137,6 +196,7 @@
     });
     if (confirmed) {
       cart.clear();
+      currentPage = 1;
       toast.info('Keranjang belanja telah dikosongkan.');
       focusSearchInput();
     }
@@ -145,6 +205,7 @@
   function handleProductSelect(product: any) {
     searchModalOpen = false;
     searchQuery = '';
+    jumpToItem(product.id);
     focusSearchInput();
   }
 
@@ -176,36 +237,29 @@
 
 <div class="space-y-6">
   <!-- Top POS Banner / Status Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
     <div>
-      <div class="flex items-center gap-2.5">
-        <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-          <ShoppingBag class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-          <span>Kasir</span>
-        </h1>
-      </div>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-        Pencarian instan barcode scanner, keranjang kasir interaktif, & kalkulator pembayaran.
-      </p>
+      <h1 class="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Kasir</h1>
+      <span class="text-xs text-neutral-400 font-mono">Terminal Penjualan</span>
     </div>
 
-    <!-- Hotkey Legend Chips -->
-    <div class="hidden md:flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800">
+    <!-- Hotkey Legend -->
+    <div class="hidden md:flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 font-mono">
+      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
         <kbd class="font-bold text-neutral-900 dark:text-neutral-100">Enter</kbd>
-        <span>Scan / Cari</span>
+        <span>Scan/Cari</span>
       </div>
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
         <kbd class="font-bold text-neutral-900 dark:text-neutral-100">F8</kbd>
         <span>Bayar</span>
       </div>
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
         <kbd class="font-bold text-neutral-900 dark:text-neutral-100">Del</kbd>
         <span>Kosongkan</span>
       </div>
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
         <kbd class="font-bold text-neutral-900 dark:text-neutral-100">Esc</kbd>
-        <span>Fokus Scan</span>
+        <span>Reset</span>
       </div>
     </div>
   </div>
@@ -241,7 +295,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-neutral-200/60 dark:divide-neutral-800/60">
-                {#each cart.items as item (item.id)}
+                {#each paginatedCartItems as item (item.id)}
                   {@const subtotal = item.harga_jual * item.jumlah_barang}
                   <tr class="hover:bg-neutral-50/40 dark:hover:bg-neutral-900/30 transition-colors">
                     <!-- Name & Barcode -->
@@ -279,7 +333,9 @@
                             max={item.stok_barang}
                             value={item.jumlah_barang}
                             onchange={(e) => handleQtyChange(item.id, e)}
-                            class="w-11 h-7 text-center font-medium tabular-nums text-xs border-x border-neutral-300 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 focus:outline-none"
+                            aria-label={`Jumlah kuantitas ${item.nama_barang}`}
+                            autocomplete="off"
+                            class="w-11 h-7 text-center font-medium tabular-nums text-xs border-x border-neutral-300 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
                           />
                           <button
                             type="button"
@@ -321,6 +377,16 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Table Footer with Pagination and Page Size Limit -->
+          <TablePagination
+            bind:currentPage
+            bind:pageSize
+            totalItems={cart.items.length}
+            currentItemsCount={paginatedCartItems.length}
+            itemLabel="produk"
+            storageKey="kasir_table_limit"
+          />
         {/if}
       </div>
 
@@ -334,7 +400,8 @@
           type="text"
           bind:value={searchQuery}
           onkeydown={handleSearchKeydown}
-          placeholder="Scan barcode scanner atau ketik nama produk... (Tekan Enter)"
+          placeholder="Scan barcode scanner atau ketik nama produk… (Tekan Enter)"
+          aria-label="Scan barcode scanner atau ketik nama produk"
           class="w-full h-12 pl-11 pr-24 rounded-lg border text-sm font-medium transition-colors
             border-neutral-300 dark:border-neutral-800 bg-[var(--bg-surface)] text-neutral-900 dark:text-neutral-100
             focus:border-neutral-900 dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/50 shadow-2xs"

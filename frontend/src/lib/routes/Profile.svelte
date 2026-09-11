@@ -200,20 +200,19 @@
 
 <div class="space-y-6 max-w-4xl mx-auto">
   <!-- Header -->
-  <div class="border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
+  <div class="flex items-center gap-2.5 border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
     <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-      Profil Pengguna
+      Profil
     </h1>
-    <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-      Kelola informasi akun Anda dan keamanan kredensial login.
-    </p>
+    <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+      @{auth.user?.username || 'user'}
+    </span>
   </div>
 
   <div class="flex flex-col space-y-6 max-w-3xl">
     <!-- Card 1: Informasi Profil -->
     <Card
       title="Informasi Pribadi"
-      description="Perbarui nama lengkap dan username akun"
     >
       <form novalidate onsubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} class="space-y-4">
         {#if profileError}
@@ -304,7 +303,6 @@
     <!-- Card 2: Ubah Kata Sandi -->
     <Card
       title="Ubah Kata Sandi"
-      description="Pastikan menggunakan kata sandi yang aman dan tidak mudah ditebak"
     >
       <form novalidate onsubmit={(e) => { e.preventDefault(); handleChangePassword(); }} class="space-y-4">
         {#if passwordError}

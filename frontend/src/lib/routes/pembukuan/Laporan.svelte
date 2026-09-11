@@ -12,6 +12,7 @@
   import Badge from '../../components/ui/Badge.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
   import DatePicker from '../../components/ui/DatePicker.svelte';
+  import TablePagination from '../../components/ui/TablePagination.svelte';
   import {
     formatRupiah,
     formatNumber,
@@ -196,7 +197,7 @@
 
   // Tab 2 Penjualan Pagination
   let penjualanPage = $state(1);
-  const penjualanPageSize = 10;
+  let penjualanPageSize = $state(10);
   const paginatedPenjualan = $derived(
     sortedPenjualan.slice((penjualanPage - 1) * penjualanPageSize, penjualanPage * penjualanPageSize)
   );
@@ -204,7 +205,7 @@
 
   // Tab 3 Pengeluaran Pagination
   let pengeluaranPage = $state(1);
-  const pengeluaranPageSize = 10;
+  let pengeluaranPageSize = $state(10);
   const paginatedPengeluaran = $derived(
     sortedPengeluaran.slice((pengeluaranPage - 1) * pengeluaranPageSize, pengeluaranPage * pengeluaranPageSize)
   );
@@ -257,14 +258,13 @@
 <div class="space-y-6">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
-    <div>
-      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-        <BarChart3 class="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
-        <span>Laporan</span>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+        Laporan
       </h1>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Analisis komprehensif performa pendapatan, beban operasional, dan kalkulasi laba bersih toko.
-      </p>
+      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+        Pembukuan & Laba Rugi
+      </span>
     </div>
 
     <div class="flex items-center gap-2">
@@ -331,94 +331,6 @@
       />
     </div>
   </div>
-
-  <!-- Primary Financial Metrics Grid (5 KPI Cards) -->
-  <!--
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Total Penjualan (Omzet)</span>
-        <DollarSign class="w-4 h-4 text-neutral-400" />
-      </div>
-      <div class="mt-2">
-        <div class="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums">
-          {formatRupiah(totalOmzet)}
-        </div>
-        <span class="text-[10px] text-neutral-400 font-mono mt-0.5 block">
-          {formatNumber(totalTransaksi)} transaksi kasir
-        </span>
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Harga Pokok (HPP)</span>
-        <ShoppingBag class="w-4 h-4 text-neutral-400" />
-      </div>
-      <div class="mt-2">
-        <div class="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200 tabular-nums">
-          {formatRupiah(totalHpp)}
-        </div>
-        <span class="text-[10px] text-neutral-400 font-mono mt-0.5 block">
-          Modal barang terjual
-        </span>
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Laba Kotor</span>
-        <TrendingUp class="w-4 h-4 text-emerald-500" />
-      </div>
-      <div class="mt-2">
-        <div class="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
-          +{formatRupiah(labaKotor)}
-        </div>
-        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
-          Gross Margin: {grossMarginPct}%
-        </span>
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Beban Toko</span>
-        <TrendingDown class="w-4 h-4 text-red-500" />
-      </div>
-      <div class="mt-2">
-        <div class="text-xl font-bold font-mono text-red-600 dark:text-red-400 tabular-nums">
-          -{formatRupiah(totalPengeluaran)}
-        </div>
-        <span class="text-[10px] text-neutral-400 font-mono mt-0.5 block">
-          {formatNumber(data.pengeluaran.length)} catatan beban
-        </span>
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex flex-col justify-between {labaBersih >= 0 ? 'ring-1 ring-emerald-500/20' : 'ring-1 ring-red-500/20'}">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Laba Bersih</span>
-        {#if labaBersih >= 0}
-          <span class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-500/20">
-            Surplus
-          </span>
-        {:else}
-          <span class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-500/20">
-            Defisit
-          </span>
-        {/if}
-      </div>
-      <div class="mt-2">
-        <div class="text-xl font-bold font-mono tabular-nums {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
-          {labaBersih >= 0 ? '+' : ''}{formatRupiah(labaBersih)}
-        </div>
-        <span class="text-[10px] font-mono mt-0.5 block text-neutral-500">
-          Net Margin: {netMarginPct}%
-        </span>
-      </div>
-    </div>
-  </div>
-  -->
 
   <!-- Visual Trend Chart (SVG Minimalist) -->
   <div class="p-5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs space-y-4">
@@ -724,34 +636,15 @@
         </div>
       {/if}
 
-      <!-- Pagination & Total Indicator -->
-      <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-        <div>
-          Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedPenjualan.length}</strong> dari {sortedPenjualan.length} transaksi
-        </div>
-
-        <div class="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={penjualanPage <= 1}
-            onclick={() => (penjualanPage -= 1)}
-          >
-            Sebelumnya
-          </Button>
-          <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-            {penjualanPage} / {totalPenjualanPages}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={penjualanPage >= totalPenjualanPages}
-            onclick={() => (penjualanPage += 1)}
-          >
-            Berikutnya
-          </Button>
-        </div>
-      </div>
+      <!-- Pagination & Total Indicator with Limit -->
+      <TablePagination
+        bind:currentPage={penjualanPage}
+        bind:pageSize={penjualanPageSize}
+        totalItems={sortedPenjualan.length}
+        currentItemsCount={paginatedPenjualan.length}
+        itemLabel="transaksi"
+        storageKey="laporan_penjualan_limit"
+      />
 
     <!-- Tab 3: Rincian Pengeluaran Table -->
     {:else if activeTab === 'pengeluaran'}
@@ -836,34 +729,15 @@
         </div>
       {/if}
 
-      <!-- Pagination & Total Indicator -->
-      <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
-        <div>
-          Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedPengeluaran.length}</strong> dari {sortedPengeluaran.length} pengeluaran
-        </div>
-
-        <div class="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={pengeluaranPage <= 1}
-            onclick={() => (pengeluaranPage -= 1)}
-          >
-            Sebelumnya
-          </Button>
-          <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
-            {pengeluaranPage} / {totalPengeluaranPages}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={pengeluaranPage >= totalPengeluaranPages}
-            onclick={() => (pengeluaranPage += 1)}
-          >
-            Berikutnya
-          </Button>
-        </div>
-      </div>
+      <!-- Pagination & Total Indicator with Limit -->
+      <TablePagination
+        bind:currentPage={pengeluaranPage}
+        bind:pageSize={pengeluaranPageSize}
+        totalItems={sortedPengeluaran.length}
+        currentItemsCount={paginatedPengeluaran.length}
+        itemLabel="pengeluaran"
+        storageKey="laporan_pengeluaran_limit"
+      />
     {/if}
   </div>
 </div>

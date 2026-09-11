@@ -174,16 +174,14 @@
 
 <div class="space-y-6 max-w-5xl mx-auto">
   <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
-    <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-          Pengaturan Toko & Struk
-        </h1>
-      </div>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-        Kelola identitas usaha, kontak toko, dan teks footer pada nota kasir termal.
-      </p>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-4">
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+        Pengaturan
+      </h1>
+      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+        Toko & Struk
+      </span>
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
