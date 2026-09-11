@@ -51,7 +51,6 @@ function check_env_file() {
     const keys = [
         "APP_LISTEN_PORT",
         "APP_USE_TLS",
-        "APP_COMPILE_HTML",
         "DB_TYPE",
         "DB_NAME",
         "POSTGRES_HOST",

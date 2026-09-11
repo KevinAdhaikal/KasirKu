@@ -110,7 +110,7 @@
           id="sqlite-file"
           type="text"
           bind:value={config.name}
-          placeholder="kasirku.db"
+          placeholder="kasirku"
           class="w-full px-3 py-2 rounded-lg bg-surface border border-border text-sm text-text-primary focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors"
         />
         <p class="text-xs text-text-muted mt-1.5">

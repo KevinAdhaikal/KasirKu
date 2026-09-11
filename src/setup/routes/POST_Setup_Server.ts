@@ -14,20 +14,17 @@ export async function POST_Setup_Server(req: Request) {
 
     const port = typeof req_json.port === "number" ? req_json.port : Number(req_json.port ?? 0);
     const protocol = typeof req_json.protocol === "string" ? req_json.protocol.trim() : "";
-    const compile_html = typeof req_json.compile_html === "boolean" ? req_json.compile_html : null;
     const tls_mode = typeof req_json.tls.mode === "string" ? req_json.tls.mode.trim() : "";
 
     if (
         !Number.isInteger(port) || port < 1 || port > 65535 ||
         !["http", "https"].includes(protocol) ||
-        compile_html === null ||
         !["generate", "upload"].includes(tls_mode)
     ) {
         current_config.temp.setup_done = [0, 0, 0, 0];
         return new Response("Bad Request", { status: 400 });
     }
     
-    current_config.compile_html = compile_html;
     current_config.listen_port = port;
     current_config.use_tls = protocol === "https"
 

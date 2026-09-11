@@ -37,7 +37,6 @@ let bun_serve: any;
 export const current_config = {
     "listen_port": 443,
     "use_tls": true,
-    "compile_html": false,
     "db_type": "" as "sqlite" | "mysql" | "postgresql",
     "db_name": "",
     "tls_key_path": "cert/key.pem",

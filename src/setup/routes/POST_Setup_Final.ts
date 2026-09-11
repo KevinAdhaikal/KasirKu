@@ -4,7 +4,6 @@ export async function POST_Setup_Final(req: Request) {
     if (current_config.temp.setup_done.every(v => v === 1)) {
         const env = `APP_LISTEN_PORT=${current_config.listen_port}
 APP_USE_TLS=${current_config.use_tls ? 1 : ''}
-APP_COMPILE_HTML=${current_config.compile_html ? 1 : ''}
 DB_TYPE=${current_config.db_type}
 DB_NAME=${current_config.db_name}
 POSTGRES_HOST=${current_config.postgresql.host}

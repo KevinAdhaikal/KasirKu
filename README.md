@@ -131,7 +131,6 @@ cp .env.example .env
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `listen_port` | `Number` | `443` | Port server HTTPS. (Alt: `8443`) |
-| `compile_html` | `Boolean` | `false` | Compile HTML saat startup jika `true`. |
 | `db_type` | `String` | `sqlite` | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
 | `db_name` | `String` | `kasirku` | Nama database (disarankan lowercase). |
 

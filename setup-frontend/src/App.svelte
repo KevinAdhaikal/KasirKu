@@ -22,7 +22,6 @@
   let serverConfig = $state<ServerConfig>({
     protocol: 'http',
     port: 80,
-    compile_html: false,
     tls: {
       mode: 'generate',
     },
@@ -32,7 +31,7 @@
     type: 'sqlite',
     host: 'localhost',
     port: 3306,
-    name: 'kasirku.db',
+    name: 'kasirku',
     user: 'root',
     pass: '',
     db_new_migrate: false,
@@ -108,7 +107,7 @@
 <div class="h-screen flex flex-col bg-canvas text-text-primary overflow-hidden selection:bg-brand/20 selection:text-brand relative pb-14">
   <!-- Header -->
   <header class="h-14 border-b border-border bg-surface shrink-0 px-4">
-    <div class="max-w-5xl mx-auto h-full flex items-center justify-between">
+    <div class="max-w-6xl mx-auto h-full flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded border border-border p-1 flex items-center justify-center bg-subtle/50">
           <img src="/img/kasirku.png" alt="KasirKu Logo" class="w-full h-full object-contain" />
@@ -137,11 +136,11 @@
   </header>
 
   <!-- Main Fixed Container -->
-  <div class="flex-1 max-w-5xl mx-auto w-full px-4 py-5 flex flex-col md:flex-row gap-5 min-h-0 overflow-hidden">
+  <div class="flex-1 max-w-6xl mx-auto w-full px-4 py-5 flex flex-col md:flex-row gap-6 min-h-0 overflow-hidden">
     <!-- Stepper Rail (Sidebar) -->
-    <aside class="w-full md:w-60 shrink-0 flex flex-col justify-between overflow-y-auto">
-      <div class="p-3.5 rounded-lg bg-surface border border-border space-y-3">
-        <div class="text-xs text-text-muted px-1">
+    <aside class="w-full md:w-72 shrink-0 flex flex-col justify-between overflow-y-auto">
+      <div class="p-4 rounded-xl bg-surface border border-border space-y-3.5">
+        <div class="text-xs text-text-muted px-1 font-medium">
           {#if currentStep <= steps.length}
             Langkah {currentStep} dari {steps.length}
           {:else}
@@ -155,7 +154,7 @@
             {@const isCurrent = step.id === currentStep}
 
             <div 
-              class="flex items-start gap-2.5 p-2 rounded-lg text-left transition-colors {isCurrent ? 'bg-subtle border border-border text-text-primary' : isCompleted ? 'text-text-secondary' : 'text-text-muted opacity-75'}"
+              class="flex items-start gap-3 p-2.5 rounded-lg text-left transition-colors {isCurrent ? 'bg-subtle border border-border text-text-primary' : isCompleted ? 'text-text-secondary' : 'text-text-muted opacity-75'}"
             >
               <div 
                 class="w-5 h-5 rounded flex items-center justify-center text-xs font-mono shrink-0 mt-0.5 {isCompleted ? 'bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : isCurrent ? 'bg-brand text-white font-medium' : 'bg-subtle border border-border text-text-muted'}"
@@ -193,8 +192,8 @@
     </aside>
 
     <!-- Content Section Card (Fixed Height Container with Scrollable Body) -->
-    <section class="flex-1 bg-surface border border-border rounded-lg flex flex-col min-h-0 overflow-hidden shadow-xs">
-      <div class="flex-1 overflow-y-auto p-5 sm:p-6">
+    <section class="flex-1 bg-surface border border-border rounded-xl flex flex-col min-h-0 overflow-hidden shadow-xs">
+      <div class="flex-1 overflow-y-auto p-6 sm:p-7">
         {#if currentStep === 1}
           <StepWelcome />
         {:else if currentStep === 2}
@@ -240,7 +239,7 @@
 
   <!-- Fixed Footer with Navigation Buttons -->
   <footer class="fixed bottom-0 left-0 right-0 h-14 border-t border-border bg-surface/95 backdrop-blur-xs px-4 flex items-center justify-between z-20">
-    <div class="max-w-5xl mx-auto w-full flex items-center justify-between gap-4">
+    <div class="max-w-6xl mx-auto w-full flex items-center justify-between gap-4">
       <!-- Back Button -->
       <div>
         {#if currentStep < 7}

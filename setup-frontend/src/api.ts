@@ -101,7 +101,6 @@ export async function setupServer(config: ServerConfig): Promise<void> {
   const payload: any = {
     protocol: config.protocol,
     port: Number(config.port),
-    compile_html: config.compile_html,
     tls: {
       mode: config.tls.mode,
     },

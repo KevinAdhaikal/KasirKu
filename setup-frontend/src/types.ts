@@ -7,7 +7,6 @@ export type TlsMode = 'generate' | 'upload';
 export interface ServerConfig {
   protocol: 'http' | 'https';
   port: number;
-  compile_html: boolean;
   tls: {
     mode: TlsMode;
     cert?: string; // base64

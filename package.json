@@ -1,6 +1,6 @@
 {
   "name": "kasirku",
-  "version": "1.0",
+  "version": "2.5",
   "description": "Simple & Efficient Point of Sale (PoS) System",
   "author": "KevinAdhaikal",
   "homepage": "https://github.com/kevinadhaikal/kasirku",
@@ -18,11 +18,9 @@
   "dependencies": {
     "clean-css": "^5.3.3",
     "drizzle-orm": "^0.45.2",
-    "html-minifier-terser": "^7.2.0",
     "mysql2": "^3.24.2",
     "node-forge": "^1.4.0",
-    "pg": "^8.23.0",
-    "terser": "^5.50.0"
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/clean-css": "^4.2.11",

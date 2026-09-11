@@ -11,7 +11,7 @@
   function selectEngine(type: DatabaseType) {
     config.type = type;
     if (type === 'sqlite') {
-      config.name = 'kasirku.db';
+      config.name = 'kasirku';
     } else if (type === 'mysql') {
       config.port = 3306;
       config.name = 'kasirku';
@@ -129,5 +129,4 @@
       Pastikan server {config.type === 'mysql' ? 'MySQL' : 'PostgreSQL'} Anda sudah aktif dan port dapat diakses dari mesin ini.
     {/if}
   </div>
-
 </div>
