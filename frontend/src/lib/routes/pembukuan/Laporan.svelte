@@ -36,7 +36,10 @@
     FileSpreadsheet,
     PieChart,
     ChevronDown,
-    Filter
+    Filter,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
   } from 'lucide-svelte';
 
   interface PenjualanRecord {
@@ -128,6 +131,91 @@
   let labaBersih = $derived(labaKotor - totalPengeluaran);
   let netMarginPct = $derived(totalOmzet > 0 ? ((labaBersih / totalOmzet) * 100).toFixed(1) : '0.0');
   let avgOrderValue = $derived(totalTransaksi > 0 ? Math.round(totalOmzet / totalTransaksi) : 0);
+  let totalQty = $derived(data.penjualan.reduce((sum, p) => sum + (Number(p.total_barang) || 0), 0));
+
+  // Tab 2 Penjualan Sorting
+  type PenjualanSortKey = 'no_struk' | 'created_ms' | 'total_barang' | 'total_harga_modal' | 'total_harga_jual' | 'laba_kotor';
+  let penjualanSortKey = $state<PenjualanSortKey>('created_ms');
+  let penjualanSortAsc = $state(false);
+
+  function togglePenjualanSort(key: PenjualanSortKey) {
+    if (penjualanSortKey === key) {
+      penjualanSortAsc = !penjualanSortAsc;
+    } else {
+      penjualanSortKey = key;
+      penjualanSortAsc = false;
+    }
+  }
+
+  let sortedPenjualan = $derived.by(() => {
+    let list = [...data.penjualan];
+    return list.sort((a, b) => {
+      let va: any;
+      let vb: any;
+      if (penjualanSortKey === 'laba_kotor') {
+        va = (Number(a.total_harga_jual) || 0) - (Number(a.total_harga_modal) || 0);
+        vb = (Number(b.total_harga_jual) || 0) - (Number(b.total_harga_modal) || 0);
+      } else {
+        va = a[penjualanSortKey] ?? 0;
+        vb = b[penjualanSortKey] ?? 0;
+      }
+      if (typeof va === 'string' && typeof vb === 'string') {
+        const cmp = va.localeCompare(vb, 'id', { sensitivity: 'base' });
+        return penjualanSortAsc ? cmp : -cmp;
+      }
+      return penjualanSortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+  });
+
+  // Tab 3 Pengeluaran Sorting
+  type PengeluaranSortKey = 'created_ms' | 'deskripsi' | 'jumlah_uang';
+  let pengeluaranSortKey = $state<PengeluaranSortKey>('created_ms');
+  let pengeluaranSortAsc = $state(false);
+
+  function togglePengeluaranSort(key: PengeluaranSortKey) {
+    if (pengeluaranSortKey === key) {
+      pengeluaranSortAsc = !pengeluaranSortAsc;
+    } else {
+      pengeluaranSortKey = key;
+      pengeluaranSortAsc = false;
+    }
+  }
+
+  let sortedPengeluaran = $derived.by(() => {
+    let list = [...data.pengeluaran];
+    return list.sort((a, b) => {
+      let va = a[pengeluaranSortKey] ?? 0;
+      let vb = b[pengeluaranSortKey] ?? 0;
+      if (typeof va === 'string' && typeof vb === 'string') {
+        const cmp = va.localeCompare(vb, 'id', { sensitivity: 'base' });
+        return pengeluaranSortAsc ? cmp : -cmp;
+      }
+      return pengeluaranSortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+  });
+
+  // Tab 2 Penjualan Pagination
+  let penjualanPage = $state(1);
+  const penjualanPageSize = 10;
+  const paginatedPenjualan = $derived(
+    sortedPenjualan.slice((penjualanPage - 1) * penjualanPageSize, penjualanPage * penjualanPageSize)
+  );
+  const totalPenjualanPages = $derived(Math.ceil(sortedPenjualan.length / penjualanPageSize) || 1);
+
+  // Tab 3 Pengeluaran Pagination
+  let pengeluaranPage = $state(1);
+  const pengeluaranPageSize = 10;
+  const paginatedPengeluaran = $derived(
+    sortedPengeluaran.slice((pengeluaranPage - 1) * pengeluaranPageSize, pengeluaranPage * pengeluaranPageSize)
+  );
+  const totalPengeluaranPages = $derived(Math.ceil(sortedPengeluaran.length / pengeluaranPageSize) || 1);
+
+  $effect(() => {
+    void startDate;
+    void endDate;
+    penjualanPage = 1;
+    pengeluaranPage = 1;
+  });
 
   // Daily Chart Aggregation (SVG Chart)
   let dailyStats = $derived.by(() => {
@@ -172,7 +260,7 @@
     <div>
       <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
         <BarChart3 class="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
-        <span>Laporan Keuangan</span>
+        <span>Laporan</span>
       </h1>
       <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
         Analisis komprehensif performa pendapatan, beban operasional, dan kalkulasi laba bersih toko.
@@ -203,7 +291,7 @@
   </div>
 
   <!-- Filter Period Card -->
-  <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <!-- Presets -->
     <div class="flex items-center gap-1.5 overflow-x-auto">
       <span class="text-xs font-medium text-neutral-500 mr-1 hidden sm:inline">Rentang:</span>
@@ -499,28 +587,170 @@
       <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 text-neutral-500 font-mono text-[11px] sticky top-0 bg-[var(--bg-surface)]">
-              <th class="px-4 py-2.5 font-medium">NO. STRUK</th>
-              <th class="px-4 py-2.5 font-medium">WAKTU</th>
-              <th class="px-4 py-2.5 font-medium text-center">QTY</th>
-              <th class="px-4 py-2.5 font-medium text-right">MODAL</th>
-              <th class="px-4 py-2.5 font-medium text-right">TOTAL JUAL</th>
-              <th class="px-4 py-2.5 font-medium text-right">LABA KOTOR</th>
+            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-500 uppercase font-mono text-[10px] tracking-wider sticky top-0 z-10">
+              <th class="px-4 py-2.5">
+                <button
+                  type="button"
+                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                  onclick={() => togglePenjualanSort('no_struk')}
+                >
+                  <span>No. Struk</span>
+                  {#if penjualanSortKey === 'no_struk'}
+                    {#if penjualanSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5">
+                <button
+                  type="button"
+                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                  onclick={() => togglePenjualanSort('created_ms')}
+                >
+                  <span>Waktu</span>
+                  {#if penjualanSortKey === 'created_ms'}
+                    {#if penjualanSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5 text-center">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none mx-auto"
+                  onclick={() => togglePenjualanSort('total_barang')}
+                >
+                  <span>Qty</span>
+                  {#if penjualanSortKey === 'total_barang'}
+                    {#if penjualanSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5 text-right">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                  onclick={() => togglePenjualanSort('total_harga_modal')}
+                >
+                  <span>Modal</span>
+                  {#if penjualanSortKey === 'total_harga_modal'}
+                    {#if penjualanSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5 text-right">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                  onclick={() => togglePenjualanSort('total_harga_jual')}
+                >
+                  <span>Total Jual</span>
+                  {#if penjualanSortKey === 'total_harga_jual'}
+                    {#if penjualanSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5 text-right">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                  onclick={() => togglePenjualanSort('laba_kotor')}
+                >
+                  <span>Laba Kotor</span>
+                  {#if penjualanSortKey === 'laba_kotor'}
+                    {#if penjualanSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-            {#each data.penjualan as p}
+            {#each paginatedPenjualan as p}
               <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
-                <td class="px-4 py-2.5 font-mono font-medium text-neutral-900 dark:text-neutral-100">{p.no_struk}</td>
-                <td class="px-4 py-2.5 font-mono text-neutral-500">{formatDateTime(p.created_ms)}</td>
-                <td class="px-4 py-2.5 text-center font-mono">{p.total_barang}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
-                <td class="px-4 py-2.5 text-right font-mono font-bold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+                <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{p.no_struk}</td>
+                <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(p.created_ms)}</td>
+                <td class="px-4 py-2.5 text-center text-xs tabular-nums font-medium text-neutral-700 dark:text-neutral-300">{formatNumber(p.total_barang)}</td>
+                <td class="px-4 py-2.5 text-right text-xs tabular-nums text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
+                <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
+                <td class="px-4 py-2.5 text-right text-xs tabular-nums font-medium text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
               </tr>
             {/each}
           </tbody>
         </table>
+      </div>
+
+      <!-- Summary Info Strip (Plain text, not badges) -->
+      {#if sortedPenjualan.length > 0}
+        <div class="px-4 py-2.5 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
+            <span>Total Item: <strong class="text-neutral-900 dark:text-neutral-100 tabular-nums">{formatNumber(totalQty)} unit</strong></span>
+            <span>Total Omzet: <strong class="text-neutral-900 dark:text-neutral-100 tabular-nums">{formatRupiah(totalOmzet)}</strong></span>
+            <span>Total Laba Kotor: <strong class="text-emerald-600 dark:text-emerald-400 tabular-nums">+{formatRupiah(labaKotor)}</strong></span>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Pagination & Total Indicator -->
+      <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+        <div>
+          Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedPenjualan.length}</strong> dari {sortedPenjualan.length} transaksi
+        </div>
+
+        <div class="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={penjualanPage <= 1}
+            onclick={() => (penjualanPage -= 1)}
+          >
+            Sebelumnya
+          </Button>
+          <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+            {penjualanPage} / {totalPenjualanPages}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={penjualanPage >= totalPenjualanPages}
+            onclick={() => (penjualanPage += 1)}
+          >
+            Berikutnya
+          </Button>
+        </div>
       </div>
 
     <!-- Tab 3: Rincian Pengeluaran Table -->
@@ -528,22 +758,111 @@
       <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 text-neutral-500 font-mono text-[11px] sticky top-0 bg-[var(--bg-surface)]">
-              <th class="px-4 py-2.5 font-medium">WAKTU</th>
-              <th class="px-4 py-2.5 font-medium">KEPERLUAN / DESKRIPSI</th>
-              <th class="px-4 py-2.5 font-medium text-right">NOMINAL BEBAN</th>
+            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-500 uppercase font-mono text-[10px] tracking-wider sticky top-0 z-10">
+              <th class="px-4 py-2.5">
+                <button
+                  type="button"
+                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                  onclick={() => togglePengeluaranSort('created_ms')}
+                >
+                  <span>Waktu</span>
+                  {#if pengeluaranSortKey === 'created_ms'}
+                    {#if pengeluaranSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5">
+                <button
+                  type="button"
+                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                  onclick={() => togglePengeluaranSort('deskripsi')}
+                >
+                  <span>Keperluan / Deskripsi</span>
+                  {#if pengeluaranSortKey === 'deskripsi'}
+                    {#if pengeluaranSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
+              <th class="px-4 py-2.5 text-right">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                  onclick={() => togglePengeluaranSort('jumlah_uang')}
+                >
+                  <span>Nominal Beban</span>
+                  {#if pengeluaranSortKey === 'jumlah_uang'}
+                    {#if pengeluaranSortAsc}
+                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                    {:else}
+                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                    {/if}
+                  {:else}
+                    <ArrowUpDown class="w-3 h-3 opacity-40" />
+                  {/if}
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-            {#each data.pengeluaran as exp}
+            {#each paginatedPengeluaran as exp}
               <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
-                <td class="px-4 py-2.5 font-mono text-neutral-500 whitespace-nowrap">{formatDateTime(exp.created_ms)}</td>
-                <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100">{exp.deskripsi}</td>
-                <td class="px-4 py-2.5 text-right font-mono font-bold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+                <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(exp.created_ms)}</td>
+                <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{exp.deskripsi}</td>
+                <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
               </tr>
             {/each}
           </tbody>
         </table>
+      </div>
+
+      <!-- Summary Info Strip (Plain text, not badges) -->
+      {#if sortedPengeluaran.length > 0}
+        <div class="px-4 py-2.5 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
+            <span>Total Pengeluaran: <strong class="text-red-600 dark:text-red-400 tabular-nums">-{formatRupiah(totalPengeluaran)}</strong> ({sortedPengeluaran.length} beban)</span>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Pagination & Total Indicator -->
+      <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+        <div>
+          Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedPengeluaran.length}</strong> dari {sortedPengeluaran.length} pengeluaran
+        </div>
+
+        <div class="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={pengeluaranPage <= 1}
+            onclick={() => (pengeluaranPage -= 1)}
+          >
+            Sebelumnya
+          </Button>
+          <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+            {pengeluaranPage} / {totalPengeluaranPages}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={pengeluaranPage >= totalPengeluaranPages}
+            onclick={() => (pengeluaranPage += 1)}
+          >
+            Berikutnya
+          </Button>
+        </div>
       </div>
     {/if}
   </div>

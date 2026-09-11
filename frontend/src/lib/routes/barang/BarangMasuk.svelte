@@ -16,6 +16,7 @@
   import DatePicker from '../../components/ui/DatePicker.svelte';
   import {
     formatNumber,
+    formatThousandSeparator,
     formatDate,
     getTanggalKey,
     formatTanggalIndo
@@ -32,7 +33,10 @@
     FileText,
     Barcode,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
   } from 'lucide-svelte';
 
   export interface BarangMasukItem {
@@ -66,7 +70,7 @@
   let searchedProducts = $state<SearchedBarang[]>([]);
   let isSearchingProduct = $state(false);
   let selectedProduct = $state<SearchedBarang | null>(null);
-  let formJumlah = $state<number>(10);
+  let formJumlah = $state<string | number>('');
   let formDeskripsi = $state('');
   let formErrorMessage = $state<string | null>(null);
 
@@ -74,7 +78,7 @@
   let isEditModalOpen = $state(false);
   let editId = $state<number | null>(null);
   let editNamaBarang = $state('');
-  let editJumlah = $state<number>(1);
+  let editJumlah = $state<string | number>('');
   let editDeskripsi = $state('');
   let editErrorMessage = $state<string | null>(null);
 
@@ -157,7 +161,8 @@
       hasError = true;
     }
 
-    if (!formJumlah || Number(formJumlah) <= 0) {
+    const cleanJumlah = String(formJumlah).replace(/\./g, '').trim();
+    if (!cleanJumlah || Number(cleanJumlah) <= 0) {
       jumlahError = 'Jumlah barang masuk harus lebih dari 0.';
       hasError = true;
     }
@@ -174,11 +179,11 @@
       const body = new URLSearchParams({
         barang_id: String(selectedProduct.id),
         deskripsi: formDeskripsi.trim(),
-        jumlah_barang: String(formJumlah),
+        jumlah_barang: cleanJumlah,
       });
 
       await api.post('/barang_masuk', body);
-      toast.success(`Berhasil menambah ${formJumlah} unit untuk "${selectedProduct.nama_barang}"!`);
+      toast.success(`Berhasil menambah ${formatThousandSeparator(cleanJumlah)} unit untuk "${selectedProduct.nama_barang}"!`);
       isAddModalOpen = false;
       await loadMasukList();
     } catch (err: any) {
@@ -191,7 +196,7 @@
   function openEditModal(item: BarangMasukItem) {
     editId = item.id;
     editNamaBarang = item.nama_barang;
-    editJumlah = item.jumlah_barang;
+    editJumlah = formatThousandSeparator(item.jumlah_barang);
     editDeskripsi = item.deskripsi;
     editErrorMessage = null;
     editJumlahError = null;
@@ -208,7 +213,8 @@
 
     let hasError = false;
 
-    if (!editJumlah || Number(editJumlah) <= 0) {
+    const cleanEditJumlah = String(editJumlah).replace(/\./g, '').trim();
+    if (!cleanEditJumlah || Number(cleanEditJumlah) <= 0) {
       editJumlahError = 'Jumlah barang masuk harus lebih dari 0.';
       hasError = true;
     }
@@ -226,7 +232,7 @@
         id: String(editId),
         tanggal_key: String(currentTanggalKey),
         deskripsi: editDeskripsi.trim(),
-        jumlah_barang: String(editJumlah),
+        jumlah_barang: cleanEditJumlah,
       });
 
       await api.patch('/barang_masuk', body);
@@ -303,24 +309,65 @@
     }
   });
 
-  // Filtered List
+  // Sorting State
+  type SortKey = 'id' | 'nama_barang' | 'jumlah_barang' | 'deskripsi';
+  let sortKey = $state<SortKey>('id');
+  let sortDirection = $state<'asc' | 'desc'>('desc');
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDirection = 'asc';
+    }
+  }
+
+  // Filtered & Sorted List
   const filteredList = $derived.by(() => {
     const q = filterTableQuery.toLowerCase().trim();
-    if (!q) return masukList;
-    return masukList.filter(
-      (m) =>
-        m.nama_barang.toLowerCase().includes(q) ||
-        (m.deskripsi && m.deskripsi.toLowerCase().includes(q))
-    );
+    let list = masukList;
+    if (q) {
+      list = list.filter(
+        (m) =>
+          m.nama_barang.toLowerCase().includes(q) ||
+          (m.deskripsi && m.deskripsi.toLowerCase().includes(q))
+      );
+    }
+    return [...list].sort((a, b) => {
+      const valA = a[sortKey];
+      const valB = b[sortKey];
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        const cmp = valA.localeCompare(valB, 'id', { sensitivity: 'base' });
+        return sortDirection === 'asc' ? cmp : -cmp;
+      }
+      return sortDirection === 'asc'
+        ? (Number(valA) > Number(valB) ? 1 : -1)
+        : (Number(valA) < Number(valB) ? 1 : -1);
+    });
   });
 
   // Total Summary
-  const totalUnitsMasuk = $derived(
-    masukList.reduce((acc, item) => acc + (item.jumlah_barang || 0), 0)
+  const totalFilteredUnits = $derived(
+    filteredList.reduce((acc, item) => acc + (item.jumlah_barang || 0), 0)
   );
+
+  // Pagination
+  let currentPage = $state(1);
+  const pageSize = 10;
+  const paginatedList = $derived(
+    filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
+  const totalPages = $derived(Math.ceil(filteredList.length / pageSize) || 1);
+
+  $effect(() => {
+    void filterTableQuery;
+    void selectedDate;
+    currentPage = 1;
+  });
 </script>
 
-<div class="space-y-6">
+<div class="space-y-4">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
     <div>
@@ -359,7 +406,7 @@
   </div>
 
   <!-- Date Navigation Toolbar & Summary -->
-  <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="flex items-center gap-2 flex-wrap">
         <DatePicker
           bind:value={selectedDate}
@@ -381,20 +428,6 @@
       </span>
     </div>
 
-    <!-- Summary Badges -->
-    <div class="flex items-center gap-3 self-end sm:self-auto text-xs font-mono">
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
-        <span class="text-neutral-500">Total Transaksi:</span>
-        <strong class="text-neutral-900 dark:text-neutral-100">{masukList.length}</strong>
-      </div>
-
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400">
-        <span>Unit Masuk:</span>
-        <strong class="tabular-nums">+{formatNumber(totalUnitsMasuk)} unit</strong>
-      </div>
-    </div>
-  </div>
-
   <!-- Search Filter on Records -->
   <div class="max-w-sm">
     <Input
@@ -409,16 +442,85 @@
       {/snippet}
     </Input>
   </div>
+</div>
 
   <!-- Restock Records Table -->
   <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
     <table class="w-full text-left text-xs border-collapse">
       <thead>
         <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
-          <th class="py-2.5 px-4 w-16">ID</th>
-          <th class="py-2.5 px-4">Nama Produk</th>
-          <th class="py-2.5 px-4 text-right">Jumlah Masuk</th>
-          <th class="py-2.5 px-4">Keterangan / Supplier</th>
+          <th class="py-2.5 px-4 w-20">
+            <button
+              type="button"
+              class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+              onclick={() => toggleSort('id')}
+            >
+              <span>ID</span>
+              {#if sortKey === 'id'}
+                {#if sortDirection === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
+          <th class="py-2.5 px-4">
+            <button
+              type="button"
+              class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+              onclick={() => toggleSort('nama_barang')}
+            >
+              <span>Nama Produk</span>
+              {#if sortKey === 'nama_barang'}
+                {#if sortDirection === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
+          <th class="py-2.5 px-4 text-right">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+              onclick={() => toggleSort('jumlah_barang')}
+            >
+              <span>Jumlah Masuk</span>
+              {#if sortKey === 'jumlah_barang'}
+                {#if sortDirection === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
+          <th class="py-2.5 px-4">
+            <button
+              type="button"
+              class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+              onclick={() => toggleSort('deskripsi')}
+            >
+              <span>Keterangan / Supplier</span>
+              {#if sortKey === 'deskripsi'}
+                {#if sortDirection === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
           <th class="py-2.5 px-4 text-center w-28">Aksi</th>
         </tr>
       </thead>
@@ -433,7 +535,7 @@
               <td class="p-4 text-center"><Skeleton class="h-6 w-14 mx-auto" /></td>
             </tr>
           {/each}
-        {:else if filteredList.length === 0}
+        {:else if paginatedList.length === 0}
           <tr>
             <td colspan="5" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
               <ArrowDownToLine class="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -442,26 +544,26 @@
             </td>
           </tr>
         {:else}
-          {#each filteredList as item (item.id)}
+          {#each paginatedList as item (item.id)}
             <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
-              <td class="py-3 px-4 font-mono text-neutral-400 text-[11px]">
+              <td class="py-3 px-4 text-neutral-400 text-xs tabular-nums">
                 #{item.id}
               </td>
 
               <td class="py-3 px-4">
-                <div class="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">
+                <div class="font-medium text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
                   {item.nama_barang}
                 </div>
               </td>
 
-              <td class="py-3 px-4 text-right font-mono tabular-nums">
-                <span class="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
+              <td class="py-3 px-4 text-right tabular-nums text-xs sm:text-sm">
+                <span class="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
                   <ArrowDownToLine class="w-3.5 h-3.5" />
                   +{formatNumber(item.jumlah_barang)} unit
                 </span>
               </td>
 
-              <td class="py-3 px-4 text-neutral-600 dark:text-neutral-400">
+              <td class="py-3 px-4 text-neutral-600 dark:text-neutral-300 text-xs">
                 {item.deskripsi}
               </td>
 
@@ -491,6 +593,35 @@
         {/if}
       </tbody>
     </table>
+
+    <!-- Pagination & Total Indicator -->
+    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+      <div>
+        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedList.length}</strong> dari {filteredList.length} data masuk
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage <= 1}
+          onclick={() => (currentPage -= 1)}
+        >
+          Sebelumnya
+        </Button>
+        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+          {currentPage} / {totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage >= totalPages}
+          onclick={() => (currentPage += 1)}
+        >
+          Berikutnya
+        </Button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -511,7 +642,7 @@
     {/if}
 
     <!-- Product Search Box -->
-    <div>
+    <div class="relative">
       <label for="bm-search-product" class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1.5 select-none">
         Pilih Produk yang Di-restock <span class="text-red-500 dark:text-red-400 font-semibold ml-1">*</span>
       </label>
@@ -534,28 +665,28 @@
 
       <!-- Autocomplete Dropdown List -->
       {#if isSearchingProduct}
-        <div class="p-3 text-xs text-neutral-400 text-center">
+        <div class="absolute left-0 right-0 top-full mt-1.5 z-40 p-3 text-xs text-neutral-400 text-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] dark:bg-neutral-900 shadow-xl">
           Mencari produk di database…
         </div>
       {:else if searchedProducts.length > 0 && !selectedProduct}
-        <div class="mt-2 max-h-48 overflow-y-auto rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 divide-y divide-neutral-200 dark:divide-neutral-800 shadow-sm">
+        <div class="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto rounded-xl border border-neutral-200/90 dark:border-neutral-800/90 bg-[var(--bg-surface)] dark:bg-neutral-900 shadow-xl divide-y divide-neutral-100 dark:divide-neutral-800/60">
           {#each searchedProducts as p}
             <button
               type="button"
               onclick={() => selectProduct(p)}
-              class="w-full text-left p-2.5 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between"
+              class="w-full text-left px-3.5 py-2.5 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between gap-3 cursor-pointer"
             >
-              <div>
-                <div class="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+              <div class="min-w-0 flex-1">
+                <div class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                   {p.nama_barang}
                 </div>
-                <div class="text-[11px] text-neutral-400 font-mono">
+                <div class="text-[11px] text-neutral-400 font-mono truncate">
                   {p.barcode_barang ? `Barcode: ${p.barcode_barang}` : 'Tanpa Barcode'}
                 </div>
               </div>
-              <div class="text-right">
-                <span class="text-xs font-mono font-medium text-neutral-700 dark:text-neutral-300">
-                  Stok saat ini: {p.stok_barang} unit
+              <div class="text-right shrink-0">
+                <span class="text-xs font-mono font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
+                  Stok: {formatNumber(p.stok_barang)} unit
                 </span>
               </div>
             </button>
@@ -576,7 +707,7 @@
               {selectedProduct.nama_barang}
             </div>
             <div class="text-[11px] text-neutral-500 font-mono">
-              Stok Gudang: <strong>{selectedProduct.stok_barang} unit</strong>
+              Stok Gudang: <strong>{formatNumber(selectedProduct.stok_barang)} unit</strong>
             </div>
           </div>
         </div>
@@ -600,15 +731,18 @@
           label="Jumlah Kuantitas Masuk"
           type="text"
           numericOnly
+          thousandSeparator
           bind:value={formJumlah}
           placeholder="0"
           required
           error={jumlahError}
           oninput={() => {
-            if (formJumlah && Number(formJumlah) > 0) jumlahError = null;
+            const clean = String(formJumlah).replace(/\./g, '').trim();
+            if (clean && Number(clean) > 0) jumlahError = null;
           }}
           onblur={() => {
-            if (!formJumlah || Number(formJumlah) <= 0) jumlahError = 'Jumlah barang masuk harus lebih dari 0.';
+            const clean = String(formJumlah).replace(/\./g, '').trim();
+            if (!clean || Number(clean) <= 0) jumlahError = 'Jumlah barang masuk harus lebih dari 0.';
           }}
         >
           {#snippet prefix()}
@@ -619,10 +753,11 @@
 
       <!-- Live Stock Preview -->
       {#if selectedProduct}
+        {@const parsedJumlah = Number(String(formJumlah).replace(/\./g, '')) || 0}
         <div class="flex flex-col justify-center">
           <span class="text-[11px] text-neutral-500">Estimasi Stok Akhir:</span>
           <div class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
-            {selectedProduct.stok_barang} + {formJumlah || 0} = {selectedProduct.stok_barang + (Number(formJumlah) || 0)} unit
+            {formatNumber(selectedProduct.stok_barang)} + {formatNumber(parsedJumlah)} = {formatNumber(selectedProduct.stok_barang + parsedJumlah)} unit
           </div>
         </div>
       {/if}
@@ -700,15 +835,18 @@
         label="Jumlah Kuantitas Masuk"
         type="text"
         numericOnly
+        thousandSeparator
         bind:value={editJumlah}
         placeholder="0"
         required
         error={editJumlahError}
         oninput={() => {
-          if (editJumlah && Number(editJumlah) > 0) editJumlahError = null;
+          const clean = String(editJumlah).replace(/\./g, '').trim();
+          if (clean && Number(clean) > 0) editJumlahError = null;
         }}
         onblur={() => {
-          if (!editJumlah || Number(editJumlah) <= 0) editJumlahError = 'Jumlah barang masuk harus lebih dari 0.';
+          const clean = String(editJumlah).replace(/\./g, '').trim();
+          if (!clean || Number(clean) <= 0) editJumlahError = 'Jumlah barang masuk harus lebih dari 0.';
         }}
       >
         {#snippet prefix()}

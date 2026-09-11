@@ -22,6 +22,7 @@
     parseIDR,
     formatNumber,
     parseNumber,
+    formatThousandSeparator,
     formatDateTime
   } from '../../utils/format';
   import {
@@ -40,6 +41,8 @@
     TrendingUp,
     Sparkles,
     ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
     CheckCircle2
   } from 'lucide-svelte';
 
@@ -71,7 +74,23 @@
   let searchQuery = $state('');
   let selectedKategori = $state<number | 'all'>('all');
   let selectedStokStatus = $state<'all' | 'safe' | 'low' | 'out'>('all');
-  let sortBy = $state<'nama_asc' | 'nama_desc' | 'stok_asc' | 'stok_desc' | 'margin_desc' | 'recent'>('nama_asc');
+  let sortBy = $state<
+    | 'nama_asc'
+    | 'nama_desc'
+    | 'stok_asc'
+    | 'stok_desc'
+    | 'margin_desc'
+    | 'margin_asc'
+    | 'recent'
+    | 'harga_modal_asc'
+    | 'harga_modal_desc'
+    | 'harga_jual_asc'
+    | 'harga_jual_desc'
+    | 'barcode_asc'
+    | 'barcode_desc'
+    | 'kategori_asc'
+    | 'kategori_desc'
+  >('nama_asc');
 
   // Modal State
   let isModalOpen = $state(false);
@@ -89,9 +108,9 @@
   let formErrorMessage = $state<string | null>(null);
   let fieldErrors = $state<Record<string, string>>({});
 
-  // parseIDR membaca nilai dalam sen (integer), ÷100 untuk rupiah
-  const previewModal = $derived(parseIDR(formModal) / 100);
-  const previewJual = $derived(parseIDR(formJual) / 100);
+  // parseIDR membaca nilai dalam sen (integer)
+  const previewModal = $derived(parseIDR(formModal));
+  const previewJual = $derived(parseIDR(formJual));
   const previewLaba = $derived(previewJual - previewModal);
   const previewPct = $derived(previewModal > 0 ? ((previewLaba / previewModal) * 100).toFixed(2).replace('.', ',') : '0,00');
 
@@ -147,9 +166,9 @@
       toast.error('Harga modal harus dimasukkan terlebih dahulu.');
       return;
     }
-    // parseIDR → nilai dalam sen, ÷100 untuk rupiah
-    const modalNum = parseIDR(formModal) / 100;
-    const jualNum = parseIDR(formJual) / 100;
+    // parseIDR → nilai dalam sen
+    const modalNum = parseIDR(formModal);
+    const jualNum = parseIDR(formJual);
     if (modalNum > 0) {
       const persen = ((jualNum - modalNum) / modalNum) * 100;
       formPersen = formatPercentage(persen);
@@ -193,8 +212,8 @@
 
     formPersen = cleaned;
 
-    // parseIDR → nilai dalam sen, ÷100 untuk rupiah
-    const modalNum = parseIDR(formModal) / 100;
+    // parseIDR → nilai dalam sen
+    const modalNum = parseIDR(formModal);
     if (modalNum <= 0) {
       formPersen = '0,00';
       toast.error('Harga modal harus dimasukkan terlebih dahulu.');
@@ -204,18 +223,18 @@
     const persenNum = parsePercentage(formPersen);
     if (isNaN(persenNum)) return;
 
-    // Hitung harga jual dalam rupiah, lalu convert ke sen untuk formatIDR
-    const calculatedJualRupiah = modalNum + (modalNum * (persenNum / 100));
-    formJual = formatIDR(Math.round(calculatedJualRupiah * 100));
+    // Hitung harga jual dalam sen untuk formatIDR
+    const calculatedJualSen = Math.round(modalNum + (modalNum * (persenNum / 100)));
+    formJual = formatIDR(calculatedJualSen);
   }
 
   function calculateSellingPrice() {
     // Helper: hitung harga jual dari persen yang ada
-    const modalNum = parseIDR(formModal) / 100;
+    const modalNum = parseIDR(formModal);
     const persenNum = parsePercentage(formPersen);
     if (modalNum > 0) {
-      const calculatedJualRupiah = modalNum + (modalNum * (persenNum / 100));
-      formJual = formatIDR(Math.round(calculatedJualRupiah * 100));
+      const calculatedJualSen = Math.round(modalNum + (modalNum * (persenNum / 100)));
+      formJual = formatIDR(calculatedJualSen);
     }
   }
 
@@ -273,16 +292,15 @@
     formNama = item.nama_barang;
     formBarcode = item.barcode_barang || '';
     formKategoriId = item.kategori_barang_id;
-    formStok = item.stok_barang;
+    formStok = formatThousandSeparator(item.stok_barang);
     // harga_modal dan harga_jual dari server adalah integer dalam sen
     formModal = formatIDR(item.harga_modal);
     formJual = formatIDR(item.harga_jual);
 
-    // Konversi sen ke rupiah untuk hitung persen
-    const modalRupiah = item.harga_modal / 100;
-    const jualRupiah = item.harga_jual / 100;
-    if (modalRupiah > 0) {
-      formPersen = formatPercentage(((jualRupiah - modalRupiah) / modalRupiah) * 100);
+    const modalSen = item.harga_modal;
+    const jualSen = item.harga_jual;
+    if (modalSen > 0) {
+      formPersen = formatPercentage(((jualSen - modalSen) / modalSen) * 100);
     } else {
       formPersen = '0,00';
     }
@@ -338,10 +356,11 @@
       hasErrors = true;
     }
 
-    if (String(formStok).trim() === '') {
+    const cleanStok = String(formStok).replace(/\./g, '').trim();
+    if (cleanStok === '') {
       setFieldError('stok', 'Jumlah stok wajib diisi.');
       hasErrors = true;
-    } else if (Number(formStok) < 0 || Number.isNaN(Number(formStok))) {
+    } else if (Number(cleanStok) < 0 || Number.isNaN(Number(cleanStok))) {
       setFieldError('stok', 'Jumlah stok tidak valid.');
       hasErrors = true;
     }
@@ -368,7 +387,7 @@
     try {
       const body = new URLSearchParams({
         nama_barang: formNama.trim(),
-        stok_barang: String(formStok),
+        stok_barang: cleanStok,
         kategori_barang_id: String(formKategoriId),
         harga_modal: String(modalNum),   // nilai dalam sen, kirim ke server
         harga_jual: String(jualNum),     // nilai dalam sen, kirim ke server
@@ -468,9 +487,9 @@
     res.sort((a, b) => {
       switch (sortBy) {
         case 'nama_asc':
-          return a.nama_barang.localeCompare(b.nama_barang);
+          return a.nama_barang.localeCompare(b.nama_barang, 'id', { sensitivity: 'base' });
         case 'nama_desc':
-          return b.nama_barang.localeCompare(a.nama_barang);
+          return b.nama_barang.localeCompare(a.nama_barang, 'id', { sensitivity: 'base' });
         case 'stok_asc':
           return a.stok_barang - b.stok_barang;
         case 'stok_desc':
@@ -479,6 +498,33 @@
           const marginA = a.harga_jual - a.harga_modal;
           const marginB = b.harga_jual - b.harga_modal;
           return marginB - marginA;
+        }
+        case 'margin_asc': {
+          const marginA = a.harga_jual - a.harga_modal;
+          const marginB = b.harga_jual - b.harga_modal;
+          return marginA - marginB;
+        }
+        case 'harga_modal_asc':
+          return a.harga_modal - b.harga_modal;
+        case 'harga_modal_desc':
+          return b.harga_modal - a.harga_modal;
+        case 'harga_jual_asc':
+          return a.harga_jual - b.harga_jual;
+        case 'harga_jual_desc':
+          return b.harga_jual - a.harga_jual;
+        case 'barcode_asc':
+          return (a.barcode_barang || '').localeCompare(b.barcode_barang || '', 'id');
+        case 'barcode_desc':
+          return (b.barcode_barang || '').localeCompare(a.barcode_barang || '', 'id');
+        case 'kategori_asc': {
+          const katA = kategoriList.find((k) => k.id === a.kategori_barang_id)?.nama_kategori || '';
+          const katB = kategoriList.find((k) => k.id === b.kategori_barang_id)?.nama_kategori || '';
+          return katA.localeCompare(katB, 'id', { sensitivity: 'base' });
+        }
+        case 'kategori_desc': {
+          const katA = kategoriList.find((k) => k.id === a.kategori_barang_id)?.nama_kategori || '';
+          const katB = kategoriList.find((k) => k.id === b.kategori_barang_id)?.nama_kategori || '';
+          return katB.localeCompare(katA, 'id', { sensitivity: 'base' });
         }
         case 'recent':
           return (b.modified_ms || b.created_ms || 0) - (a.modified_ms || a.created_ms || 0);
@@ -489,6 +535,24 @@
 
     return res;
   });
+
+  function handleHeaderSort(col: 'nama' | 'barcode' | 'kategori' | 'stok' | 'harga_modal' | 'harga_jual' | 'margin') {
+    if (col === 'nama') {
+      sortBy = sortBy === 'nama_asc' ? 'nama_desc' : 'nama_asc';
+    } else if (col === 'barcode') {
+      sortBy = sortBy === 'barcode_asc' ? 'barcode_desc' : 'barcode_asc';
+    } else if (col === 'kategori') {
+      sortBy = sortBy === 'kategori_asc' ? 'kategori_desc' : 'kategori_asc';
+    } else if (col === 'stok') {
+      sortBy = sortBy === 'stok_asc' ? 'stok_desc' : 'stok_asc';
+    } else if (col === 'harga_modal') {
+      sortBy = sortBy === 'harga_modal_asc' ? 'harga_modal_desc' : 'harga_modal_asc';
+    } else if (col === 'harga_jual') {
+      sortBy = sortBy === 'harga_jual_asc' ? 'harga_jual_desc' : 'harga_jual_asc';
+    } else if (col === 'margin') {
+      sortBy = sortBy === 'margin_desc' ? 'margin_asc' : 'margin_desc';
+    }
+  }
 
   // Summary Metrics
   const summaryMetrics = $derived.by(() => {
@@ -617,9 +681,9 @@
   -->
 
   <!-- Filters Toolbar -->
-  <div class="flex sm:flex-row justify-between">
-    <!-- Search Bar -->
-    <div class="flex-1 relative">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <!-- Search Bar (Compact width to avoid clashing with category select) -->
+    <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
       <Input
         id="search-barang-input"
         bind:value={searchQuery}
@@ -633,7 +697,7 @@
       </Input>
     </div>
 
-    <!-- Category Filter -->
+    <!-- Category & Status Filters -->
     <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
       <Select
         bind:value={selectedKategori}
@@ -680,13 +744,118 @@
       <table class="w-full text-left text-xs border-collapse">
         <thead>
           <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
-            <th class="py-2.5 px-3">Produk</th>
-            <th class="py-2.5 px-3">Barcode</th>
-            <th class="py-2.5 px-3">Kategori</th>
-            <th class="py-2.5 px-3 text-right">Stok</th>
-            <th class="py-2.5 px-3 text-right">Harga Modal</th>
-            <th class="py-2.5 px-3 text-right">Harga Jual</th>
-            <th class="py-2.5 px-3 text-right">Margin / Unit</th>
+            <th class="py-2.5 px-3">
+              <button
+                type="button"
+                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                onclick={() => handleHeaderSort('nama')}
+              >
+                <span>Produk</span>
+                {#if sortBy === 'nama_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'nama_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-3">
+              <button
+                type="button"
+                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                onclick={() => handleHeaderSort('barcode')}
+              >
+                <span>Barcode</span>
+                {#if sortBy === 'barcode_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'barcode_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-3">
+              <button
+                type="button"
+                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                onclick={() => handleHeaderSort('kategori')}
+              >
+                <span>Kategori</span>
+                {#if sortBy === 'kategori_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'kategori_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-3 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                onclick={() => handleHeaderSort('stok')}
+              >
+                <span>Stok</span>
+                {#if sortBy === 'stok_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'stok_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-3 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                onclick={() => handleHeaderSort('harga_modal')}
+              >
+                <span>Harga Modal</span>
+                {#if sortBy === 'harga_modal_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'harga_modal_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-3 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                onclick={() => handleHeaderSort('harga_jual')}
+              >
+                <span>Harga Jual</span>
+                {#if sortBy === 'harga_jual_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'harga_jual_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-3 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                onclick={() => handleHeaderSort('margin')}
+              >
+                <span>Margin / Unit</span>
+                {#if sortBy === 'margin_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'margin_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
             <th class="py-2.5 px-3 text-center">Aksi</th>
           </tr>
         </thead>
@@ -719,16 +888,16 @@
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- Nama Produk -->
                 <td class="py-2.5 px-3">
-                  <div class="font-medium text-neutral-900 dark:text-neutral-100">
+                  <div class="font-medium text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
                     {item.nama_barang}
                   </div>
-                  <div class="text-[10px] text-neutral-400 font-mono">
+                  <div class="text-[10px] text-neutral-400">
                     ID #{item.id}
                   </div>
                 </td>
 
                 <!-- Barcode -->
-                <td class="py-2.5 px-3 font-mono">
+                <td class="py-2.5 px-3 tabular-nums">
                   {#if item.barcode_barang}
                     <span class="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                       <Barcode class="w-3 h-3 text-neutral-400" />
@@ -747,30 +916,22 @@
                 </td>
 
                 <!-- Stok -->
-                <td class="py-2.5 px-3 text-right font-mono tabular-nums">
-                  {#if item.stok_barang === 0}
-                    <Badge variant="danger" size="sm">Habis (0)</Badge>
-                  {:else if item.stok_barang <= 10}
-                    <Badge variant="warning" size="sm">{item.stok_barang} unit</Badge>
-                  {:else}
-                    <span class="font-semibold text-neutral-900 dark:text-neutral-100">
-                      {formatNumber(item.stok_barang)}
-                    </span>
-                  {/if}
+                <td class="py-2.5 px-3 text-right tabular-nums text-neutral-900 dark:text-neutral-100 font-medium text-xs">
+                  {formatNumber(item.stok_barang)}
                 </td>
 
                 <!-- Harga Modal -->
-                <td class="py-2.5 px-3 text-right font-mono tabular-nums text-neutral-500">
+                <td class="py-2.5 px-3 text-right tabular-nums text-neutral-500 text-xs">
                   {formatRupiah(item.harga_modal)}
                 </td>
 
                 <!-- Harga Jual -->
-                <td class="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">
+                <td class="py-2.5 px-3 text-right tabular-nums font-semibold text-neutral-900 dark:text-neutral-100 text-xs">
                   {formatRupiah(item.harga_jual)}
                 </td>
 
                 <!-- Margin -->
-                <td class="py-2.5 px-3 text-right font-mono tabular-nums">
+                <td class="py-2.5 px-3 text-right tabular-nums text-xs">
                   <div class="text-emerald-600 dark:text-emerald-400 font-medium">
                     +{formatRupiah(marginVal)}
                   </div>
@@ -964,7 +1125,7 @@
           id="barang-stok"
           label="Jumlah Stok Fisik"
           type="text"
-          numericOnly
+          thousandSeparator
           bind:value={formStok}
           placeholder="0"
           required

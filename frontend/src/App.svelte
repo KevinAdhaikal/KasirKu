@@ -16,12 +16,12 @@
   import KategoriBarang from './lib/routes/barang/KategoriBarang.svelte';
   import BarangMasuk from './lib/routes/barang/BarangMasuk.svelte';
   import ReturBarang from './lib/routes/barang/ReturBarang.svelte';
-  import RiwayatPenjualan from './lib/routes/pembukuan/RiwayatPenjualan.svelte';
-  import PengeluaranToko from './lib/routes/pembukuan/PengeluaranToko.svelte';
-  import LaporanFinansial from './lib/routes/pembukuan/LaporanFinansial.svelte';
-  import DaftarPengguna from './lib/routes/admin/DaftarPengguna.svelte';
-  import RolesPermissions from './lib/routes/admin/RolesPermissions.svelte';
-  import PengaturanToko from './lib/routes/admin/PengaturanToko.svelte';
+  import Penjualan from './lib/routes/pembukuan/Penjualan.svelte';
+  import Pengeluaran from './lib/routes/pembukuan/Pengeluaran.svelte';
+  import Laporan from './lib/routes/pembukuan/Laporan.svelte';
+  import Users from './lib/routes/admin/Users.svelte';
+  import Roles from './lib/routes/admin/Roles.svelte';
+  import Settings from './lib/routes/admin/Settings.svelte';
 
   onMount(async () => {
     await auth.init();
@@ -82,17 +82,17 @@
     {:else if router.currentPath === '/barang/retur_barang'}
       <ReturBarang />
     {:else if router.currentPath === '/pembukuan/penjualan' || router.currentPath === '/penjualan'}
-      <RiwayatPenjualan />
+      <Penjualan />
     {:else if router.currentPath === '/pembukuan/pengeluaran' || router.currentPath === '/pengeluaran'}
-      <PengeluaranToko />
+      <Pengeluaran />
     {:else if router.currentPath === '/pembukuan/laporan' || router.currentPath === '/laporan'}
-      <LaporanFinansial />
+      <Laporan />
     {:else if router.currentPath === '/users'}
-      <DaftarPengguna />
+      <Users />
     {:else if router.currentPath === '/rp'}
-      <RolesPermissions />
+      <Roles />
     {:else if router.currentPath === '/settings'}
-      <PengaturanToko />
+      <Settings />
     {:else}
       <div class="py-16 text-center">
         <h2 class="text-2xl font-bold font-mono">404</h2>

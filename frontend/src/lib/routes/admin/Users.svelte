@@ -33,7 +33,10 @@
     AlertCircle,
     User,
     ShieldAlert,
-    ShieldCheck
+    ShieldCheck,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
   } from 'lucide-svelte';
 
   export interface UserItem {
@@ -376,6 +379,20 @@
   const totalAdmins = $derived(userList.filter(u => u.role_id === 1).length);
   const totalStaff = $derived(userList.filter(u => u.role_id !== 1).length);
 
+  // Pagination
+  let currentPage = $state(1);
+  const pageSize = 10;
+  const paginatedUsers = $derived(
+    filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
+  const totalPages = $derived(Math.ceil(filteredUsers.length / pageSize) || 1);
+
+  $effect(() => {
+    void searchQuery;
+    void selectedRoleFilter;
+    currentPage = 1;
+  });
+
   // SSE Unsubscribe handler
   let sseUnsub: (() => void) | null = null;
 
@@ -452,17 +469,77 @@
       <table class="w-full text-xs border-collapse">
         <thead class="bg-neutral-50/70 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 text-neutral-500 uppercase font-mono text-[10px] font-semibold tracking-wider text-center">
           <tr>
-            <th class="py-2.5 px-3 text-center w-16 cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('id')}>
-              ID
+            <th class="py-2.5 px-3 text-center w-20">
+              <button
+                type="button"
+                onclick={() => toggleSort('id')}
+                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+              >
+                <span>ID</span>
+                {#if sortField === 'id'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('full_name')}>
-              Pengguna / Kredensial
+            <th class="py-2.5 px-3 text-center">
+              <button
+                type="button"
+                onclick={() => toggleSort('full_name')}
+                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+              >
+                <span>Pengguna / Kredensial</span>
+                {#if sortField === 'full_name'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('role_id')}>
-              Role
+            <th class="py-2.5 px-3 text-center">
+              <button
+                type="button"
+                onclick={() => toggleSort('role_id')}
+                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+              >
+                <span>Role</span>
+                {#if sortField === 'role_id'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('created_ms')}>
-              Didaftarkan
+            <th class="py-2.5 px-3 text-center">
+              <button
+                type="button"
+                onclick={() => toggleSort('created_ms')}
+                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+              >
+                <span>Didaftarkan</span>
+                {#if sortField === 'created_ms'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
             <th class="py-2.5 px-3 text-center w-28">
               Aksi
@@ -480,7 +557,7 @@
                 <td class="py-2.5 px-3 text-center"><Skeleton class="h-7 w-20 mx-auto" /></td>
               </tr>
             {/each}
-          {:else if filteredUsers.length === 0}
+          {:else if paginatedUsers.length === 0}
             <tr>
               <td colspan="5" class="py-12 text-center text-neutral-500">
                 <div class="flex flex-col items-center justify-center gap-2">
@@ -499,12 +576,12 @@
               </td>
             </tr>
           {:else}
-            {#each filteredUsers as user (user.id)}
+            {#each paginatedUsers as user (user.id)}
               {@const isSelf = user.id === auth.user?.id}
               {@const roleObj = roleMap().get(user.role_id)}
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- ID (Centered) -->
-                <td class="py-2.5 px-3 text-center font-mono font-medium text-neutral-500">
+                <td class="py-2.5 px-3 text-center font-medium text-neutral-500 tabular-nums">
                   #{user.id}
                 </td>
 
@@ -523,7 +600,7 @@
                           <Badge variant="success" size="sm">Akun Anda</Badge>
                         {/if}
                       </div>
-                      <span class="font-mono text-[10px] text-neutral-400">
+                      <span class="text-[10px] text-neutral-400">
                         @{user.username}
                       </span>
                     </div>
@@ -547,7 +624,7 @@
 
                 <!-- Actions (Centered) -->
                 <td class="py-2.5 px-3 text-center">
-                  <div class="flex items-center justify-center gap-1">
+                  <div class="flex items-center justify-center gap-1.5">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -576,6 +653,35 @@
           {/if}
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination & Total Indicator -->
+    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+      <div>
+        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedUsers.length}</strong> dari {filteredUsers.length} pengguna
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage <= 1}
+          onclick={() => (currentPage -= 1)}
+        >
+          Sebelumnya
+        </Button>
+        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+          {currentPage} / {totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage >= totalPages}
+          onclick={() => (currentPage += 1)}
+        >
+          Berikutnya
+        </Button>
+      </div>
     </div>
   </div>
 </div>

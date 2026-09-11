@@ -15,8 +15,7 @@
 
 const MAX_CONCURRENT = 4;
 
-import { global } from "./global";
-import { readdir, mkdir } from "node:fs/promises";
+import { readdir, mkdir, stat } from "node:fs/promises";
 
 let future_import = {
     minifyHTML: null as any,
@@ -129,9 +128,7 @@ async function scan_html_file(startDir: string) {
 }
 
 export async function compile_html() {
-    try {
-        await mkdir("./html_build");
-    } catch(e) {}
+    await mkdir("./html_build", { recursive: true });
 
     future_import.minifyHTML = (await import("html-minifier-terser")).minify;
     future_import.minifyJS = (await import("terser")).minify;
@@ -146,18 +143,10 @@ async function prepare() {
     if (Bun.env.APP_COMPILE_HTML) await compile_html();
 
     // Preapre Profile Image Folder
-    if (!(await Bun.file("profile_img/default.svg").exists())) {
-        console.log("[LOG] default.svg for default profile not found! Creating...");
-        
-        try {
-            await mkdir("./profile_img");
-        } catch (e) {
-            console.log("[WARNING]:", e)
-        }
-
-        await Bun.write("profile_img/default.svg", global.default_svg_profile_img);
-        console.log("[LOG] default.svg has been created!");
+    if (!(await stat("./profile_img")).isDirectory()) {
+        await mkdir("./profile_img", { recursive: true });
     }
+
 
     process.exit(0);
 }

@@ -1,58 +1,45 @@
 // Formatters & helpers conforming to Vercel/Cloudflare tabular-nums and Indonesian Rupiah standards
 
+/**
+ * Format nilai mata uang Rupiah dari nilai integer dalam sen (cents).
+ * Identik dengan format: "Rp" + money_format_bigint di kasirku lama.
+ * Input: integer dalam sen (contoh: 500000 -> "Rp5.000,00", 1000000 -> "Rp10.000,00")
+ */
 export function formatRupiah(amount: number | bigint | string | null | undefined): string {
   if (amount === null || amount === undefined || amount === '') return 'Rp0,00';
 
-  let num: bigint;
-  let fractionStr = '00';
+  let rawCents: bigint;
 
   if (typeof amount === 'bigint') {
-    num = amount;
+    rawCents = amount;
   } else if (typeof amount === 'number') {
     if (!Number.isFinite(amount)) return 'Rp0,00';
-    const isNeg = amount < 0;
-    const absVal = Math.abs(amount);
-    const intPart = Math.floor(absVal);
-    const fracPart = Math.round((absVal - intPart) * 100);
-    num = BigInt(intPart) * (isNeg ? -1n : 1n);
-    fractionStr = fracPart > 0 ? String(fracPart).padStart(2, '0') : '00';
+    rawCents = BigInt(Math.round(amount));
   } else {
-    let strVal = String(amount).trim();
-    if (strVal.includes(',')) {
-      const parts = strVal.split(',');
-      const cleanedInt = parts[0].replace(/[^0-9-]/g, '');
-      num = cleanedInt ? BigInt(cleanedInt) : 0n;
-      const cleanedFrac = parts[1].replace(/[^0-9]/g, '').slice(0, 2);
-      fractionStr = cleanedFrac.padEnd(2, '0');
-    } else if (/\.\d{2}$/.test(strVal)) {
-      const parts = strVal.split('.');
-      const cleanedInt = parts[0].replace(/[^0-9-]/g, '');
-      num = cleanedInt ? BigInt(cleanedInt) : 0n;
-      fractionStr = parts[1].replace(/[^0-9]/g, '').slice(0, 2).padEnd(2, '0');
+    const str = String(amount).trim();
+    if (!str) return 'Rp0,00';
+    const isNegative = str.includes('-');
+    if (str.includes(',')) {
+      const parts = str.split(',');
+      const cleanedInt = parts[0].replace(/[^0-9]/g, '');
+      const intNum = cleanedInt ? BigInt(cleanedInt) : 0n;
+      const cleanedFrac = parts[1].replace(/[^0-9]/g, '').slice(0, 2).padEnd(2, '0');
+      const fracNum = BigInt(cleanedFrac);
+      rawCents = (intNum * 100n + fracNum) * (isNegative ? -1n : 1n);
     } else {
-      const cleaned = strVal.replace(/[^0-9-]/g, '');
-      num = cleaned ? BigInt(cleaned) : 0n;
-      fractionStr = '00';
+      const cleaned = str.replace(/[^0-9]/g, '');
+      rawCents = (cleaned ? BigInt(cleaned) : 0n) * (isNegative ? -1n : 1n);
     }
   }
 
-  const isNegative = num < 0n;
-  const absNum = isNegative ? -num : num;
-  const str = absNum.toString();
+  const isNegative = rawCents < 0n;
+  const absCents = isNegative ? -rawCents : rawCents;
 
-  // Add thousand separators
-  const parts: string[] = [];
-  let remaining = str;
-  while (remaining.length > 3) {
-    parts.unshift(remaining.slice(-3));
-    remaining = remaining.slice(0, -3);
-  }
-  if (remaining.length > 0) {
-    parts.unshift(remaining);
-  }
+  const intPart = absCents / 100n;
+  const decPart = (absCents % 100n).toString().padStart(2, '0');
+  const intStr = new Intl.NumberFormat('id-ID').format(intPart);
 
-  const formattedInt = parts.length > 0 ? parts.join('.') : '0';
-  return `${isNegative ? '-Rp' : 'Rp'}${formattedInt},${fractionStr}`;
+  return `${isNegative ? '-Rp' : 'Rp'}${intStr},${decPart}`;
 }
 
 export function splitRupiah(amount: number | bigint | string | null | undefined): { prefix: string; value: string } {
@@ -112,6 +99,18 @@ export function parseIDR(val: string | number | null | undefined): number {
   if (val === null || val === undefined || val === '') return 0;
   const digits = String(val).replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
+}
+
+/**
+ * Format string/angka dengan pemisah ribuan titik (id-ID) untuk input realtime.
+ * Contoh: "100000" -> "100.000", "500" -> "500", "" -> ""
+ */
+export function formatThousandSeparator(val: number | bigint | string | null | undefined): string {
+  if (val === null || val === undefined || val === '') return '';
+  const digits = String(val).replace(/\D/g, '');
+  if (!digits) return '';
+  const normalized = digits.replace(/^0+(?=\d)/, '');
+  return normalized.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 export function formatNumber(val: number | bigint | string | null | undefined): string {

@@ -32,6 +32,8 @@
     Eye,
     Printer,
     ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
     ShoppingBag,
     TrendingUp,
     DollarSign,
@@ -76,7 +78,7 @@
   let endDate = $state(todayDateStr);
 
   // Sorting
-  let sortField = $state<'id' | 'created_ms' | 'total_harga_jual' | 'total_barang'>('created_ms');
+  let sortField = $state<'id' | 'no_struk' | 'created_ms' | 'nama_kasir' | 'total_barang' | 'total_harga_jual' | 'laba_kotor'>('created_ms');
   let sortAsc = $state(false);
 
   // Detail Modal State
@@ -188,8 +190,15 @@
     }
 
     list.sort((a, b) => {
-      let va = a[sortField] ?? 0;
-      let vb = b[sortField] ?? 0;
+      let va: any;
+      let vb: any;
+      if (sortField === 'laba_kotor') {
+        va = (Number(a.total_harga_jual) || 0) - (Number(a.total_harga_modal) || 0);
+        vb = (Number(b.total_harga_jual) || 0) - (Number(b.total_harga_modal) || 0);
+      } else {
+        va = a[sortField] ?? 0;
+        vb = b[sortField] ?? 0;
+      }
       if (typeof va === 'string') va = (va as string).toLowerCase();
       if (typeof vb === 'string') vb = (vb as string).toLowerCase();
       if (va < vb) return sortAsc ? -1 : 1;
@@ -198,6 +207,31 @@
     });
 
     return list;
+  });
+
+  const sumFilteredBarang = $derived(
+    filteredList.reduce((acc, item) => acc + (Number(item.total_barang) || 0), 0)
+  );
+  const sumFilteredLaba = $derived(
+    filteredList.reduce(
+      (acc, item) => acc + ((Number(item.total_harga_jual) || 0) - (Number(item.total_harga_modal) || 0)),
+      0
+    )
+  );
+
+  // Pagination
+  let currentPage = $state(1);
+  const pageSize = 10;
+  const paginatedList = $derived(
+    filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
+  const totalPages = $derived(Math.ceil(filteredList.length / pageSize) || 1);
+
+  $effect(() => {
+    void searchQuery;
+    void startDate;
+    void endDate;
+    currentPage = 1;
   });
 
   // KPI Metrics
@@ -307,7 +341,7 @@
   -->
 
   <!-- Filter & Controls Toolbar -->
-  <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs space-y-3">
+  <div class="space-y-3">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
       <!-- Quick Date Presets -->
       <div class="flex items-center gap-1.5 overflow-x-auto">
@@ -370,34 +404,116 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs border-collapse">
         <thead>
-          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 text-neutral-500 font-mono text-[11px]">
-            <th class="px-4 py-3 font-medium cursor-pointer select-none" onclick={() => toggleSort('created_ms')}>
-              <div class="flex items-center gap-1">
-                <span>NO. STRUK</span>
-                <ArrowUpDown class="w-3 h-3 text-neutral-400" />
-              </div>
+          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
+            <th class="px-4 py-2.5">
+              <button
+                type="button"
+                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                onclick={() => toggleSort('no_struk')}
+              >
+                <span>No. Struk</span>
+                {#if sortField === 'no_struk'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="px-4 py-3 font-medium cursor-pointer select-none" onclick={() => toggleSort('created_ms')}>
-              <div class="flex items-center gap-1">
-                <span>WAKTU TRANSAKSI</span>
-                <ArrowUpDown class="w-3 h-3 text-neutral-400" />
-              </div>
+            <th class="px-4 py-2.5">
+              <button
+                type="button"
+                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                onclick={() => toggleSort('created_ms')}
+              >
+                <span>Waktu Transaksi</span>
+                {#if sortField === 'created_ms'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="px-4 py-3 font-medium">KASIR</th>
-            <th class="px-4 py-3 font-medium text-center cursor-pointer select-none" onclick={() => toggleSort('total_barang')}>
-              <div class="flex items-center justify-center gap-1">
-                <span>ITEM</span>
-                <ArrowUpDown class="w-3 h-3 text-neutral-400" />
-              </div>
+            <th class="px-4 py-2.5">
+              <button
+                type="button"
+                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                onclick={() => toggleSort('nama_kasir')}
+              >
+                <span>Kasir</span>
+                {#if sortField === 'nama_kasir'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="px-4 py-3 font-medium text-right cursor-pointer select-none" onclick={() => toggleSort('total_harga_jual')}>
-              <div class="flex items-center justify-end gap-1">
-                <span>TOTAL BELANJA</span>
-                <ArrowUpDown class="w-3 h-3 text-neutral-400" />
-              </div>
+            <th class="px-4 py-2.5 text-center">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none mx-auto"
+                onclick={() => toggleSort('total_barang')}
+              >
+                <span>Item</span>
+                {#if sortField === 'total_barang'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
             </th>
-            <th class="px-4 py-3 font-medium text-right">LABA KOTOR</th>
-            <th class="px-4 py-3 font-medium text-center">AKSI</th>
+            <th class="px-4 py-2.5 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                onclick={() => toggleSort('total_harga_jual')}
+              >
+                <span>Total Belanja</span>
+                {#if sortField === 'total_harga_jual'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="px-4 py-2.5 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                onclick={() => toggleSort('laba_kotor')}
+              >
+                <span>Laba Kotor</span>
+                {#if sortField === 'laba_kotor'}
+                  {#if sortAsc}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="px-4 py-2.5 text-center">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
@@ -413,7 +529,7 @@
                 <td class="px-4 py-3"><Skeleton class="h-4 w-16 mx-auto" /></td>
               </tr>
             {/each}
-          {:else if filteredList.length === 0}
+          {:else if paginatedList.length === 0}
             <tr>
               <td colspan="7" class="px-4 py-12 text-center text-neutral-400">
                 <Receipt class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
@@ -424,13 +540,13 @@
               </td>
             </tr>
           {:else}
-            {#each filteredList as item (item.id)}
+            {#each paginatedList as item (item.id)}
               {@const laba = (Number(item.total_harga_jual) || 0) - (Number(item.total_harga_modal) || 0)}
               <tr class="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- Struk No -->
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-1.5">
-                    <span class="font-mono font-medium text-neutral-900 dark:text-neutral-100">
+                    <span class="font-medium text-neutral-900 dark:text-neutral-100 text-xs">
                       {item.no_struk}
                     </span>
                     <button
@@ -449,7 +565,7 @@
                 </td>
 
                 <!-- Waktu -->
-                <td class="px-4 py-3 font-mono text-neutral-500 text-[11px] whitespace-nowrap">
+                <td class="px-4 py-3 text-neutral-500 text-xs whitespace-nowrap">
                   {formatDateTime(item.created_ms)}
                 </td>
 
@@ -459,24 +575,24 @@
                     <div class="w-5 h-5 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-neutral-600 dark:text-neutral-300">
                       {item.nama_kasir ? item.nama_kasir.charAt(0).toUpperCase() : 'K'}
                     </div>
-                    <span class="text-neutral-800 dark:text-neutral-200">
+                    <span class="text-neutral-800 dark:text-neutral-200 text-xs">
                       {item.nama_kasir || 'Kasir'}
                     </span>
                   </div>
                 </td>
 
                 <!-- Total Barang -->
-                <td class="px-4 py-3 text-center font-mono font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
+                <td class="px-4 py-3 text-center font-medium text-neutral-700 dark:text-neutral-300 tabular-nums text-xs">
                   {formatNumber(item.total_barang)}
                 </td>
 
                 <!-- Total Harga Jual -->
-                <td class="px-4 py-3 text-right font-mono font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
+                <td class="px-4 py-3 text-right font-semibold text-neutral-900 dark:text-neutral-100 tabular-nums text-xs">
                   {formatRupiah(item.total_harga_jual)}
                 </td>
 
                 <!-- Laba Kotor -->
-                <td class="px-4 py-3 text-right font-mono text-emerald-600 dark:text-emerald-400 tabular-nums font-medium">
+                <td class="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums font-medium text-xs">
                   +{formatRupiah(laba)}
                 </td>
 
@@ -509,12 +625,33 @@
       </table>
     </div>
 
-    <!-- Table Footer Count -->
-    <div class="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 flex items-center justify-between text-xs text-neutral-500">
-      <span>Menampilkan {formatNumber(filteredList.length)} dari {formatNumber(penjualanList.length)} total transaksi</span>
-      <span class="font-mono font-medium text-neutral-800 dark:text-neutral-200 tabular-nums">
-        Akumulasi: {formatRupiah(totalOmzet)}
-      </span>
+    <!-- Pagination & Total Indicator -->
+    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+      <div>
+        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedList.length}</strong> dari {filteredList.length} transaksi
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage <= 1}
+          onclick={() => (currentPage -= 1)}
+        >
+          Sebelumnya
+        </Button>
+        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+          {currentPage} / {totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage >= totalPages}
+          onclick={() => (currentPage += 1)}
+        >
+          Berikutnya
+        </Button>
+      </div>
     </div>
   </div>
 </div>

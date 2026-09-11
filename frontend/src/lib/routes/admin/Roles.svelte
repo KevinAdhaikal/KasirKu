@@ -35,7 +35,8 @@
     Lock,
     Info,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    ArrowUpDown
   } from 'lucide-svelte';
 
   export interface RoleItem {
@@ -423,6 +424,19 @@
     return list;
   });
 
+  // Pagination
+  let currentPage = $state(1);
+  const pageSize = 10;
+  const paginatedRoles = $derived(
+    filteredRoles.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
+  const totalPages = $derived(Math.ceil(filteredRoles.length / pageSize) || 1);
+
+  $effect(() => {
+    void searchQuery;
+    currentPage = 1;
+  });
+
   // Filtered Assigned Users in modal
   let filteredAssignedUsers = $derived.by(() => {
     const q = assignedUserSearch.trim().toLowerCase();
@@ -497,7 +511,9 @@
               <div class="inline-flex items-center justify-center gap-1">
                 <span>ID</span>
                 {#if sortField === 'id'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3" />{:else}<ArrowDown class="w-3 h-3" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
@@ -505,7 +521,9 @@
               <div class="inline-flex items-center justify-center gap-1">
                 <span>Role Name</span>
                 {#if sortField === 'name'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3" />{:else}<ArrowDown class="w-3 h-3" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
@@ -513,7 +531,9 @@
               <div class="inline-flex items-center justify-center gap-1">
                 <span>Created At</span>
                 {#if sortField === 'created_ms'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3" />{:else}<ArrowDown class="w-3 h-3" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
@@ -521,7 +541,9 @@
               <div class="inline-flex items-center justify-center gap-1">
                 <span>Modified At</span>
                 {#if sortField === 'modified_ms'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3" />{:else}<ArrowDown class="w-3 h-3" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
@@ -529,7 +551,9 @@
               <div class="inline-flex items-center justify-center gap-1">
                 <span>Pengguna</span>
                 {#if sortField === 'users'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3" />{:else}<ArrowDown class="w-3 h-3" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
@@ -550,7 +574,7 @@
                 <td class="py-3 px-3 text-center"><Skeleton class="h-7 w-32 mx-auto" /></td>
               </tr>
             {/each}
-          {:else if filteredRoles.length === 0}
+          {:else if paginatedRoles.length === 0}
             <tr>
               <td colspan="6" class="py-12 text-center text-neutral-500">
                 <div class="flex flex-col items-center justify-center gap-2">
@@ -569,12 +593,12 @@
               </td>
             </tr>
           {:else}
-            {#each filteredRoles as role (role.id)}
+            {#each paginatedRoles as role (role.id)}
               {@const isAdministrator = role.id === 1 || role.name === 'Administrator'}
               {@const usersInRole = userCountPerRole().get(role.id) || 0}
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- ID -->
-                <td class="py-3 px-3 text-center font-mono font-medium text-neutral-500">
+                <td class="py-3 px-3 text-center font-medium text-neutral-500 tabular-nums">
                   #{role.id}
                 </td>
 
@@ -590,12 +614,12 @@
                 </td>
 
                 <!-- Created At -->
-                <td class="py-3 px-3 text-center tabular-nums text-neutral-500 text-[11px] font-mono">
+                <td class="py-3 px-3 text-center tabular-nums text-neutral-500 text-[11px]">
                   {role.created_ms ? formatDateTime(role.created_ms) : '-'}
                 </td>
 
                 <!-- Modified At -->
-                <td class="py-3 px-3 text-center tabular-nums text-neutral-500 text-[11px] font-mono">
+                <td class="py-3 px-3 text-center tabular-nums text-neutral-500 text-[11px]">
                   {role.modified_ms ? formatDateTime(role.modified_ms) : '-'}
                 </td>
 
@@ -637,6 +661,35 @@
           {/if}
         </tbody>
       </table>
+    </div>
+    
+    <!-- Pagination & Total Indicator -->
+    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+      <div>
+        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedRoles.length}</strong> dari {filteredRoles.length} role
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage <= 1}
+          onclick={() => (currentPage -= 1)}
+        >
+          Sebelumnya
+        </Button>
+        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+          {currentPage} / {totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage >= totalPages}
+          onclick={() => (currentPage += 1)}
+        >
+          Berikutnya
+        </Button>
+      </div>
     </div>
   </div>
 </div>

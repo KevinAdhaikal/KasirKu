@@ -5,7 +5,7 @@
   import { cart, type CartItem } from '../../stores/cart.svelte';
   import { auth } from '../../stores/auth.svelte';
   import { toast } from '../../stores/toast.svelte';
-  import { formatRupiah, formatNumber } from '../../utils/format';
+  import { formatRupiah, formatNumber, formatIDR, parseIDR } from '../../utils/format';
   import { CheckCircle2, AlertCircle } from 'lucide-svelte';
 
   export interface ReceiptData {
@@ -32,27 +32,16 @@
   let inputElement = $state<HTMLInputElement | null>(null);
 
   function parseCashDigits(value: string): number {
-    const digits = value.replace(/[^0-9]/g, '');
-    if (!digits) return 0;
-    return Number(digits) / 100;
+    return parseIDR(value);
   }
 
   function formatCashDigits(value: string): string {
-    const digits = value.replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '');
-    if (!digits) return '';
-
-    const amount = Number(digits) / 100;
-    return new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    const num = parseIDR(value);
+    return num === 0 ? '' : formatIDR(num);
   }
 
   function formatCashAmount(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
+    return formatIDR(amount);
   }
 
   const tunaiNum = $derived(parseCashDigits(tunaiRaw));
@@ -63,7 +52,7 @@
   const isSufficient = $derived(tunaiNum >= totalAmount && totalAmount > 0);
   const kekurangan = $derived(Math.max(0, totalAmount - tunaiNum));
 
-  const presets = [10000, 20000, 50000, 100000, 200000, 500000];
+  const presets = [1000000, 2000000, 5000000, 10000000, 20000000, 50000000];
 
   function setPreset(amount: number) {
     tunaiRaw = formatCashAmount(amount);

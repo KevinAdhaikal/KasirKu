@@ -12,12 +12,16 @@
   import Badge from '../components/ui/Badge.svelte';
   import { User, Shield, Lock, Save, KeyRound, AlertCircle, Upload, Eye, EyeOff } from 'lucide-svelte';
 
+  import ImageCropperModal from '../components/ui/ImageCropperModal.svelte';
+
   // Profile edit state
   let fullName = $state(auth.user?.full_name || '');
   let username = $state(auth.user?.username || '');
   let savingProfile = $state(false);
-  let profileImageFile = $state<File | null>(null);
+  let profileImageBase64 = $state<string | null>(null);
   let profileImagePreview = $state<string | null>(auth.user?.profile_img || null);
+  let rawImageSrc = $state<string>('');
+  let cropperModalOpen = $state(false);
   let profileError = $state<string | null>(null);
   let fullNameError = $state<string | null>(null);
   let usernameError = $state<string | null>(null);
@@ -71,23 +75,18 @@
 
     savingProfile = true;
     try {
-      if (profileImageFile) {
-        const form = new FormData();
-        form.append('new_full_name', fullName.trim());
-        form.append('new_username', username.trim());
-        form.append('profile_img', profileImageFile);
-        await api.patch('/api/profile', form);
-      } else {
-        const params = new URLSearchParams({
-          new_full_name: fullName.trim(),
-          new_username: username.trim(),
-        });
-        await api.patch('/api/profile', params);
+      const params = new URLSearchParams({
+        new_full_name: fullName.trim(),
+        new_username: username.trim(),
+      });
+      if (profileImageBase64) {
+        params.append('new_profile_img', profileImageBase64);
       }
+      await api.patch('/api/profile', params);
 
       await auth.fetchProfile();
       profileImagePreview = auth.user?.profile_img || profileImagePreview;
-      profileImageFile = null;
+      profileImageBase64 = null;
       toast.success('Profil berhasil diperbarui.');
     } catch (err: any) {
       if (err.status === 403 || err.message === '1') {
@@ -105,20 +104,38 @@
     const file = input.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('File profil harus berupa gambar.');
+    // Strict image validation
+    if (!file.type || !file.type.startsWith('image/')) {
+      alert('File yang dipilih bukan gambar! Hanya file gambar (JPG, PNG, WebP) yang diperbolehkan.');
+      toast.error('File yang dipilih harus berupa gambar.');
       input.value = '';
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Ukuran foto maksimal 2 MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran file foto terlalu besar! Maksimal 10 MB.');
+      toast.error('Ukuran foto maksimal 10 MB.');
       input.value = '';
       return;
     }
 
-    profileImageFile = file;
-    profileImagePreview = URL.createObjectURL(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      rawImageSrc = reader.result as string;
+      cropperModalOpen = true;
+      input.value = '';
+    };
+    reader.onerror = () => {
+      toast.error('Gagal membaca file gambar.');
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleCropComplete(result: { dataUrl: string; base64: string }) {
+    profileImagePreview = result.dataUrl;
+    profileImageBase64 = result.base64;
+    toast.success('Foto profil siap. Klik "Simpan Perubahan" untuk menyimpan ke akun Anda.');
   }
 
   async function handleChangePassword() {
@@ -384,3 +401,14 @@
     </Card>
   </div>
 </div>
+
+<!-- Avatar Image Cropper Modal (Discord-style) -->
+<ImageCropperModal
+  bind:open={cropperModalOpen}
+  imageSrc={rawImageSrc}
+  oncrop={handleCropComplete}
+  onclose={() => {
+    cropperModalOpen = false;
+  }}
+/>
+

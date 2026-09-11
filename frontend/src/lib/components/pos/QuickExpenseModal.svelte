@@ -4,7 +4,7 @@
   import Input from '../ui/Input.svelte';
   import { api } from '../../api/api';
   import { toast } from '../../stores/toast.svelte';
-  import { formatRupiah, formatRupiahInput, parseNumber } from '../../utils/format';
+  import { formatRupiah, formatIDR, parseIDR } from '../../utils/format';
   import { TrendingDown, Receipt, Banknote, AlertCircle } from 'lucide-svelte';
 
   interface Props {
@@ -25,7 +25,7 @@
   let nominalError = $state<string | null>(null);
 
   let nominalFormatted = $derived.by(() => {
-    const num = parseNumber(nominalRaw);
+    const num = parseIDR(nominalRaw);
     return num > 0 ? formatRupiah(num) : 'Rp0,00';
   });
 
@@ -34,7 +34,7 @@
     deskripsiError = null;
     nominalError = null;
 
-    const amount = parseNumber(nominalRaw);
+    const amount = parseIDR(nominalRaw);
     let hasError = false;
 
     if (!deskripsi.trim()) {
@@ -114,13 +114,13 @@
         required
         error={nominalError}
         oninput={() => {
-          if (parseNumber(nominalRaw) > 0) nominalError = null;
+          if (parseIDR(nominalRaw) > 0) nominalError = null;
         }}
         onblur={() => {
-          if (parseNumber(nominalRaw) <= 0) nominalError = 'Nominal pengeluaran harus lebih besar dari Rp0.';
+          if (parseIDR(nominalRaw) <= 0) nominalError = 'Nominal pengeluaran harus lebih besar dari Rp0.';
         }}
       />
-      {#if parseNumber(nominalRaw) > 0}
+      {#if parseIDR(nominalRaw) > 0}
         <p class="text-xs font-mono text-neutral-500 dark:text-neutral-400 mt-1">
           Terbilang: <span class="font-semibold text-neutral-900 dark:text-neutral-100">{nominalFormatted}</span>
         </p>
@@ -131,11 +131,11 @@
     <div>
       <p class="text-[11px] font-medium text-neutral-500 mb-1.5">Nominal Cepat:</p>
       <div class="flex flex-wrap gap-1.5">
-        {#each [10000, 20000, 50000, 100000, 200000, 500000] as preset}
+        {#each [1000000, 2000000, 5000000, 10000000, 20000000, 50000000] as preset}
           <button
             type="button"
             onclick={() => {
-              nominalRaw = formatRupiahInput(preset);
+              nominalRaw = formatIDR(preset);
             }}
             class="px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800 text-[11px] font-mono text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-[var(--bg-hover)] transition-colors"
           >

@@ -27,7 +27,10 @@
     Shield,
     FolderKanban,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
   } from 'lucide-svelte';
 
   export interface KategoriItem {
@@ -50,7 +53,18 @@
 
   // Search & Filter
   let searchQuery = $state('');
-  let sortBy = $state<'nama_asc' | 'nama_desc' | 'count_desc' | 'recent'>('nama_asc');
+  type SortCol = 'id' | 'nama' | 'count' | 'recent';
+  let sortCol = $state<SortCol>('nama');
+  let sortDir = $state<'asc' | 'desc'>('asc');
+
+  function toggleColSort(col: SortCol) {
+    if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col;
+      sortDir = 'asc';
+    }
+  }
 
   // Modal State
   let isModalOpen = $state(false);
@@ -214,24 +228,41 @@
     let res = kategoriList.filter((k) => !q || k.nama_kategori.toLowerCase().includes(q));
 
     res.sort((a, b) => {
-      switch (sortBy) {
-        case 'nama_asc':
-          return a.nama_kategori.localeCompare(b.nama_kategori);
-        case 'nama_desc':
-          return b.nama_kategori.localeCompare(a.nama_kategori);
-        case 'count_desc': {
-          const countA = productCountMap.get(a.id) || 0;
-          const countB = productCountMap.get(b.id) || 0;
-          return countB - countA;
-        }
-        case 'recent':
-          return (b.modified_ms || b.created_ms || 0) - (a.modified_ms || a.created_ms || 0);
-        default:
-          return 0;
+      let cmp = 0;
+      if (sortCol === 'id') {
+        cmp = a.id - b.id;
+      } else if (sortCol === 'nama') {
+        cmp = a.nama_kategori.localeCompare(b.nama_kategori);
+      } else if (sortCol === 'count') {
+        const countA = productCountMap.get(a.id) || 0;
+        const countB = productCountMap.get(b.id) || 0;
+        cmp = countA - countB;
+      } else if (sortCol === 'recent') {
+        cmp = (a.modified_ms || a.created_ms || 0) - (b.modified_ms || b.created_ms || 0);
       }
+      return sortDir === 'asc' ? cmp : -cmp;
     });
 
     return res;
+  });
+
+  const totalFilteredProducts = $derived.by(() => {
+    return filteredKategori.reduce((sum, kat) => sum + (productCountMap.get(kat.id) || 0), 0);
+  });
+
+  // Pagination
+  let currentPage = $state(1);
+  const pageSize = 10;
+  const paginatedKategori = $derived(
+    filteredKategori.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  );
+  const totalPages = $derived(Math.ceil(filteredKategori.length / pageSize) || 1);
+
+  $effect(() => {
+    void searchQuery;
+    void sortCol;
+    void sortDir;
+    currentPage = 1;
   });
 </script>
 
@@ -335,14 +366,21 @@
 
     <div class="flex items-center gap-2">
       <Select
-        bind:value={sortBy}
+        value={`${sortCol}_${sortDir}`}
+        onchange={(e: any) => {
+          const val = e.target.value;
+          if (val === 'nama_asc') { sortCol = 'nama'; sortDir = 'asc'; }
+          else if (val === 'nama_desc') { sortCol = 'nama'; sortDir = 'desc'; }
+          else if (val === 'count_desc') { sortCol = 'count'; sortDir = 'desc'; }
+          else if (val === 'recent_desc') { sortCol = 'recent'; sortDir = 'desc'; }
+        }}
         class="w-auto min-w-[140px]"
         selectClass="h-9 text-xs"
       >
         <option value="nama_asc">Nama (A-Z)</option>
         <option value="nama_desc">Nama (Z-A)</option>
         <option value="count_desc">Produk Terbanyak</option>
-        <option value="recent">Terakhir Diubah</option>
+        <option value="recent_desc">Terakhir Diubah</option>
       </Select>
     </div>
   </div>
@@ -352,9 +390,60 @@
     <table class="w-full text-left text-xs border-collapse">
       <thead>
         <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
-          <th class="py-2.5 px-4 w-16">ID</th>
-          <th class="py-2.5 px-4">Nama Kategori</th>
-          <th class="py-2.5 px-4 text-center">Jumlah Produk</th>
+          <th class="py-2.5 px-4 w-20">
+            <button
+              type="button"
+              onclick={() => toggleColSort('id')}
+              class="flex items-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider"
+            >
+              <span>ID</span>
+              {#if sortCol === 'id'}
+                {#if sortDir === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
+          <th class="py-2.5 px-4">
+            <button
+              type="button"
+              onclick={() => toggleColSort('nama')}
+              class="flex items-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider"
+            >
+              <span>Nama Kategori</span>
+              {#if sortCol === 'nama'}
+                {#if sortDir === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
+          <th class="py-2.5 px-4 text-center">
+            <button
+              type="button"
+              onclick={() => toggleColSort('count')}
+              class="inline-flex items-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+            >
+              <span>Jumlah Produk</span>
+              {#if sortCol === 'count'}
+                {#if sortDir === 'asc'}
+                  <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                {:else}
+                  <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                {/if}
+              {:else}
+                <ArrowUpDown class="w-3 h-3 opacity-40" />
+              {/if}
+            </button>
+          </th>
           <th class="py-2.5 px-4 text-center w-28">Aksi</th>
         </tr>
       </thead>
@@ -369,18 +458,18 @@
               <td class="p-4 text-center"><Skeleton class="h-6 w-14 mx-auto" /></td>
             </tr>
           {/each}
-        {:else if filteredKategori.length === 0}
+        {:else if paginatedKategori.length === 0}
           <tr>
-            <td colspan="5" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
+            <td colspan="4" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
               <Tag class="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p class="font-medium text-xs">Tidak ada kategori yang sesuai.</p>
             </td>
           </tr>
         {:else}
-          {#each filteredKategori as kat (kat.id)}
+          {#each paginatedKategori as kat (kat.id)}
             {@const count = productCountMap.get(kat.id) || 0}
             <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
-              <td class="py-3 px-4 font-mono text-neutral-400 text-[11px]">
+              <td class="py-3 px-4 tabular-nums text-neutral-400 text-xs font-medium">
                 #{kat.id}
               </td>
 
@@ -394,7 +483,7 @@
                 <button
                   type="button"
                   onclick={() => router.navigate('/barang/daftar_barang')}
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 hover:bg-[var(--bg-hover)] transition-colors"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium tabular-nums border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 hover:bg-[var(--bg-hover)] transition-colors"
                   title="Lihat barang dalam kategori ini"
                 >
                   <Package class="w-3 h-3 text-neutral-400" />
@@ -430,6 +519,35 @@
         {/if}
       </tbody>
     </table>
+    
+    <!-- Pagination & Total Indicator -->
+    <div class="p-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+      <div>
+        Menampilkan <strong class="text-neutral-900 dark:text-neutral-100">{paginatedKategori.length}</strong> dari {filteredKategori.length} kategori
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage <= 1}
+          onclick={() => (currentPage -= 1)}
+        >
+          Sebelumnya
+        </Button>
+        <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+          {currentPage} / {totalPages}
+        </span>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={currentPage >= totalPages}
+          onclick={() => (currentPage += 1)}
+        >
+          Berikutnya
+        </Button>
+      </div>
+    </div>
   </div>
 </div>
 

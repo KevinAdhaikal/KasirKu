@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { parseNumber, formatRupiahInput, formatIDR, parseIDR } from '$lib/utils/format';
+  import { parseNumber, formatRupiahInput, formatIDR, parseIDR, formatThousandSeparator } from '$lib/utils/format';
 
   interface Props {
     id?: string;
@@ -12,6 +12,7 @@
     readonly?: boolean;
     required?: boolean;
     numericOnly?: boolean;
+    thousandSeparator?: boolean;
     error?: string;
     hint?: string;
     class?: string;
@@ -36,6 +37,7 @@
     readonly = false,
     required = false,
     numericOnly = false,
+    thousandSeparator = false,
     error,
     hint,
     class: className = '',
@@ -56,8 +58,17 @@
   // Is this a currency input?
   let isCurrency = $derived(type === 'currency');
   let effectiveType = $derived(isCurrency ? 'text' : type);
-  let effectiveInputMode = $derived(isCurrency || numericOnly ? 'numeric' : undefined);
+  let effectiveInputMode = $derived(isCurrency || numericOnly || thousandSeparator ? 'numeric' : undefined);
   let effectivePlaceholder = $derived(placeholder !== undefined ? placeholder : (isCurrency ? '0' : ''));
+
+  $effect(() => {
+    if (thousandSeparator && value !== undefined && value !== null && value !== '') {
+      const formatted = formatThousandSeparator(value);
+      if (formatted !== String(value)) {
+        value = formatted;
+      }
+    }
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (disabled || readonly) {
@@ -122,7 +133,7 @@
       return;
     }
 
-    if (numericOnly) {
+    if (numericOnly || thousandSeparator) {
       // Allow control keys
       if (
         e.key === 'Tab' || e.key === 'Enter' || e.key === 'Escape' ||
@@ -157,6 +168,14 @@
       return;
     }
 
+    if (thousandSeparator) {
+      e.preventDefault();
+      const pasted = e.clipboardData?.getData('text') || '';
+      value = formatThousandSeparator(pasted);
+      oninput?.(new Event('input', { bubbles: true }));
+      return;
+    }
+
     if (numericOnly) {
       e.preventDefault();
       const pasted = e.clipboardData?.getData('text') || '';
@@ -171,12 +190,34 @@
     if (isCurrency && value) {
       const num = parseIDR(value as string);
       value = num === 0 ? '' : formatIDR(num);
+    } else if (thousandSeparator && value) {
+      value = formatThousandSeparator(value as string);
     }
     onblur?.(e);
   }
 
   function handleInput(e: Event) {
-    if (numericOnly && typeof value === 'string') {
+    if (thousandSeparator) {
+      const input = e.target as HTMLInputElement;
+      const raw = input.value;
+      const cursor = input.selectionStart || 0;
+      const beforeDigits = raw.slice(0, cursor).replace(/\D/g, '').length;
+      const formatted = formatThousandSeparator(raw);
+      value = formatted;
+      input.value = formatted;
+
+      let newCursor = 0;
+      let digitsSeen = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) digitsSeen++;
+        if (digitsSeen === beforeDigits) {
+          newCursor = i + 1;
+          break;
+        }
+      }
+      if (beforeDigits === 0) newCursor = 0;
+      input.setSelectionRange(newCursor, newCursor);
+    } else if (numericOnly && typeof value === 'string') {
       const sanitized = value.replace(/\D/g, '');
       if (sanitized !== value) {
         value = sanitized;
