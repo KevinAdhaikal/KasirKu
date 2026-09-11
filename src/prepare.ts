@@ -15,7 +15,7 @@
 
 const MAX_CONCURRENT = 4;
 
-import { readdir, mkdir, stat } from "node:fs/promises";
+import { readdir, mkdir } from "node:fs/promises";
 
 let future_import = {
     minifyHTML: null as any,
@@ -143,7 +143,7 @@ async function prepare() {
     if (Bun.env.APP_COMPILE_HTML) await compile_html();
 
     // Preapre Profile Image Folder
-    if (!(await stat("./profile_img")).isDirectory()) {
+    if (!(await Bun.file("./profile_img").exists())) {
         await mkdir("./profile_img", { recursive: true });
     }
 

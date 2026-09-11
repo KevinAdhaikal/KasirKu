@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * KasirKu Setup Design Tokens
+ * Clean, Swiss utilitarian system installer aesthetic.
+ */
+:root {
+  --brand: #348eaa;
+  --brand-hover: #2b778f;
+  --brand-action: #348eaa;
+  --brand-action-hover: #2b778f;
+  --brand-action-border: #2b778f;
+  --brand-soft: #eaf3f6;
+  --brand-soft-hover: #dceaf0;
+  --brand-ink: #1f5c6e;
+
+  --bg-canvas: #f4f7f9;
+  --bg-surface: #ffffff;
+  --bg-subtle: #edf2f5;
+  --bg-hover: #e5edf1;
+  --border-subtle: #d6e2e7;
+  --border-contrast: #b5cbd4;
+
+  --text-primary: #19272e;
+  --text-secondary: #576d77;
+  --text-muted: #8298a2;
+
+  --accent: var(--brand-action);
+  --accent-fg: #ffffff;
+  --focus-ring: rgba(52, 142, 170, 0.25);
+
+  --success: #138a63;
+  --warning: #c97e10;
+  --danger: #d44351;
+  --info: #2d829c;
+}
+
+.dark {
+  --brand: #3ba0bf;
+  --brand-hover: #328da8;
+  --brand-action: #3ba0bf;
+  --brand-action-hover: #328da8;
+  --brand-action-border: #328da8;
+  --brand-soft: #122129;
+  --brand-soft-hover: #182c36;
+  --brand-ink: #b1dbeb;
+
+  --bg-canvas: #0c1317;
+  --bg-surface: #121c22;
+  --bg-subtle: #17242c;
+  --bg-hover: #1e2e38;
+  --border-subtle: #223540;
+  --border-contrast: #324c5a;
+
+  --text-primary: #edf4f7;
+  --text-secondary: #9cb1bc;
+  --text-muted: #6b828d;
+
+  --accent: var(--brand-action);
+  --accent-fg: #ffffff;
+  --focus-ring: rgba(59, 160, 191, 0.35);
+
+  --success: #22a97b;
+  --warning: #df9d2e;
+  --danger: #e45f6b;
+  --info: #338ea7;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-hover: var(--bg-hover);
+  --color-border: var(--border-subtle);
+  --color-border-contrast: var(--border-contrast);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, input, select, textarea {
+    vertical-align: middle;
+    font-family: inherit;
+    font-weight: 400;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    accent-color: var(--brand);
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .font-mono, code, pre, kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Custom Clean Scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-contrast) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-contrast);
+  }
+}
