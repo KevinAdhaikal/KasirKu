@@ -1,5 +1,9 @@
 <img width="1250" height="417" alt="KasirKu-1" src="https://github.com/user-attachments/assets/a53d2bf5-8f01-4bf5-97a4-9212273f0889" />
-<hr>
+<p align="center">
+<img src="https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Bun">
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+</p>
 
 **KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien.
 
