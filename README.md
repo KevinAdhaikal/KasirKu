@@ -1,6 +1,10 @@
 <img width="1250" height="417" alt="KasirKu-1" src="https://github.com/user-attachments/assets/a53d2bf5-8f01-4bf5-97a4-9212273f0889" />
 <hr>
 
+**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien.
+
+KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai frontend. Aplikasi ini juga mendukung **realtime data updates**, sehingga perubahan data dapat ditampilkan secara langsung tanpa perlu melakukan refresh halaman.
+
 ## Table of contents
 - [Fitur](#fitur)
 - [Requrements](#requirements)
