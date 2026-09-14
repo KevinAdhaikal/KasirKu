@@ -14,9 +14,7 @@ async function handleResponse(res: Response): Promise<any> {
       const json = JSON.parse(errorText);
       if (json.message) message = json.message;
       else if (json.error) message = json.error;
-    } catch {
-      // not json
-    }
+    } catch {}
     throw new Error(message || `Request failed with status ${res.status}`);
   }
 }
@@ -154,9 +152,7 @@ export async function pollPing(targetUrl: string, maxAttempts = 40, intervalMs =
       if (res.ok) {
         return true;
       }
-    } catch {
-      // server starting up
-    }
+    } catch {}
     await new Promise((r) => setTimeout(r, intervalMs));
   }
   return false;

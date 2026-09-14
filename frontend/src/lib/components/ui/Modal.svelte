@@ -9,6 +9,7 @@
     size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
     closeOnEscape?: boolean;
     closeOnBackdrop?: boolean;
+    autoFocusFirstInput?: boolean;
     onclose?: () => void;
     children?: Snippet;
     footer?: Snippet;
@@ -21,10 +22,13 @@
     size = 'lg',
     closeOnEscape = true,
     closeOnBackdrop = true,
+    autoFocusFirstInput = true,
     onclose,
     children,
     footer,
   }: Props = $props();
+
+  let modalBoxEl = $state<HTMLElement | null>(null);
 
   const sizeStyles = {
     sm: 'max-w-md',
@@ -46,10 +50,42 @@
     }
   }
 
+  function focusFirstField() {
+    if (!modalBoxEl || !open) return;
+
+    // First check if there is an element explicitly requesting autofocus
+    const explicit = modalBoxEl.querySelector<HTMLElement>(
+      'input[autofocus]:not([disabled]):not([readonly]), textarea[autofocus]:not([disabled]):not([readonly]), select[autofocus]:not([disabled]):not([readonly]), [data-autofocus]:not([disabled]):not([readonly])'
+    );
+    if (explicit) {
+      explicit.focus();
+      return;
+    }
+
+    // Otherwise find the first interactive input field inside the modal content body
+    const contentArea = modalBoxEl.querySelector('.modal-body-content') || modalBoxEl;
+    const firstField = contentArea.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled]):not([readonly])'
+    );
+
+    if (firstField) {
+      firstField.focus();
+    }
+  }
+
   $effect(() => {
     if (typeof document !== 'undefined') {
       if (open) {
         document.body.style.overflow = 'hidden';
+        if (autoFocusFirstInput) {
+          const t1 = setTimeout(focusFirstField, 40);
+          const t2 = setTimeout(focusFirstField, 150);
+          return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            document.body.style.overflow = '';
+          };
+        }
       } else {
         document.body.style.overflow = '';
       }
@@ -83,6 +119,7 @@
 
     <!-- Modal Content Box -->
     <div
+      bind:this={modalBoxEl}
       class="relative w-full {sizeStyles[size]} rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-2xl z-10 transition-transform my-8 flex flex-col max-h-[90vh]"
     >
       {#if title}
@@ -104,7 +141,7 @@
         </div>
       {/if}
 
-      <div class="px-6 py-5 overflow-y-auto flex-1">
+      <div class="px-6 py-5 overflow-y-auto flex-1 modal-body-content">
         {@render children?.()}
       </div>
 

@@ -1,4 +1,6 @@
 // High-level API client for KasirKu backend
+import { progress } from '../stores/progress.svelte';
+
 export class ApiError extends Error {
   status: number;
   data: any;
@@ -17,7 +19,9 @@ export async function request<T = any>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem('token');
+  progress.requestStarted();
+  try {
+    const token = localStorage.getItem('token');
   const headers = new Headers(options.headers || {});
 
   if (token && !headers.has('token')) {
@@ -31,10 +35,7 @@ export async function request<T = any>(
 
   if (res.status === 401) {
     localStorage.removeItem('token');
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-    throw new ApiError(401, 'Sesi telah berakhir atau tidak valid. Silakan login kembali.');
+    throw new ApiError(401, 'Sesi telah berakhir atau server sedang offline.');
   }
 
   if (res.status === 429) {
@@ -51,15 +52,18 @@ export async function request<T = any>(
     }
   }
 
-  const text = await res.text();
-  if (!text || text.trim() === '') {
-    return null as unknown as T;
-  }
+    const text = await res.text();
+    if (!text || text.trim() === '') {
+      return null as unknown as T;
+    }
 
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return text as unknown as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return text as unknown as T;
+    }
+  } finally {
+    progress.requestFinished();
   }
 }
 

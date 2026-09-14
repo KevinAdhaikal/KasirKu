@@ -1,12 +1,23 @@
 <script lang="ts">
-  import { ArrowLeft, ArrowRight, CheckCircle2, FileText, Globe, Key, ShieldCheck, AlertCircle } from 'lucide-svelte';
+  import { 
+    Globe, 
+    ShieldCheck, 
+    CheckCircle2, 
+    AlertCircle, 
+    FileText, 
+    Key, 
+    RefreshCw, 
+    Upload, 
+    Lock,
+    Sparkles
+  } from 'lucide-svelte';
   import type { ServerConfig } from '../types';
   import { checkCertificate } from '../api';
 
   interface Props {
     config: ServerConfig;
-    onNext: () => void;
-    onBack: () => void;
+    onNext?: () => void;
+    onBack?: () => void;
   }
 
   let { config = $bindable(), onNext, onBack }: Props = $props();
@@ -20,18 +31,19 @@
     config.protocol = newProto;
     if (newProto === 'http' && config.port === 443) {
       config.port = 80;
+      portError = '';
     } else if (newProto === 'https' && config.port === 80) {
       config.port = 443;
+      portError = '';
     }
   }
 
   function handlePortKeyDown(e: KeyboardEvent) {
-    // Allow navigation and edit keys
     const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
     if (allowedKeys.includes(e.key) || (e.ctrlKey || e.metaKey)) {
       return;
     }
-    // Block non-numeric characters (including 'e', '+', '-', '.')
+    // Strictly block non-numeric characters (including 'e', '+', '-', '.')
     if (!/^\d$/.test(e.key)) {
       e.preventDefault();
     }
@@ -44,10 +56,10 @@
     const num = Number(sanitized);
 
     if (!sanitized) {
-      portError = 'Port tidak boleh kosong.';
+      portError = 'Nomor port tidak boleh kosong.';
       config.port = 0;
     } else if (num < 1 || num > 65535) {
-      portError = 'Port harus berada di antara 1 dan 65535.';
+      portError = 'Port harus berada di rentang 1 – 65535.';
       config.port = num;
     } else {
       portError = '';
@@ -59,7 +71,7 @@
     const input = e.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
-    
+
     certValid = false;
     certError = '';
 
@@ -69,19 +81,19 @@
       const base64 = result.split(',')[1] || '';
       if (type === 'cert') {
         config.tls.cert = base64;
-        config.tls.certFileName = file.name;
+        config.tls.certFileName = `${file.name} (${Math.round(file.size / 1024 * 10) / 10} KB)`;
       } else {
         config.tls.key = base64;
-        config.tls.keyFileName = file.name;
+        config.tls.keyFileName = `${file.name} (${Math.round(file.size / 1024 * 10) / 10} KB)`;
       }
     };
     reader.readAsDataURL(file);
   }
 
-  async function verifyCertFiles() {
+  async function verifyCertFiles(): Promise<boolean> {
     if (!config.tls.cert || !config.tls.key) {
-      certError = 'Harap unggah kedua berkas sertifikat (.crt) dan kunci pribadi (.key).';
-      return;
+      certError = 'Harap unggah kedua berkas: sertifikat SSL (.crt/.pem) dan kunci privat (.key).';
+      return false;
     }
 
     certTesting = true;
@@ -91,14 +103,16 @@
     try {
       await checkCertificate(config.tls.cert, config.tls.key);
       certValid = true;
+      return true;
     } catch (err: any) {
-      certError = err.message || 'Sertifikat tidak valid atau pasangan kunci tidak cocok.';
+      certError = err.message || 'Sertifikat tidak valid atau pasangan kunci privat tidak cocok.';
+      return false;
     } finally {
       certTesting = false;
     }
   }
 
-  function handleContinue(): boolean {
+  export async function proceed(): Promise<boolean> {
     if (!config.port || config.port < 1 || config.port > 65535) {
       portError = 'Port harus berupa angka valid antara 1 dan 65535.';
       return false;
@@ -106,93 +120,90 @@
 
     if (config.protocol === 'https' && config.tls.mode === 'upload') {
       if (!config.tls.cert || !config.tls.key) {
-        certError = 'Harap unggah sertifikat SSL dan kunci pribadi sebelum melanjutkan.';
+        certError = 'Harap unggah berkas sertifikat SSL dan kunci privat sebelum melanjutkan.';
         return false;
       }
       if (!certValid) {
-        certError = 'Harap verifikasi sertifikat SSL terlebih dahulu.';
-        return false;
+        const isValid = await verifyCertFiles();
+        if (!isValid) return false;
       }
     }
 
     onNext?.();
     return true;
   }
-
-  export function proceed(): boolean {
-    return handleContinue();
-  }
 </script>
 
-<div class="space-y-6">
-  <!-- Title -->
-  <div>
-    <h2 class="text-lg font-medium text-text-primary">Konfigurasi Jaringan & Port</h2>
-    <p class="text-sm text-text-secondary mt-0.5">
-      Tentukan protokol komunikasi web dan port layanan yang digunakan oleh server KasirKu.
+<div class="space-y-6 text-ink">
+  <!-- Title Header -->
+  <div class="space-y-1.5 border-b border-line pb-4">
+    <h2 class="text-xl font-bold text-ink tracking-tight">Konfigurasi Jaringan & Port</h2>
+    <p class="text-sm text-ink-muted leading-relaxed">
+      Tentukan protokol komunikasi web dan nomor port yang digunakan server KasirKu.
     </p>
   </div>
 
-  <!-- Protocol Selector Cards -->
-  <div class="space-y-2">
-    <div class="text-xs font-medium text-text-muted">
-      Protokol Server Web
+  <!-- Protocol Selector -->
+  <div class="space-y-2.5">
+    <div class="block text-sm font-semibold text-ink">
+      Protokol Server
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <!-- HTTP -->
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <!-- HTTP Option -->
       <button
         type="button"
         onclick={() => onProtocolChange('http')}
-        class="p-4 rounded-lg border text-left transition-colors cursor-pointer flex items-start gap-3 {config.protocol === 'http' ? 'border-brand bg-brand/5' : 'border-border bg-surface hover:bg-subtle/50'}"
+        class="p-4 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3.5 select-none {config.protocol === 'http' ? 'border-brand bg-brand-soft/30 ring-1 ring-brand/30 shadow-xs' : 'border-line bg-surface hover:bg-subtle/50'}"
       >
-        <div class="p-2 rounded {config.protocol === 'http' ? 'bg-brand/10 text-brand' : 'bg-subtle text-text-muted'} shrink-0">
-          <Globe class="w-4 h-4" />
+        <div class="p-2.5 rounded-lg {config.protocol === 'http' ? 'bg-brand text-white' : 'bg-subtle text-ink-muted'} shrink-0 mt-0.5">
+          <Globe class="w-5 h-5" />
         </div>
-        <div class="space-y-1">
+        <div class="space-y-1 flex-1">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-text-primary">HTTP</span>
+            <span class="text-base font-semibold text-ink">HTTP</span>
             {#if config.protocol === 'http'}
-              <CheckCircle2 class="w-4 h-4 text-brand" />
+              <CheckCircle2 class="w-5 h-5 text-brand shrink-0" />
             {/if}
           </div>
-          <p class="text-xs text-text-secondary leading-normal">
-            Cocok untuk jaringan lokal toko (LAN) atau jika diletakkan di belakang reverse proxy seperti Nginx.
+          <p class="text-xs sm:text-sm text-ink-muted leading-relaxed">
+            Cocok jika KasirKu hanya digunakan di dalam toko dan tidak diakses dari internet.
           </p>
         </div>
       </button>
 
-      <!-- HTTPS -->
+      <!-- HTTPS Option -->
       <button
         type="button"
         onclick={() => onProtocolChange('https')}
-        class="p-4 rounded-lg border text-left transition-colors cursor-pointer flex items-start gap-3 {config.protocol === 'https' ? 'border-brand bg-brand/5' : 'border-border bg-surface hover:bg-subtle/50'}"
+        class="p-4 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3.5 select-none {config.protocol === 'https' ? 'border-brand bg-brand-soft/30 ring-1 ring-brand/30 shadow-xs' : 'border-line bg-surface hover:bg-subtle/50'}"
       >
-        <div class="p-2 rounded {config.protocol === 'https' ? 'bg-brand/10 text-brand' : 'bg-subtle text-text-muted'} shrink-0">
-          <ShieldCheck class="w-4 h-4" />
+        <div class="p-2.5 rounded-lg {config.protocol === 'https' ? 'bg-brand text-white' : 'bg-subtle text-ink-muted'} shrink-0 mt-0.5">
+          <ShieldCheck class="w-5 h-5" />
         </div>
-        <div class="space-y-1">
+        <div class="space-y-1 flex-1">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-text-primary">HTTPS</span>
+            <span class="text-base font-semibold text-ink">HTTPS</span>
             {#if config.protocol === 'https'}
-              <CheckCircle2 class="w-4 h-4 text-brand" />
+              <CheckCircle2 class="w-5 h-5 text-brand shrink-0" />
             {/if}
           </div>
-          <p class="text-xs text-text-secondary leading-normal">
-            Koneksi terenkripsi TLS/SSL. Direkomendasikan jika server diakses langsung melalui domain internet.
+          <p class="text-xs sm:text-sm text-ink-muted leading-relaxed">
+            Pilih ini jika KasirKu akan diakses melalui internet. Lebih aman untuk penggunaan jarak jauh.
           </p>
         </div>
       </button>
     </div>
   </div>
 
-  <!-- Port Configuration (Strictly Numeric) -->
-  <div class="space-y-1.5">
+  <!-- Port Input Section -->
+  <div class="space-y-2">
     <div class="flex items-center justify-between">
-      <label for="server-port" class="block text-xs font-medium text-text-muted">
-        Port Layanan <span class="text-red-500 font-medium">*</span>
+      <label for="server-port" class="block text-sm font-semibold text-ink">
+        Port Server <span class="text-danger">*</span>
       </label>
-      <span class="text-xs text-text-muted">Standar: {config.protocol === 'https' ? '443' : '80'}</span>
     </div>
+
     <div class="max-w-xs">
       <input
         id="server-port"
@@ -202,115 +213,139 @@
         value={config.port || ''}
         onkeydown={handlePortKeyDown}
         oninput={handlePortInput}
-        class="w-full px-3 py-2 rounded-lg bg-surface border border-border text-sm font-mono text-text-primary focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors tabular-nums"
+        class="w-full px-4 py-2.5 rounded-xl bg-surface border {portError ? 'border-danger ring-1 ring-danger/30' : 'border-line focus:border-brand focus:ring-1 focus:ring-brand/30'} text-sm text-ink transition-colors focus:outline-hidden"
         placeholder={config.protocol === 'https' ? '443' : '80'}
       />
     </div>
+
     {#if portError}
-      <p class="text-xs text-red-500 flex items-center gap-1.5 mt-1">
-        <AlertCircle class="w-3.5 h-3.5 shrink-0" />
+      <p class="text-xs sm:text-sm text-danger flex items-center gap-1.5 mt-1">
+        <AlertCircle class="w-4 h-4 shrink-0" />
         {portError}
       </p>
     {:else}
-      <p class="text-xs text-text-muted">
-        Nomor port TCP tempat aplikasi KasirKu akan melayani permintaan pengguna.
+      <p class="text-xs sm:text-sm text-ink-faint">
+        Nomor Port untuk Server aplikasi KasirKu.
       </p>
     {/if}
   </div>
 
-  <!-- HTTPS TLS Options -->
+  <!-- HTTPS TLS Certificate Configuration -->
   {#if config.protocol === 'https'}
-    <div class="p-4 rounded-lg bg-surface border border-border space-y-4">
+    <div class="p-5 rounded-2xl bg-subtle/40 border border-line space-y-4">
       <div>
-        <div class="text-xs font-medium text-text-primary">
-          Metode Sertifikat SSL/TLS
+        <div class="text-sm font-semibold text-ink flex items-center gap-2">
+          <Lock class="w-4 h-4 text-brand" />
+          Metode Sertifikat SSL / TLS
         </div>
-        <p class="text-xs text-text-secondary mt-0.5">
-          Tentukan bagaimana sertifikat SSL disediakan.
+        <p class="text-xs sm:text-sm text-ink-muted mt-0.5">
+          Pilih bagaimana sertifikat SSL disediakan untuk server.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors {config.tls.mode === 'generate' ? 'border-brand bg-brand/5' : 'border-border bg-subtle/40 hover:bg-subtle'}">
-          <input
-            type="radio"
-            name="tls-mode"
-            value="generate"
-            checked={config.tls.mode === 'generate'}
-            onchange={() => config.tls.mode = 'generate'}
-            class="mt-1"
-          />
-          <div class="space-y-0.5">
-            <span class="text-xs font-medium text-text-primary block">Buat Otomatis (Self-Signed)</span>
-            <span class="text-xs text-text-secondary block">
-              Sertifikat dibuat otomatis oleh server saat dijalankan.
-            </span>
+      <!-- Mode Selector with Checkbox Card Style matching Protocol Selector -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <!-- Generate Option Card -->
+        <button
+          type="button"
+          onclick={() => config.tls.mode = 'generate'}
+          class="p-4 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3.5 select-none {config.tls.mode === 'generate' ? 'border-brand bg-brand-soft/30 ring-1 ring-brand/30 shadow-xs' : 'border-line bg-surface hover:bg-subtle'}"
+        >
+          <div class="p-2.5 rounded-lg {config.tls.mode === 'generate' ? 'bg-brand text-white' : 'bg-subtle text-ink-muted'} shrink-0 mt-0.5">
+            <Sparkles class="w-5 h-5" />
           </div>
-        </label>
+          <div class="space-y-1 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-ink">Buat Otomatis (Self-Signed)</span>
+              {#if config.tls.mode === 'generate'}
+                <CheckCircle2 class="w-5 h-5 text-brand shrink-0" />
+              {/if}
+            </div>
+            <p class="text-xs sm:text-sm text-ink-muted leading-relaxed">
+              Sertifikat dibuat otomatis oleh server saat proses instalasi.
+            </p>
+          </div>
+        </button>
 
-        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors {config.tls.mode === 'upload' ? 'border-brand bg-brand/5' : 'border-border bg-subtle/40 hover:bg-subtle'}">
-          <input
-            type="radio"
-            name="tls-mode"
-            value="upload"
-            checked={config.tls.mode === 'upload'}
-            onchange={() => config.tls.mode = 'upload'}
-            class="mt-1"
-          />
-          <div class="space-y-0.5">
-            <span class="text-xs font-medium text-text-primary block">Unggah Berkas Mandiri</span>
-            <span class="text-xs text-text-secondary block">
-              Gunakan sertifikat milik domain Anda sendiri.
-            </span>
+        <!-- Upload Option Card -->
+        <button
+          type="button"
+          onclick={() => config.tls.mode = 'upload'}
+          class="p-4 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-3.5 select-none {config.tls.mode === 'upload' ? 'border-brand bg-brand-soft/30 ring-1 ring-brand/30 shadow-xs' : 'border-line bg-surface hover:bg-subtle'}"
+        >
+          <div class="p-2.5 rounded-lg {config.tls.mode === 'upload' ? 'bg-brand text-white' : 'bg-subtle text-ink-muted'} shrink-0 mt-0.5">
+            <Upload class="w-5 h-5" />
           </div>
-        </label>
+          <div class="space-y-1 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-ink">Gunakan Sertifikat Sendiri</span>
+              {#if config.tls.mode === 'upload'}
+                <CheckCircle2 class="w-5 h-5 text-brand shrink-0" />
+              {/if}
+            </div>
+            <p class="text-xs sm:text-sm text-ink-muted leading-relaxed">
+              Gunakan berkas sertifikat (.crt / .pem) dan kunci privat (.key) yang sudah Anda miliki.
+            </p>
+          </div>
+        </button>
       </div>
 
+      <!-- File Uploads for Custom Cert -->
       {#if config.tls.mode === 'upload'}
-        <div class="pt-3 border-t border-border space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="pt-4 border-t border-line space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <!-- Cert File -->
-            <div>
-              <span class="block text-xs text-text-muted mb-1 flex items-center gap-1.5">
-                <FileText class="w-3.5 h-3.5 text-text-secondary" /> Sertifikat (.crt / .pem) <span class="text-red-500 font-medium">*</span>
+            <div class="space-y-1.5">
+              <span class="text-sm font-medium text-ink flex items-center gap-1.5">
+                <FileText class="w-4 h-4 text-brand" /> Sertifikat (.crt / .pem) <span class="text-danger">*</span>
               </span>
-              <label class="flex items-center justify-between px-3 py-2 rounded-lg border border-dashed border-border hover:border-brand bg-subtle/30 cursor-pointer text-xs transition-colors">
-                <span class="truncate text-text-secondary max-w-[180px]">
+              <label class="flex items-center justify-between p-3 rounded-xl border border-line hover:border-brand bg-surface cursor-pointer transition-colors text-xs sm:text-sm">
+                <span class="truncate text-ink max-w-[180px]">
                   {config.tls.certFileName || 'Pilih berkas sertifikat...'}
                 </span>
-                <span class="px-2 py-0.5 rounded bg-surface border border-border text-xs text-text-primary shrink-0">
-                  Pilih
+                <span class="px-3 py-1 rounded-lg bg-subtle text-xs font-medium text-ink shrink-0 flex items-center gap-1.5">
+                  <Upload class="w-3.5 h-3.5" /> Pilih
                 </span>
-                <input type="file" accept=".crt,.pem,.cer" class="hidden" onchange={(e) => handleFileUpload(e, 'cert')} />
+                <input 
+                  type="file" 
+                  accept=".crt,.pem,.cer" 
+                  class="hidden" 
+                  onchange={(e) => handleFileUpload(e, 'cert')} 
+                />
               </label>
             </div>
 
             <!-- Key File -->
-            <div>
-              <span class="block text-xs text-text-muted mb-1 flex items-center gap-1.5">
-                <Key class="w-3.5 h-3.5 text-text-secondary" /> Kunci Pribadi (.key) <span class="text-red-500 font-medium">*</span>
+            <div class="space-y-1.5">
+              <span class="text-sm font-medium text-ink flex items-center gap-1.5">
+                <Key class="w-4 h-4 text-brand" /> Kunci Privat (.key) <span class="text-danger">*</span>
               </span>
-              <label class="flex items-center justify-between px-3 py-2 rounded-lg border border-dashed border-border hover:border-brand bg-subtle/30 cursor-pointer text-xs transition-colors">
-                <span class="truncate text-text-secondary max-w-[180px]">
-                  {config.tls.keyFileName || 'Pilih berkas private key...'}
+              <label class="flex items-center justify-between p-3 rounded-xl border border-line hover:border-brand bg-surface cursor-pointer transition-colors text-xs sm:text-sm">
+                <span class="truncate text-ink max-w-[180px]">
+                  {config.tls.keyFileName || 'Pilih berkas kunci privat...'}
                 </span>
-                <span class="px-2 py-0.5 rounded bg-surface border border-border text-xs text-text-primary shrink-0">
-                  Pilih
+                <span class="px-3 py-1 rounded-lg bg-subtle text-xs font-medium text-ink shrink-0 flex items-center gap-1.5">
+                  <Upload class="w-3.5 h-3.5" /> Pilih
                 </span>
-                <input type="file" accept=".key,.pem" class="hidden" onchange={(e) => handleFileUpload(e, 'key')} />
+                <input 
+                  type="file" 
+                  accept=".key,.pem" 
+                  class="hidden" 
+                  onchange={(e) => handleFileUpload(e, 'key')} 
+                />
               </label>
             </div>
           </div>
 
-          <!-- Verification -->
-          <div class="flex items-center justify-between pt-1">
+          <!-- Verification status & button -->
+          <div class="pt-2 flex flex-wrap items-center justify-between gap-3">
             <div>
               {#if certValid}
-                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                <span class="inline-flex items-center gap-2 text-sm text-success font-medium">
                   <CheckCircle2 class="w-4 h-4" /> Sertifikat valid
                 </span>
               {:else if certError}
-                <span class="inline-flex items-center gap-1.5 text-xs text-red-500">
+                <span class="inline-flex items-center gap-2 text-sm text-danger">
                   <AlertCircle class="w-4 h-4 shrink-0" /> {certError}
                 </span>
               {/if}
@@ -320,15 +355,19 @@
               type="button"
               onclick={verifyCertFiles}
               disabled={certTesting || !config.tls.cert || !config.tls.key}
-              class="px-3 py-1.5 rounded-lg border border-border hover:bg-subtle text-xs text-text-primary transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
+              class="px-4 py-2 rounded-xl bg-surface border border-line hover:bg-subtle text-xs sm:text-sm text-ink font-medium transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 ml-auto shadow-xs"
             >
-              <ShieldCheck class="w-3.5 h-3.5 text-brand" />
-              {certTesting ? 'Memeriksa...' : 'Uji Validitas'}
+              {#if certTesting}
+                <RefreshCw class="w-4 h-4 animate-spin text-brand" />
+                <span>Memeriksa...</span>
+              {:else}
+                <ShieldCheck class="w-4 h-4 text-brand" />
+                <span>Uji Validitas Sertifikat</span>
+              {/if}
             </button>
           </div>
         </div>
       {/if}
     </div>
   {/if}
-
 </div>

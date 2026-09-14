@@ -415,12 +415,10 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-4">
     <div class="flex items-center gap-2.5">
-      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-        Users
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+        <Users class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+        <span>Users</span>
       </h1>
-      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
-        {totalUsers} Pengguna
-      </span>
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
@@ -685,6 +683,7 @@
         placeholder="contoh: kasir_sore"
         hint="Huruf kecil (a-z), angka (0-9), garis bawah (_)."
         required
+        autofocus
         error={usernameError}
         oninput={() => {
           if (formUsername.trim()) usernameError = null;
@@ -810,6 +809,7 @@
           placeholder="username"
           hint="Huruf kecil (a-z), angka (0-9), garis bawah (_)."
           required
+          autofocus
           error={editUsernameError}
           oninput={() => {
             if (editUsername.trim()) editUsernameError = null;

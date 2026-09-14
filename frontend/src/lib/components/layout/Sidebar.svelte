@@ -2,6 +2,8 @@
   import { router } from '../../stores/router.svelte';
   import { auth, Permissions } from '../../stores/auth.svelte';
   import { ui } from '../../stores/ui.svelte';
+  import { sse } from '../../stores/sse.svelte';
+  import { toast } from '../../stores/toast.svelte';
   import {
     LayoutDashboard,
     ShoppingBag,
@@ -17,9 +19,26 @@
     Settings,
     UserCircle,
     X,
+    WifiOff,
   } from 'lucide-svelte';
 
+  const isSseDown = $derived(sse.status !== 'online');
+
   function handleNav(path: string) {
+    if (isSseDown) {
+      toast.warning(
+        sse.status === 'connecting'
+          ? 'Sedang menghubungkan ke server… Mohon tunggu koneksi realtime pulih.'
+          : 'Server terputus (SSE offline). Anda tidak dapat berpindah halaman hingga server online.',
+        'Realtime Terputus'
+      );
+      return;
+    }
+    // Jika sedang berada di menu yang sama (current), jangan lakukan apa-apa & jangan munculkan progress
+    if (router.matches(path)) {
+      ui.closeMobileSidebar();
+      return;
+    }
     router.navigate(path);
     ui.closeMobileSidebar();
   }
@@ -118,7 +137,9 @@
       <button
         type="button"
         onclick={() => handleNav('/')}
-        class="flex items-center gap-2.5 text-left group focus-visible:outline-none min-w-0"
+        disabled={isSseDown}
+        class="flex items-center gap-2.5 text-left group focus-visible:outline-none min-w-0 {isSseDown ? 'opacity-50 cursor-not-allowed' : ''}"
+        title={isSseDown ? 'Server terputus (SSE offline) - Navigasi dinonaktifkan' : 'KasirKu'}
       >
         <div class="w-8 h-8 rounded-md bg-[var(--bg-subtle)] flex items-center justify-center shadow-xs group-hover:scale-[1.02] transition-transform shrink-0 overflow-hidden">
           <img src="/images/kasirku.png" alt="KasirKu" class="w-full h-full object-contain" />
@@ -132,8 +153,9 @@
       <button
         type="button"
         onclick={() => handleNav('/')}
-        class="w-full flex justify-center py-1 group focus-visible:outline-none"
-        title="KasirKu - Kembali ke Beranda"
+        disabled={isSseDown}
+        class="w-full flex justify-center py-1 group focus-visible:outline-none {isSseDown ? 'opacity-50 cursor-not-allowed' : ''}"
+        title={isSseDown ? 'Server terputus (SSE offline) - Navigasi dinonaktifkan' : 'KasirKu - Kembali ke Beranda'}
       >
         <div class="w-8 h-8 rounded-md bg-[var(--bg-subtle)] flex items-center justify-center shadow-xs group-hover:scale-[1.05] transition-transform overflow-hidden">
           <img src="/images/kasirku.png" alt="KasirKu" class="w-full h-full object-contain" />
@@ -151,6 +173,33 @@
       <X class="w-5 h-5" />
     </button>
   </div>
+
+  <!-- Server Down / SSE Offline Notification in Sidebar -->
+  {#if isSseDown}
+    <div class="px-2.5 pt-2.5 pb-1">
+      {#if !ui.sidebarCollapsed}
+        <div class="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400 text-xs">
+          <div class="flex items-center gap-1.5 font-semibold text-[11px] tracking-tight">
+            <span class="relative flex h-2 w-2 shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span>Server Terputus</span>
+          </div>
+          <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1 leading-snug">
+            SSE offline. Menu dinonaktifkan agar data tetap sinkron.
+          </p>
+        </div>
+      {:else}
+        <div
+          class="flex justify-center p-2 rounded-md bg-red-500/10 border border-red-500/20 text-red-500"
+          title="Server Terputus (SSE offline) - Navigasi dinonaktifkan"
+        >
+          <WifiOff class="w-4 h-4" />
+        </div>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Navigation Groups -->
   <div class="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
@@ -171,14 +220,17 @@
             <button
               type="button"
               onclick={() => handleNav(item.path)}
-              title={item.name}
+              disabled={isSseDown}
+              title={isSseDown ? 'Server sedang terputus (SSE offline). Navigasi dinonaktifkan.' : item.name}
               class="w-full flex items-center rounded-md text-[13px] font-medium transition-colors text-left select-none
                 {ui.sidebarCollapsed ? 'justify-center p-3' : 'gap-2.5 px-3 py-2.5'}
-                {active
-                  ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] font-semibold ring-1 ring-inset ring-[var(--brand)]/10'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-[var(--bg-hover)]'}"
+                {isSseDown
+                  ? 'opacity-40 cursor-not-allowed'
+                  : active
+                    ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] font-semibold ring-1 ring-inset ring-[var(--brand)]/10'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-[var(--bg-hover)]'}"
             >
-              <Icon class="w-[17px] h-[17px] shrink-0 {active ? 'text-current' : 'text-neutral-500 dark:text-neutral-400'}" strokeWidth={1.75} />
+              <Icon class="w-[17px] h-[17px] shrink-0 {active && !isSseDown ? 'text-current' : 'text-neutral-500 dark:text-neutral-400'}" strokeWidth={1.75} />
               {#if !ui.sidebarCollapsed}
                 <span class="truncate">{item.name}</span>
               {/if}
@@ -195,12 +247,15 @@
       <button
         type="button"
         onclick={() => handleNav('/settings')}
-        title="Settings"
+        disabled={isSseDown}
+        title={isSseDown ? 'Server sedang terputus (SSE offline). Navigasi dinonaktifkan.' : 'Settings'}
         class="w-full flex items-center rounded-md text-[13px] font-medium transition-colors text-left select-none
           {ui.sidebarCollapsed ? 'justify-center p-3' : 'gap-2.5 px-3 py-2.5'}
-          {router.matches('/settings')
-            ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] font-semibold ring-1 ring-inset ring-[var(--brand)]/10'
-            : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-[var(--bg-hover)]'}"
+          {isSseDown
+            ? 'opacity-40 cursor-not-allowed'
+            : router.matches('/settings')
+              ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] font-semibold ring-1 ring-inset ring-[var(--brand)]/10'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-[var(--bg-hover)]'}"
       >
         <Settings class="w-4 h-4 shrink-0" strokeWidth={1.75} />
         {#if !ui.sidebarCollapsed}
@@ -212,24 +267,27 @@
     <button
       type="button"
       onclick={() => handleNav('/profile')}
-      title={auth.user?.full_name || 'Profile'}
+      disabled={isSseDown}
+      title={isSseDown ? 'Server sedang terputus (SSE offline). Navigasi dinonaktifkan.' : (auth.user?.full_name || 'Profile')}
       class="w-full flex items-center rounded-md text-[13px] font-medium transition-colors text-left select-none
         {ui.sidebarCollapsed ? 'justify-center p-3' : 'gap-2.5 px-3 py-2.5'}
-        {router.matches('/profile')
-          ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] font-semibold ring-1 ring-inset ring-[var(--brand)]/10'
-          : 'text-neutral-700 dark:text-neutral-300 hover:bg-[var(--bg-hover)]'}"
+        {isSseDown
+          ? 'opacity-40 cursor-not-allowed'
+          : router.matches('/profile')
+            ? 'bg-[var(--brand-soft)] text-[var(--brand-ink)] font-semibold ring-1 ring-inset ring-[var(--brand)]/10'
+            : 'text-neutral-700 dark:text-neutral-300 hover:bg-[var(--bg-hover)]'}"
     >
       {#if auth.user?.profile_img}
         <img src={auth.user.profile_img} alt="Avatar" class="w-5 h-5 rounded-full object-cover shrink-0 border border-neutral-300 dark:border-neutral-700" />
       {:else}
-        <UserCircle class="w-5 h-5 shrink-0 {router.matches('/profile') ? 'text-[var(--brand-ink)]' : 'text-neutral-400 dark:text-neutral-500'}" strokeWidth={1.75} />
+        <UserCircle class="w-5 h-5 shrink-0 {router.matches('/profile') && !isSseDown ? 'text-[var(--brand-ink)]' : 'text-neutral-400 dark:text-neutral-500'}" strokeWidth={1.75} />
       {/if}
       {#if !ui.sidebarCollapsed}
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium truncate {router.matches('/profile') ? 'text-[var(--brand-ink)] font-semibold' : 'text-neutral-900 dark:text-neutral-100'}">
+          <p class="text-xs font-medium truncate {router.matches('/profile') && !isSseDown ? 'text-[var(--brand-ink)] font-semibold' : 'text-neutral-900 dark:text-neutral-100'}">
             {auth.user?.full_name || 'Pengguna'}
           </p>
-          <p class="text-[10px] truncate {router.matches('/profile') ? 'text-[var(--brand)] dark:text-[var(--brand-hover)] font-medium' : 'text-neutral-500 dark:text-neutral-400'}">
+          <p class="text-[10px] truncate {router.matches('/profile') && !isSseDown ? 'text-[var(--brand)] dark:text-[var(--brand-hover)] font-medium' : 'text-neutral-500 dark:text-neutral-400'}">
             {auth.user?.role_name || 'Kasir'}
           </p>
         </div>

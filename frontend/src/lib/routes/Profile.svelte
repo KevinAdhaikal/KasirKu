@@ -10,7 +10,7 @@
   import Button from '../components/ui/Button.svelte';
   import Input from '../components/ui/Input.svelte';
   import Badge from '../components/ui/Badge.svelte';
-  import { User, Shield, Lock, Save, KeyRound, AlertCircle, Upload, Eye, EyeOff } from 'lucide-svelte';
+  import { UserCircle, User, Shield, Lock, Save, KeyRound, AlertCircle, Upload, Eye, EyeOff } from 'lucide-svelte';
 
   import ImageCropperModal from '../components/ui/ImageCropperModal.svelte';
 
@@ -201,12 +201,10 @@
 <div class="space-y-6 max-w-4xl mx-auto">
   <!-- Header -->
   <div class="flex items-center gap-2.5 border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
-    <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-      Profil
+    <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+      <UserCircle class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+      <span>Profil</span>
     </h1>
-    <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
-      @{auth.user?.username || 'user'}
-    </span>
   </div>
 
   <div class="flex flex-col space-y-6 max-w-3xl">

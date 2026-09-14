@@ -3,7 +3,9 @@
   import { auth, Permissions } from './lib/stores/auth.svelte';
   import { router } from './lib/stores/router.svelte';
   import { sse } from './lib/stores/sse.svelte';
+  import { progress } from './lib/stores/progress.svelte';
   import AppLayout from './lib/components/layout/AppLayout.svelte';
+  import ProgressBar from './lib/components/ui/ProgressBar.svelte';
   import ToastContainer from './lib/components/ui/ToastContainer.svelte';
   import ConfirmDialog from './lib/components/ui/ConfirmDialog.svelte';
 
@@ -24,17 +26,22 @@
   import Settings from './lib/routes/admin/Settings.svelte';
 
   onMount(async () => {
-    await auth.init();
+    progress.start();
+    try {
+      await auth.init();
 
-    if (auth.isAuthenticated) {
-      sse.connect();
-      if (router.currentPath === '/login') {
-        router.navigate('/', true);
+      if (auth.isAuthenticated) {
+        sse.connect();
+        if (router.currentPath === '/login') {
+          router.navigate('/', true);
+        }
+      } else {
+        if (router.currentPath !== '/login') {
+          router.navigate('/login', true);
+        }
       }
-    } else {
-      if (router.currentPath !== '/login') {
-        router.navigate('/login', true);
-      }
+    } finally {
+      progress.done();
     }
   });
 
@@ -61,14 +68,9 @@
   });
 </script>
 
-{#if auth.isLoading}
-  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-canvas)] text-neutral-900 dark:text-neutral-100">
-    <div class="w-8 h-8 rounded-lg bg-[var(--brand)] text-[var(--accent-fg)] flex items-center justify-center font-bold text-sm shadow-sm animate-pulse mb-3">
-      K
-    </div>
-    <p class="text-xs font-mono text-neutral-500">Memuat sistem KasirKu…</p>
-  </div>
-{:else if !auth.isAuthenticated}
+<ProgressBar />
+
+{#if !auth.isAuthenticated}
   <Login />
 {:else}
   <AppLayout>

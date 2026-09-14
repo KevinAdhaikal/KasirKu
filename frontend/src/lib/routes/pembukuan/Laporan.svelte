@@ -259,12 +259,10 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200/80 dark:border-neutral-800 pb-4">
     <div class="flex items-center gap-2.5">
-      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-        Laporan
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+        <BarChart3 class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+        <span>Laporan</span>
       </h1>
-      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
-        Pembukuan & Laba Rugi
-      </span>
     </div>
 
     <div class="flex items-center gap-2">

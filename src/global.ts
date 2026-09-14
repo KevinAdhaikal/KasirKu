@@ -39,11 +39,8 @@ export const global = {
 
     rate_limit: null as unknown as rate_limit,
 
-    // Database (Drizzle instance — one of the three dialects)
+    // Database (Drizzle instance)
     database: null as unknown as BaseSQLiteDatabase<any, any> | MySql2Database<any> | NodePgDatabase<any>,
-
-    // static cache for file
-    static_cache: new Map() as Map<string, {buffer: Uint8Array, last_modified: number}>,
 
     // Permissions
     permissions: {
@@ -54,17 +51,5 @@ export const global = {
         DASHBOARD: 1 << 4
     },
 
-    method_cache: {} as Record<string, any>,
-
-    default_svg_profile_img: `<?xml version="1.0" encoding="utf-8"?>
-    <!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-    <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
-        <!ENTITY st0 "fill:#B3B3B3;">
-    ]>
-    <svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         width="50px" height="75px" viewBox="0 0 50 75" style="enable-background:new 0 0 50 75;" xml:space="preserve">
-    <circle style="&st0;" cx="25" cy="16.726" r="16.725"/>
-    <path style="&st0;" d="M49.998,75V53.872c0-8.497-6.889-15.385-15.385-15.385H15.384c-8.496,0-15.386,6.888-15.386,15.385V75H49.998
-        z"/>
-    </svg>`, // https://upload.wikimedia.org/wikipedia/commons/4/4b/User-Pict-Profil.svg
+    method_cache: {} as Record<string, any>
 }

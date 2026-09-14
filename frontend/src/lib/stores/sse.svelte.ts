@@ -1,7 +1,7 @@
-// Svelte 5 Rune-based SSE Store
 import { auth } from './auth.svelte';
+import { router } from './router.svelte';
 
-export type SseStatus = 'online' | 'connecting' | 'offline';
+export type SseStatus = 'online' | 'offline';
 
 export interface SseEventData {
   type: number;
@@ -17,10 +17,9 @@ class SseStore {
   private eventSource: EventSource | null = null;
   private handlers = new Set<SseHandler>();
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
-  private retryCount = 0;
   private isManualDisconnect = false;
   private lastConnectAttempt = 0;
-  private minConnectCooldown = 1500;
+  private minConnectCooldown = 100; // 100ms cooldown
   private listenersInitialized = false;
 
   constructor() {
@@ -33,7 +32,6 @@ class SseStore {
 
     window.addEventListener('online', () => {
       if (!this.isManualDisconnect && auth.token && this.status === 'offline') {
-        this.retryCount = 0;
         this.connect();
       }
     });
@@ -45,13 +43,12 @@ class SseStore {
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && !this.isManualDisconnect && auth.token && this.status === 'offline') {
-        // When tab is restored from background, attempt reconnection once
         this.connect();
       }
     });
   }
 
-  connect() {
+  async connect() {
     if (typeof window === 'undefined') return;
 
     if (!auth.token) {
@@ -59,18 +56,13 @@ class SseStore {
       return;
     }
 
-    // If already active or connecting, skip to prevent redundant connection churn
-    if (this.eventSource) {
-      if (this.eventSource.readyState === EventSource.OPEN) {
-        this.status = 'online';
-        return;
-      }
-      if (this.eventSource.readyState === EventSource.CONNECTING && this.status === 'connecting') {
-        return;
-      }
+    // If already open, keep online
+    if (this.eventSource && this.eventSource.readyState === EventSource.OPEN) {
+      this.status = 'online';
+      return;
     }
 
-    // Cooldown throttle: prevent tight loops from hammering the server
+    // Cooldown throttle: 100ms
     const now = Date.now();
     if (now - this.lastConnectAttempt < this.minConnectCooldown) {
       if (!this.retryTimer) {
@@ -80,12 +72,9 @@ class SseStore {
     }
     this.lastConnectAttempt = now;
 
-    // Reset manual disconnect flag
     this.isManualDisconnect = false;
     this.clearRetryTimer();
     this.cleanupEventSource();
-
-    this.status = 'connecting';
 
     try {
       const sseUrl = `/api/sse?token=${encodeURIComponent(auth.token)}`;
@@ -95,12 +84,12 @@ class SseStore {
       this.eventSource = sse;
 
       sse.onopen = () => {
-        if (this.isManualDisconnect) {
+        if (this.isManualDisconnect || !auth.token) {
           this.cleanupEventSource();
+          this.status = 'offline';
           return;
         }
         this.status = 'online';
-        this.retryCount = 0;
         this.clearRetryTimer();
       };
 
@@ -110,20 +99,14 @@ class SseStore {
         this.status = 'offline';
         this.cleanupEventSource();
 
-        // Do not spam reconnects if device is offline
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-          return;
-        }
-
-        // Schedule next reconnect with progressive exponential backoff
-        this.scheduleReconnect();
+        // Schedule next SSE reconnect attempt after 100ms without spamming login endpoints
+        this.scheduleReconnect(100);
       };
 
       sse.onmessage = async (e) => {
-        if (this.isManualDisconnect) return;
+        if (this.isManualDisconnect || !auth.token) return;
 
         this.status = 'online';
-        this.retryCount = 0;
 
         try {
           const data: SseEventData = JSON.parse(e.data);
@@ -137,9 +120,17 @@ class SseStore {
                 await auth.fetchProfile();
                 break;
               case 'UNAUTHORIZED':
+                if (auth.hasSavedCredentials()) {
+                  const relogged = await auth.reloginWithSavedCredentials();
+                  if (relogged) {
+                    this.cleanupEventSource();
+                    this.connect();
+                    return;
+                  }
+                }
                 this.disconnect();
                 await auth.logout();
-                window.location.href = '/login';
+                router.navigate('/login', true);
                 return;
             }
           } else if (data.type === 8 && data.code === 'UPDATE_TOKO_SETTING') {
@@ -158,9 +149,9 @@ class SseStore {
           console.error('Error parsing SSE event:', err);
         }
       };
-    } catch (err) {
+    } catch {
       this.status = 'offline';
-      this.scheduleReconnect();
+      this.scheduleReconnect(100);
     }
   }
 
@@ -168,13 +159,11 @@ class SseStore {
     this.isManualDisconnect = true;
     this.clearRetryTimer();
     this.cleanupEventSource();
-    this.retryCount = 0;
     this.status = 'offline';
   }
 
   private cleanupEventSource() {
     if (this.eventSource) {
-      // Detach listeners before closing to prevent unwanted callback recursion
       this.eventSource.onopen = null;
       this.eventSource.onerror = null;
       this.eventSource.onmessage = null;
@@ -192,24 +181,16 @@ class SseStore {
     }
   }
 
-  private scheduleReconnect(explicitDelay?: number) {
-    if (this.isManualDisconnect || !auth.token) return;
-    if (this.retryTimer) return; // Reconnect is already pending
-
-    // Exponential backoff: 2s, 3s, 4.5s, 6.75s, up to max 20s + jitter
-    const delay =
-      explicitDelay ??
-      Math.min(20000, 2000 * Math.pow(1.5, Math.min(this.retryCount, 8))) +
-        Math.floor(Math.random() * 600);
-
-    this.retryCount++;
+  private scheduleReconnect(explicitDelay = 100) {
+    if (this.isManualDisconnect) return;
+    if (this.retryTimer) return;
 
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
-      if (!this.isManualDisconnect && auth.token) {
+      if (!this.isManualDisconnect) {
         this.connect();
       }
-    }, delay);
+    }, explicitDelay);
   }
 
   subscribe(handler: SseHandler) {
@@ -221,4 +202,3 @@ class SseStore {
 }
 
 export const sse = new SseStore();
-

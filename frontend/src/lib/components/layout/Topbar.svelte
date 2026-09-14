@@ -3,10 +3,29 @@
   import { auth, Permissions } from '../../stores/auth.svelte';
   import { ui } from '../../stores/ui.svelte';
   import { dialog } from '../../stores/dialog.svelte';
+  import { sse } from '../../stores/sse.svelte';
+  import { toast } from '../../stores/toast.svelte';
   import SseStatus from './SseStatus.svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import CalendarWidget from './CalendarWidget.svelte';
-  import { Menu, LogOut, ShoppingBag, PanelLeft } from 'lucide-svelte';
+  import {
+    Menu,
+    LogOut,
+    ShoppingBag,
+    PanelLeft,
+    LayoutDashboard,
+    Package,
+    Tag,
+    ArrowDownToLine,
+    Undo2,
+    ReceiptText,
+    TrendingDown,
+    BarChart3,
+    Users,
+    ShieldAlert,
+    Settings,
+    UserCircle,
+  } from 'lucide-svelte';
 
   interface Props {
     ontogglemobile?: () => void;
@@ -14,23 +33,23 @@
 
   let { ontogglemobile }: Props = $props();
 
-  const routeTitles: Record<string, { title: string; section: string }> = {
-    '/': { title: 'Dashboard', section: 'Utama' },
-    '/kasir': { title: 'Kasir', section: 'Utama' },
-    '/barang/daftar_barang': { title: 'Daftar Barang', section: 'Barang' },
-    '/barang/kategori_barang': { title: 'Kategori Barang', section: 'Barang' },
-    '/barang/barang_masuk': { title: 'Barang Masuk', section: 'Barang' },
-    '/barang/retur_barang': { title: 'Retur Barang', section: 'Barang' },
-    '/pembukuan/penjualan': { title: 'Penjualan', section: 'Pembukuan' },
-    '/pembukuan/pengeluaran': { title: 'Pengeluaran', section: 'Pembukuan' },
-    '/pembukuan/laporan': { title: 'Laporan', section: 'Pembukuan' },
-    '/users': { title: 'Users', section: 'Sistem' },
-    '/rp': { title: 'Roles', section: 'Sistem' },
-    '/settings': { title: 'Settings', section: 'Sistem' },
-    '/profile': { title: 'Profile', section: 'User' },
+  const routeTitles: Record<string, { title: string; section: string; icon: any }> = {
+    '/': { title: 'Dashboard', section: 'Utama', icon: LayoutDashboard },
+    '/kasir': { title: 'Kasir', section: 'Utama', icon: ShoppingBag },
+    '/barang/daftar_barang': { title: 'Daftar Barang', section: 'Barang', icon: Package },
+    '/barang/kategori_barang': { title: 'Kategori Barang', section: 'Barang', icon: Tag },
+    '/barang/barang_masuk': { title: 'Barang Masuk', section: 'Barang', icon: ArrowDownToLine },
+    '/barang/retur_barang': { title: 'Retur Barang', section: 'Barang', icon: Undo2 },
+    '/pembukuan/penjualan': { title: 'Penjualan', section: 'Pembukuan', icon: ReceiptText },
+    '/pembukuan/pengeluaran': { title: 'Pengeluaran', section: 'Pembukuan', icon: TrendingDown },
+    '/pembukuan/laporan': { title: 'Laporan', section: 'Pembukuan', icon: BarChart3 },
+    '/users': { title: 'Users', section: 'Sistem', icon: Users },
+    '/rp': { title: 'Roles', section: 'Sistem', icon: ShieldAlert },
+    '/settings': { title: 'Settings', section: 'Sistem', icon: Settings },
+    '/profile': { title: 'Profile', section: 'User', icon: UserCircle },
   };
 
-  const currentMeta = $derived(routeTitles[router.currentPath] || { title: 'KasirKu', section: 'Halaman' });
+  const currentMeta = $derived(routeTitles[router.currentPath] || { title: 'KasirKu', section: 'Halaman', icon: null });
 
   async function handleLogout() {
     const confirmed = await dialog.confirm({
@@ -41,8 +60,9 @@
       variant: 'danger',
     });
     if (confirmed) {
+      sse.disconnect();
       await auth.logout();
-      router.navigate('/login');
+      router.navigate('/login', true);
     }
   }
 </script>
@@ -74,7 +94,13 @@
     <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 min-w-0">
       <span class="hidden sm:inline font-medium uppercase tracking-wider text-[10px] text-neutral-400 dark:text-neutral-500">{currentMeta.section}</span>
       <span class="hidden sm:inline text-neutral-300 dark:text-neutral-700">/</span>
-      <span class="font-semibold text-neutral-900 dark:text-neutral-100 truncate text-sm">{currentMeta.title}</span>
+      <span class="font-semibold text-neutral-900 dark:text-neutral-100 truncate text-sm flex items-center gap-1.5">
+        {#if currentMeta.icon}
+          {@const MetaIcon = currentMeta.icon}
+          <MetaIcon class="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" strokeWidth={1.75} />
+        {/if}
+        <span>{currentMeta.title}</span>
+      </span>
     </div>
   </div>
 
@@ -84,8 +110,16 @@
     {#if router.currentPath !== '/kasir' && auth.can(Permissions.KASIR)}
       <button
         type="button"
-        onclick={() => router.navigate('/kasir')}
-        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--brand)] text-[var(--accent-fg)] hover:bg-[var(--brand-hover)] shadow-2xs transition-colors"
+        onclick={() => {
+          if (sse.status !== 'online') {
+            toast.warning('Server sedang terputus (SSE offline). Navigasi dinonaktifkan.', 'Koneksi Offline');
+            return;
+          }
+          router.navigate('/kasir');
+        }}
+        disabled={sse.status !== 'online'}
+        title={sse.status !== 'online' ? 'Server terputus (SSE offline) - Navigasi dinonaktifkan' : 'Buka Kasir'}
+        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--brand)] text-[var(--accent-fg)] hover:bg-[var(--brand-hover)] shadow-2xs transition-colors {sse.status !== 'online' ? 'opacity-40 cursor-not-allowed' : ''}"
       >
         <ShoppingBag class="w-3.5 h-3.5" />
         <span>Buka Kasir</span>

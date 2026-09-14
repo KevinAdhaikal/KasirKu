@@ -1,6 +1,23 @@
 // Svelte 5 Rune-based Auth Store
 import { api } from '../api/api';
 
+export function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+export function setCookie(name: string, value: string, days = 30) {
+  if (typeof document === 'undefined') return;
+  const maxAge = days * 86400;
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+export function deleteCookie(name: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${encodeURIComponent(name)}=; path=/; max-age=0; SameSite=Lax`;
+}
+
 export const Permissions = {
   ADMINISTRATOR: 1 << 0, // 1
   MANAGE_BARANG: 1 << 1, // 2
@@ -29,13 +46,47 @@ export interface StorePublicInfo {
 
 class AuthStore {
   token = $state<string | null>(typeof window !== 'undefined' ? localStorage.getItem('token') : null);
-  user = $state<UserProfile | null>(null);
-  publicInfo = $state<StorePublicInfo>({
-    store_name: 'KasirKu',
-    store_desc: 'Sistem Kasir & Inventaris Modern',
-    store_address: '',
-    store_phone_num: '',
-  });
+  user = $state<UserProfile | null>(
+    typeof window !== 'undefined'
+      ? (() => {
+          try {
+            const cached = localStorage.getItem('kasirku_user');
+            return cached ? JSON.parse(cached) : null;
+          } catch {
+            return null;
+          }
+        })()
+      : null
+  );
+  publicInfo = $state<StorePublicInfo>(
+    typeof window !== 'undefined'
+      ? (() => {
+          try {
+            const cached = localStorage.getItem('kasirku_public_info');
+            return (
+              (cached && JSON.parse(cached)) || {
+                store_name: 'KasirKu',
+                store_desc: 'Sistem Kasir & Inventaris Modern',
+                store_address: '',
+                store_phone_num: '',
+              }
+            );
+          } catch {
+            return {
+              store_name: 'KasirKu',
+              store_desc: 'Sistem Kasir & Inventaris Modern',
+              store_address: '',
+              store_phone_num: '',
+            };
+          }
+        })()
+      : {
+          store_name: 'KasirKu',
+          store_desc: 'Sistem Kasir & Inventaris Modern',
+          store_address: '',
+          store_phone_num: '',
+        }
+  );
   isLoading = $state(true);
   isInitialized = $state(false);
 
@@ -45,7 +96,7 @@ class AuthStore {
     }
   }
 
-  isAuthenticated = $derived(!!this.token && !!this.user);
+  isAuthenticated = $derived(!!this.token && (!!this.user || !this.isInitialized));
 
   can(permission: number): boolean {
     if (!this.user) {
@@ -59,6 +110,52 @@ class AuthStore {
     return (userPerm & permission) !== 0;
   }
 
+  hasSavedCredentials(): boolean {
+    const u = getCookie('username') || (typeof window !== 'undefined' ? localStorage.getItem('username') : null);
+    const p = getCookie('password') || (typeof window !== 'undefined' ? localStorage.getItem('password') : null);
+    return !!u && !!p;
+  }
+
+  getSavedCredentials(): { username: string; password: string } | null {
+    const u = getCookie('username') || (typeof window !== 'undefined' ? localStorage.getItem('username') : null);
+    const p = getCookie('password') || (typeof window !== 'undefined' ? localStorage.getItem('password') : null);
+    if (u && p) {
+      return { username: u, password: p };
+    }
+    return null;
+  }
+
+  async reloginWithSavedCredentials(): Promise<boolean> {
+    const creds = this.getSavedCredentials();
+    if (!creds) return false;
+
+    try {
+      const params = new URLSearchParams({ username: creds.username, password: creds.password });
+      const res = await fetch('/login', {
+        method: 'POST',
+        body: params,
+      });
+
+      if (res.status === 200) {
+        const token = await res.text();
+        this.token = token;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', token);
+        }
+        if (typeof document !== 'undefined') {
+          document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+          setCookie('username', creds.username, 30);
+          setCookie('password', creds.password, 30);
+        }
+        await Promise.all([this.fetchProfile(), this.fetchPublicInfo()]);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   async init() {
     if (this.isInitialized) return;
     this.isLoading = true;
@@ -67,12 +164,34 @@ class AuthStore {
       try {
         await Promise.all([this.fetchProfile(), this.fetchPublicInfo()]);
       } catch (err) {
-        console.error('Failed to initialize session:', err);
-        this.token = null;
-        localStorage.removeItem('token');
+        console.warn('Session verification failed, attempting auto-relogin if remembered:', err);
+        if (this.hasSavedCredentials()) {
+          const relogged = await this.reloginWithSavedCredentials();
+          if (!relogged) {
+            this.token = null;
+            this.user = null;
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('token');
+              localStorage.removeItem('kasirku_user');
+            }
+            if (typeof document !== 'undefined') {
+              document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
+            }
+          }
+        } else {
+          this.token = null;
+          this.user = null;
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('kasirku_user');
+          }
+          if (typeof document !== 'undefined') {
+            document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
+          }
+        }
       }
     } else {
-      // Still fetch public info if available
+      // Fetch public info for store branding on login screen
       try {
         await this.fetchPublicInfo();
       } catch {}
@@ -87,9 +206,15 @@ class AuthStore {
       const data = await api.get<UserProfile>('/api/profile');
       const user = typeof data === 'string' ? JSON.parse(data) : data;
       this.user = user;
+      if (typeof window !== 'undefined' && user) {
+        localStorage.setItem('kasirku_user', JSON.stringify(user));
+      }
       return user;
     } catch (err) {
       this.user = null;
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('kasirku_user');
+      }
       throw err;
     }
   }
@@ -100,13 +225,16 @@ class AuthStore {
       const parsed = typeof data === 'string' ? JSON.parse(data) : data;
       const storeInfo = parsed?.store || parsed || {};
       this.publicInfo = { ...this.publicInfo, ...storeInfo };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kasirku_public_info', JSON.stringify(this.publicInfo));
+      }
       return this.publicInfo;
     } catch (err) {
       return this.publicInfo;
     }
   }
 
-  async login(username: string, password: string, remember = true): Promise<boolean> {
+  async login(username: string, password: string, rememberPassword = true): Promise<boolean> {
     const params = new URLSearchParams({ username, password });
     const res = await fetch('/login', {
       method: 'POST',
@@ -121,10 +249,19 @@ class AuthStore {
         document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
       }
 
-      if (remember) {
+      // Handle Remember my Account via Cookie & localStorage
+      if (rememberPassword) {
+        setCookie('username', username, 30);
+        setCookie('password', password, 30);
         localStorage.setItem('username', username);
+        localStorage.setItem('password', password);
+        localStorage.setItem('remember_password', 'true');
       } else {
-        localStorage.removeItem('username');
+        deleteCookie('username');
+        deleteCookie('password');
+        localStorage.removeItem('password');
+        localStorage.removeItem('remember_password');
+        localStorage.setItem('username', username);
       }
 
       await this.fetchProfile();
@@ -140,15 +277,25 @@ class AuthStore {
   }
 
   async logout() {
+    // 1. Immediately invalidate local token, user, and credentials
+    this.token = null;
+    this.user = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('kasirku_user');
+      localStorage.removeItem('kasirku_public_info');
+      localStorage.removeItem('password');
+      localStorage.removeItem('remember_password');
+    }
+    if (typeof document !== 'undefined') {
+      deleteCookie('password');
+      document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
+    }
+
+    // 2. Notify backend server to destroy session
     try {
       await api.post('/api/logout');
     } catch {}
-    this.token = null;
-    this.user = null;
-    localStorage.removeItem('token');
-    if (typeof document !== 'undefined') {
-      document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
-    }
   }
 }
 

@@ -9,6 +9,13 @@ class ThemeStore {
       } else {
         this.setDark(false);
       }
+
+      // Listen for system theme changes if no explicit preference stored
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('setup-theme')) {
+          this.setDark(e.matches);
+        }
+      });
     }
   }
 

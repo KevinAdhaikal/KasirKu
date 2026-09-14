@@ -55,6 +55,27 @@
   // Guarantee single red asterisk by stripping any hardcoded asterisks from the label string
   let cleanLabel = $derived(label ? label.replace(/\s*\*+\s*$/, '').trim() : '');
 
+  let inputElement = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (autofocus && inputElement) {
+      const timer = setTimeout(() => {
+        if (inputElement && document.activeElement !== inputElement) {
+          inputElement.focus();
+        }
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+  });
+
+  export function focus() {
+    inputElement?.focus();
+  }
+
+  export function select() {
+    inputElement?.select();
+  }
+
   // Is this a currency input?
   let isCurrency = $derived(type === 'currency');
   let effectiveType = $derived(isCurrency ? 'text' : type);
@@ -256,6 +277,7 @@
 
     <!-- svelte-ignore a11y_autofocus -->
     <input
+      bind:this={inputElement}
       {id}
       type={effectiveType}
       inputmode={effectiveInputMode}

@@ -590,9 +590,11 @@
 <div class="space-y-6">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
-    <div class="flex items-baseline gap-2.5">
-      <h1 class="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Daftar Barang</h1>
-      <span class="text-xs text-neutral-400 font-mono tabular-nums">{barangList.length} SKU</span>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+        <Package class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+        <span>Daftar Barang</span>
+      </h1>
     </div>
 
     <div class="flex items-center gap-2">
@@ -942,6 +944,7 @@
           bind:value={formNama}
           placeholder="Contoh: Kopi Susu Gula Aren 250ml"
           required
+          autofocus
           error={fieldErrors.nama}
           oninput={() => {
             if (formNama.trim()) clearFieldError('nama');

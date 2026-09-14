@@ -4,83 +4,82 @@
 
 /*
  * KasirKu Setup Design Tokens
- * Clean, Swiss utilitarian system installer aesthetic.
+ * Modern, clean, and comfortable user interface.
  */
 :root {
-  --brand: #348eaa;
-  --brand-hover: #2b778f;
-  --brand-action: #348eaa;
-  --brand-action-hover: #2b778f;
-  --brand-action-border: #2b778f;
-  --brand-soft: #eaf3f6;
-  --brand-soft-hover: #dceaf0;
-  --brand-ink: #1f5c6e;
+  --brand: #0284c7;
+  --brand-hover: #0369a1;
+  --brand-soft: #f0f9ff;
+  --brand-soft-hover: #e0f2fe;
+  --brand-ink: #0369a1;
 
-  --bg-canvas: #f4f7f9;
+  --bg-canvas: #f8fafc;
   --bg-surface: #ffffff;
-  --bg-subtle: #edf2f5;
-  --bg-hover: #e5edf1;
-  --border-subtle: #d6e2e7;
-  --border-contrast: #b5cbd4;
+  --bg-subtle: #f1f5f9;
+  --bg-hover: #e2e8f0;
 
-  --text-primary: #19272e;
-  --text-secondary: #576d77;
-  --text-muted: #8298a2;
+  --border-subtle: #e2e8f0;
+  --border-contrast: #cbd5e1;
 
-  --accent: var(--brand-action);
-  --accent-fg: #ffffff;
-  --focus-ring: rgba(52, 142, 170, 0.25);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
 
-  --success: #138a63;
-  --warning: #c97e10;
-  --danger: #d44351;
-  --info: #2d829c;
+  --focus-ring: rgba(2, 132, 199, 0.25);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #0284c7;
 }
 
 .dark {
-  --brand: #3ba0bf;
-  --brand-hover: #328da8;
-  --brand-action: #3ba0bf;
-  --brand-action-hover: #328da8;
-  --brand-action-border: #328da8;
-  --brand-soft: #122129;
-  --brand-soft-hover: #182c36;
-  --brand-ink: #b1dbeb;
+  /* Deeper, more solid blue for dark mode */
+  --brand: #3b82f6;
+  --brand-hover: #2563eb;
+  --brand-soft: rgba(37, 99, 235, 0.16);
+  --brand-soft-hover: rgba(37, 99, 235, 0.24);
+  --brand-ink: #bfdbfe;
 
-  --bg-canvas: #0c1317;
-  --bg-surface: #121c22;
-  --bg-subtle: #17242c;
-  --bg-hover: #1e2e38;
-  --border-subtle: #223540;
-  --border-contrast: #324c5a;
+  --bg-canvas: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-subtle: #273549;
+  --bg-hover: #334155;
 
-  --text-primary: #edf4f7;
-  --text-secondary: #9cb1bc;
-  --text-muted: #6b828d;
+  --border-subtle: #334155;
+  --border-contrast: #475569;
 
-  --accent: var(--brand-action);
-  --accent-fg: #ffffff;
-  --focus-ring: rgba(59, 160, 191, 0.35);
+  /* Brighter, easily readable text colors in dark mode */
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;
+  --text-muted: #cbd5e1;
 
-  --success: #22a97b;
-  --warning: #df9d2e;
-  --danger: #e45f6b;
-  --info: #338ea7;
+  --focus-ring: rgba(59, 130, 246, 0.25);
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #3b82f6;
 }
 
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-hover: var(--brand-soft-hover);
   --color-brand-ink: var(--brand-ink);
 
   --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
   --color-subtle: var(--bg-subtle);
   --color-hover: var(--bg-hover);
+
+  --color-line: var(--border-subtle);
+  --color-line-contrast: var(--border-contrast);
   --color-border: var(--border-subtle);
   --color-border-contrast: var(--border-contrast);
 
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-secondary);
+  --color-ink-faint: var(--text-muted);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
@@ -126,15 +125,6 @@
     accent-color: var(--brand);
   }
 
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-  }
-
-  .font-mono, code, pre, kbd {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-variant-numeric: tabular-nums;
-  }
-
   /* Custom Clean Scrollbar */
   * {
     scrollbar-width: thin;
@@ -149,10 +139,10 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--border-subtle);
-    border-radius: 4px;
+    background: var(--border-contrast);
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--border-contrast);
+    background: var(--brand);
   }
 }

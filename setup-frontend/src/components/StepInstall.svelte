@@ -1,6 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { AlertCircle, ArrowRight, CheckCircle2, RefreshCw } from 'lucide-svelte';
+  import { 
+    AlertCircle, 
+    ArrowRight, 
+    CheckCircle2, 
+    RefreshCw, 
+    ExternalLink, 
+    Copy, 
+    Check, 
+    RotateCcw
+  } from 'lucide-svelte';
   import type { ServerConfig, DatabaseConfig, AdminConfig, StoreConfig, InstallProgressState } from '../types';
   import { setupServer, setupDatabase, setupAdmin, setupStore, setupFinal, pollPing } from '../api';
 
@@ -10,24 +19,43 @@
     adminConfig: AdminConfig;
     storeConfig: StoreConfig;
     onBackToSettings: () => void;
+    isSuccess?: boolean;
+    redirectUrl?: string;
   }
 
-  let { serverConfig, dbConfig, adminConfig, storeConfig, onBackToSettings }: Props = $props();
+  let { 
+    serverConfig, 
+    dbConfig, 
+    adminConfig, 
+    storeConfig, 
+    onBackToSettings,
+    isSuccess = $bindable(false),
+    redirectUrl = $bindable('')
+  }: Props = $props();
 
   let state = $state<InstallProgressState>({
-    currentStage: 'Menyiapkan konfigurasi...',
-    percentage: 5,
+    currentStage: 'Menyiapkan proses instalasi...',
+    percentage: 0,
     status: 'running',
   });
 
-  let stages = $state([
-    { id: 'server', label: 'Konfigurasi Jaringan & Port', status: 'pending' },
-    { id: 'database', label: 'Inisialisasi & Migrasi Basis Data', status: 'pending' },
-    { id: 'admin', label: 'Pembuatan Akun Administrator', status: 'pending' },
-    { id: 'store', label: 'Penyimpanan Profil Toko', status: 'pending' },
-    { id: 'final', label: 'Finalisasi Lingkungan & Booting Server', status: 'pending' },
-    { id: 'verify', label: 'Verifikasi Server Aktif', status: 'pending' },
+  interface StageItem {
+    id: string;
+    label: string;
+    status: 'pending' | 'running' | 'completed' | 'failed';
+  }
+
+  let stages = $state<StageItem[]>([
+    { id: 'server', label: 'Konfigurasi protokol & port jaringan', status: 'pending' },
+    { id: 'database', label: 'Inisialisasi & migrasi basis data', status: 'pending' },
+    { id: 'admin', label: 'Pembuatan akun administrator utama', status: 'pending' },
+    { id: 'store', label: 'Penyimpanan profil toko', status: 'pending' },
+    { id: 'final', label: 'Finalisasi lingkungan & berkas konfigurasi', status: 'pending' },
+    { id: 'verify', label: 'Verifikasi server utama', status: 'pending' },
   ]);
+
+  let activeStageId = $state<string>('');
+  let copiedUrl = $state(false);
 
   function updateStageStatus(stageId: string, status: 'pending' | 'running' | 'completed' | 'failed') {
     const idx = stages.findIndex(s => s.id === stageId);
@@ -39,16 +67,21 @@
   async function runInstallation() {
     state.status = 'running';
     state.errorMessage = undefined;
+    isSuccess = false;
+    redirectUrl = '';
+    stages.forEach(s => s.status = 'pending');
 
     try {
       // 1. Setup Server
+      activeStageId = 'server';
       updateStageStatus('server', 'running');
-      state.currentStage = 'Menerapkan konfigurasi protokol & port jaringan...';
+      state.currentStage = 'Menerapkan konfigurasi protokol dan port jaringan...';
       state.percentage = 15;
       await setupServer(serverConfig);
       updateStageStatus('server', 'completed');
 
       // 2. Setup Database
+      activeStageId = 'database';
       updateStageStatus('database', 'running');
       state.currentStage = `Menghubungkan basis data ${dbConfig.type}...`;
       state.percentage = 35;
@@ -56,13 +89,15 @@
       updateStageStatus('database', 'completed');
 
       // 3. Setup Admin
+      activeStageId = 'admin';
       updateStageStatus('admin', 'running');
-      state.currentStage = 'Mendaftarkan akun superadmin...';
+      state.currentStage = 'Mendaftarkan akun administrator...';
       state.percentage = 55;
       await setupAdmin(adminConfig);
       updateStageStatus('admin', 'completed');
 
       // 4. Setup Store
+      activeStageId = 'store';
       updateStageStatus('store', 'running');
       state.currentStage = 'Menyimpan profil toko...';
       state.percentage = 70;
@@ -70,34 +105,57 @@
       updateStageStatus('store', 'completed');
 
       // 5. Finalize setup
+      activeStageId = 'final';
       updateStageStatus('final', 'running');
-      state.currentStage = 'Menulis berkas .env dan beralih ke server utama...';
+      state.currentStage = 'Menulis berkas konfigurasi .env dan memuat server utama...';
       state.percentage = 85;
       await setupFinal();
       updateStageStatus('final', 'completed');
 
       // 6. Ping server
+      activeStageId = 'verify';
       updateStageStatus('verify', 'running');
-      state.currentStage = 'Memverifikasi ketersediaan server...';
-      state.percentage = 95;
+      state.currentStage = 'Memverifikasi ketersediaan server utama...';
+      state.percentage = 92;
 
       const hostname = window.location.hostname || 'localhost';
       const protocol = serverConfig.protocol;
       const port = serverConfig.port;
       const portPart = (protocol === 'http' && port === 80) || (protocol === 'https' && port === 443) ? '' : `:${port}`;
       const targetUrl = `${protocol}://${hostname}${portPart}`;
-
       state.redirectUrl = targetUrl;
 
-      // Poll ping
-      await pollPing(targetUrl, 30, 1500);
+      const isUp = await pollPing(targetUrl, 30, 1500);
+
+      if (!isUp) {
+        throw new Error(`Server utama tidak merespons pada ${targetUrl}/ping.`);
+      }
+
       state.percentage = 100;
       state.status = 'success';
       updateStageStatus('verify', 'completed');
-      state.currentStage = 'Instalasi selesai.';
+      state.currentStage = 'Instalasi selesai. Aplikasi siap digunakan.';
+      isSuccess = true;
+      redirectUrl = targetUrl;
     } catch (err: any) {
+      if (activeStageId) {
+        updateStageStatus(activeStageId, 'failed');
+      }
       state.status = 'error';
       state.errorMessage = err.message || 'Terjadi kesalahan selama proses instalasi.';
+      isSuccess = false;
+      redirectUrl = '';
+    }
+  }
+
+  async function copyLaunchUrl() {
+    if (!state.redirectUrl) return;
+    try {
+      await navigator.clipboard.writeText(state.redirectUrl);
+      copiedUrl = true;
+      setTimeout(() => copiedUrl = false, 2500);
+    } catch {
+      // fallback
     }
   }
 
@@ -106,117 +164,133 @@
   });
 </script>
 
-<div class="space-y-6">
-  <!-- Status Header -->
-  <div>
-    {#if state.status === 'success'}
-      <h2 class="text-lg font-medium text-text-primary">Instalasi Berhasil</h2>
-      <p class="text-sm text-text-secondary mt-0.5">
-        Aplikasi KasirKu telah berhasil dipasang dan siap digunakan.
-      </p>
-    {:else if state.status === 'error'}
-      <h2 class="text-lg font-medium text-text-primary">Instalasi Gagal</h2>
-      <p class="text-sm text-text-secondary mt-0.5">
-        Terjadi kendala pada proses konfigurasi sistem.
-      </p>
-    {:else}
-      <h2 class="text-lg font-medium text-text-primary">Menjalankan Instalasi</h2>
-      <p class="text-sm text-text-secondary mt-0.5">
+<div class="space-y-6 text-ink">
+  <!-- Title Header -->
+  <div class="space-y-1.5 border-b border-line pb-4">
+    <h2 class="text-xl font-bold text-ink tracking-tight">
+      {#if state.status === 'success'}
+        Instalasi Selesai
+      {:else if state.status === 'error'}
+        Instalasi Gagal
+      {:else}
+        Menjalankan Instalasi
+      {/if}
+    </h2>
+    <p class="text-sm text-ink-muted leading-relaxed">
+      {#if state.status === 'success'}
+        Aplikasi KasirKu telah berhasil dipasang dan server siap digunakan.
+      {:else if state.status === 'error'}
+        Terjadi kendala saat melakukan konfigurasi sistem.
+      {:else}
         Mohon tunggu beberapa saat selagi sistem menyiapkan database dan server.
-      </p>
-    {/if}
+      {/if}
+    </p>
   </div>
 
-  <!-- Progress Bar & Stage List -->
-  <div class="p-4 rounded-lg bg-surface border border-border space-y-3">
-    <div class="flex justify-between items-center text-xs">
-      <span class="text-text-primary truncate">{state.currentStage}</span>
-      <span class="font-mono text-text-muted tabular-nums">{state.percentage}%</span>
+  <!-- Progress Bar Container -->
+  <div class="p-6 rounded-2xl border border-line bg-surface space-y-3.5">
+    <div class="flex justify-between items-center text-sm">
+      <span class="text-ink font-semibold truncate">{state.currentStage}</span>
+      <span class="text-ink-faint font-semibold tabular-nums shrink-0 ml-2">{state.percentage}%</span>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="w-full h-1.5 rounded-full bg-subtle overflow-hidden border border-border">
+    <!-- Progress Track & Bar -->
+    <div class="w-full h-2.5 rounded-full bg-subtle overflow-hidden border border-line">
       <div
-        class="h-full transition-all duration-300 {state.status === 'error' ? 'bg-red-500' : state.status === 'success' ? 'bg-emerald-500' : 'bg-brand'}"
+        class="h-full transition-all duration-300 {state.status === 'error' ? 'bg-danger' : state.status === 'success' ? 'bg-success' : 'bg-brand'}"
         style="width: {state.percentage}%"
       ></div>
     </div>
+  </div>
 
-    <!-- Stage Checklist -->
-    <div class="pt-3 border-t border-border space-y-2">
-      {#each stages as stage}
-        <div class="flex items-center justify-between text-xs py-0.5">
-          <div class="flex items-center gap-2.5">
+  <!-- Stage Checklist -->
+  <div class="rounded-2xl border border-line bg-surface overflow-hidden divide-y divide-line">
+    {#each stages as stage}
+      <div class="p-4 flex items-center justify-between gap-3.5 text-sm transition-colors {stage.status === 'running' ? 'bg-subtle/40' : stage.status === 'failed' ? 'bg-danger/5' : ''}">
+        <div class="flex items-center gap-3.5">
+          <!-- Icon -->
+          <div class="shrink-0">
             {#if stage.status === 'completed'}
-              <CheckCircle2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <CheckCircle2 class="w-5 h-5 text-success" />
             {:else if stage.status === 'running'}
-              <RefreshCw class="w-4 h-4 text-brand animate-spin shrink-0" />
+              <RefreshCw class="w-5 h-5 text-brand animate-spin" />
             {:else if stage.status === 'failed'}
-              <AlertCircle class="w-4 h-4 text-red-500 shrink-0" />
+              <AlertCircle class="w-5 h-5 text-danger" />
             {:else}
-              <div class="w-4 h-4 rounded-full border border-border shrink-0"></div>
+              <div class="w-5 h-5 rounded-full border border-line"></div>
             {/if}
-            <span class="{stage.status === 'running' ? 'text-text-primary font-medium' : stage.status === 'completed' ? 'text-text-secondary' : 'text-text-muted'}">
-              {stage.label}
-            </span>
           </div>
 
-          <span class="text-xs {stage.status === 'completed' ? 'text-emerald-600 dark:text-emerald-400' : stage.status === 'running' ? 'text-brand' : 'text-text-muted'}">
-            {stage.status === 'completed' ? 'Selesai' : stage.status === 'running' ? 'Berjalan...' : 'Menunggu'}
+          <span class="{stage.status === 'running' ? 'font-semibold text-ink' : stage.status === 'completed' ? 'text-ink-muted font-medium' : stage.status === 'failed' ? 'text-danger font-semibold' : 'text-ink-faint'}">
+            {stage.label}
           </span>
         </div>
-      {/each}
-    </div>
+
+        <!-- Status Text -->
+        <div class="shrink-0 text-sm">
+          {#if stage.status === 'completed'}
+            <span class="text-success font-semibold">Selesai</span>
+          {:else if stage.status === 'running'}
+            <span class="text-brand font-semibold">Berjalan...</span>
+          {:else if stage.status === 'failed'}
+            <span class="text-danger font-semibold">Gagal</span>
+          {:else}
+            <span class="text-ink-faint">Menunggu</span>
+          {/if}
+        </div>
+      </div>
+    {/each}
   </div>
 
   <!-- Success Card -->
   {#if state.status === 'success'}
-    <div class="p-4 rounded-lg bg-subtle/50 border border-border space-y-3">
-      <div class="text-xs text-text-secondary">
-        Server utama telah aktif. Anda dapat langsung membuka aplikasi kasir melalui tautan di bawah:
-      </div>
-
-      <div class="text-xs space-y-1 bg-surface p-3 rounded border border-border font-mono">
-        <div class="flex justify-between">
-          <span class="text-text-muted">URL Akses:</span>
-          <span class="text-text-primary font-medium">{state.redirectUrl}</span>
+    <div class="p-6 rounded-2xl border border-success/30 bg-success/5 space-y-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-success/15 text-success flex items-center justify-center shrink-0">
+          <CheckCircle2 class="w-6 h-6" />
         </div>
-        <div class="flex justify-between">
-          <span class="text-text-muted">Username Admin:</span>
-          <span class="text-brand font-medium">{adminConfig.username}</span>
+        <div>
+          <h3 class="text-base font-bold text-ink">KasirKu Siap Digunakan</h3>
+          <p class="text-xs sm:text-sm text-ink-muted mt-0.5">
+            Anda dapat langsung membuka aplikasi kasir melalui informasi dibawah.
+          </p>
         </div>
       </div>
 
-      <div class="pt-2 flex justify-end">
-        <a
-          href={state.redirectUrl}
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-white text-xs font-medium transition-colors cursor-pointer"
-        >
-          Buka KasirKu
-          <ArrowRight class="w-4 h-4" />
-        </a>
+      <!-- Access Info -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm bg-surface p-4 rounded-xl border border-line">
+        <div class="space-y-1">
+          <span class="text-xs text-ink-faint">Username:</span>
+          <span class="text-ink font-semibold block truncate">{adminConfig.username}</span>
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs text-ink-faint"> Password:</span>
+          <span class="text-ink font-semibold block truncate">{adminConfig.password}</span>
+        </div>
       </div>
     </div>
   {/if}
 
   <!-- Error Card -->
   {#if state.status === 'error'}
-    <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/20 space-y-3">
-      <div class="flex items-start gap-2.5">
-        <AlertCircle class="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-        <div>
-          <div class="text-xs font-medium text-red-500">Rincian Kesalahan:</div>
-          <p class="text-xs text-red-400 mt-0.5 leading-relaxed font-mono">
+    <div class="p-6 rounded-2xl border border-danger/30 bg-danger/5 space-y-4">
+      <div class="flex items-start gap-3.5">
+        <AlertCircle class="w-6 h-6 text-danger shrink-0 mt-0.5" />
+        <div class="space-y-1.5 flex-1">
+          <div class="text-sm font-bold text-danger">
+            Rincian Kesalahan:
+          </div>
+          <p class="text-sm text-danger leading-relaxed bg-surface p-3.5 rounded-xl border border-danger/20 font-mono">
             {state.errorMessage}
           </p>
         </div>
       </div>
 
-      <div class="pt-2 border-t border-red-500/20 flex items-center justify-between">
+      <div class="pt-2 border-t border-danger/20 flex items-center justify-between gap-3">
         <button
           type="button"
           onclick={onBackToSettings}
-          class="px-3 py-1.5 rounded-lg border border-border hover:bg-subtle text-text-secondary hover:text-text-primary text-xs font-medium transition-colors cursor-pointer"
+          class="px-4 py-2.5 text-sm font-medium rounded-xl border border-line bg-surface hover:bg-subtle text-ink transition-colors cursor-pointer"
         >
           Kembali ke Pengaturan
         </button>
@@ -224,10 +298,10 @@
         <button
           type="button"
           onclick={runInstallation}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-medium transition-colors cursor-pointer"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-danger hover:bg-danger/90 text-white text-sm font-medium transition-colors cursor-pointer shadow-xs"
         >
-          <RefreshCw class="w-3.5 h-3.5" />
-          Ulangi
+          <RotateCcw class="w-4 h-4" />
+          <span>Ulangi Instalasi</span>
         </button>
       </div>
     </div>

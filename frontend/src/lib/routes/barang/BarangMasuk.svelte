@@ -371,9 +371,11 @@
 <div class="space-y-4">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
-    <div class="flex items-baseline gap-2.5">
-      <h1 class="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Barang Masuk</h1>
-      <span class="text-xs text-neutral-400 font-mono tabular-nums">{filteredList.length} pasokan</span>
+    <div class="flex items-center gap-2.5">
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+        <ArrowDownToLine class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+        <span>Barang Masuk</span>
+      </h1>
     </div>
 
     <div class="flex items-center gap-2">
@@ -812,6 +814,7 @@
         bind:value={editJumlah}
         placeholder="0"
         required
+        autofocus
         error={editJumlahError}
         oninput={() => {
           const clean = String(editJumlah).replace(/\./g, '').trim();

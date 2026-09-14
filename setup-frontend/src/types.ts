@@ -4,6 +4,10 @@ export type DatabaseType = 'sqlite' | 'mysql' | 'postgresql';
 
 export type TlsMode = 'generate' | 'upload';
 
+export interface StepController {
+  proceed: () => Promise<boolean> | boolean;
+}
+
 export interface ServerConfig {
   protocol: 'http' | 'https';
   port: number;

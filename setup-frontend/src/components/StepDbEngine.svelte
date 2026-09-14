@@ -20,113 +20,87 @@
       config.name = 'kasirku';
     }
   }
+
+  const engines: {
+    type: DatabaseType;
+    name: string;
+    desc: string;
+    suitableFor: string;
+    logo: string;
+  }[] = [
+    {
+      type: 'sqlite',
+      name: 'SQLite',
+      desc: 'Database file lokal tanpa instalasi server tambahan. Praktis dan langsung siap pakai.',
+      suitableFor: 'Untuk toko kecil dengan satu komputer',
+      logo: '/img/sqlite.png',
+    },
+    {
+      type: 'mysql',
+      name: 'MySQL / MariaDB',
+      desc: 'Database server yang dapat digunakan oleh beberapa komputer dan cocok untuk berbagai ukuran bisnis.',
+      suitableFor: 'Untuk toko dengan beberapa komputer atau kebutuhan yang terus berkembang',
+      logo: '/img/mysql.png',
+    },
+    {
+      type: 'postgresql',
+      name: 'PostgreSQL',
+      desc: 'Database yang kuat dan fleksibel untuk aplikasi dengan kebutuhan data yang lebih kompleks.',
+      suitableFor: 'Untuk bisnis dengan kebutuhan data yang lebih kompleks',
+      logo: '/img/postgresql.svg',
+    },
+  ];
 </script>
 
-<div class="space-y-6">
-  <!-- Title -->
-  <div>
-    <h2 class="text-lg font-medium text-text-primary">Pilih Mesin Basis Data</h2>
-    <p class="text-sm text-text-secondary mt-0.5">
-      Tentukan jenis database yang digunakan untuk menyimpan data produk dan transaksi.
+<div class="space-y-6 text-ink">
+  <!-- Title Header -->
+  <div class="space-y-1.5 border-b border-line pb-4">
+    <h2 class="text-xl font-bold text-ink tracking-tight">Pilih Mesin Basis Data</h2>
+    <p class="text-sm text-ink-muted leading-relaxed">
+      Tentukan jenis database yang digunakan untuk menyimpan data produk, stok, dan transaksi penjualan.
     </p>
   </div>
 
-  <!-- Engine Selection Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-    <!-- SQLite -->
-    <button
-      type="button"
-      onclick={() => selectEngine('sqlite')}
-      class="p-4 rounded-lg border text-left transition-colors cursor-pointer flex flex-col justify-between {config.type === 'sqlite' ? 'border-brand bg-brand/5 ring-1 ring-brand/30' : 'border-border bg-surface hover:bg-subtle/50'}"
-    >
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="w-10 h-10 rounded border border-border bg-subtle/40 p-1.5 flex items-center justify-center">
-            <img src="/img/sqlite.png" alt="SQLite" class="w-full h-full object-contain" />
+  <!-- Engine Selection Cards Matrix -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {#each engines as engine}
+      {@const isSelected = config.type === engine.type}
+
+      <button
+        type="button"
+        onclick={() => selectEngine(engine.type)}
+        class="p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between select-none {isSelected ? 'border-brand bg-brand-soft/30 ring-1 ring-brand/30 shadow-xs' : 'border-line bg-surface hover:bg-subtle/50'}"
+      >
+        <div class="space-y-4">
+          <!-- Logo & Selection Indicator -->
+          <div class="flex items-center justify-between">
+            <div class="w-12 h-12 rounded-xl border border-line bg-surface p-2 flex items-center justify-center shrink-0 shadow-xs">
+              <img src={engine.logo} alt={engine.name} class="w-full h-full object-contain" />
+            </div>
+
+            {#if isSelected}
+              <CheckCircle2 class="w-6 h-6 text-brand shrink-0" />
+            {:else}
+              <div class="w-5 h-5 rounded-full border border-line"></div>
+            {/if}
           </div>
-          {#if config.type === 'sqlite'}
-            <CheckCircle2 class="w-4 h-4 text-brand shrink-0" />
-          {/if}
-        </div>
 
-        <div>
-          <h3 class="font-medium text-text-primary text-sm">SQLite</h3>
-          <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-            Database file lokal. Tanpa perlu install server atau konfigurasi jaringan.
-          </p>
-        </div>
-      </div>
-
-      <div class="pt-3 mt-3 border-t border-border text-xs text-text-muted">
-        Cocok untuk 1 komputer kasir
-      </div>
-    </button>
-
-    <!-- MySQL -->
-    <button
-      type="button"
-      onclick={() => selectEngine('mysql')}
-      class="p-4 rounded-lg border text-left transition-colors cursor-pointer flex flex-col justify-between {config.type === 'mysql' ? 'border-brand bg-brand/5 ring-1 ring-brand/30' : 'border-border bg-surface hover:bg-subtle/50'}"
-    >
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="w-10 h-10 rounded border border-border bg-subtle/40 p-1.5 flex items-center justify-center">
-            <img src="/img/mysql.png" alt="MySQL" class="w-full h-full object-contain" />
+          <!-- Engine Title & Description -->
+          <div class="space-y-1.5">
+            <h3 class="font-bold text-ink text-base">
+              {engine.name}
+            </h3>
+            <p class="text-xs sm:text-sm text-ink-muted leading-relaxed">
+              {engine.desc}
+            </p>
           </div>
-          {#if config.type === 'mysql'}
-            <CheckCircle2 class="w-4 h-4 text-brand shrink-0" />
-          {/if}
         </div>
 
-        <div>
-          <h3 class="font-medium text-text-primary text-sm">MySQL / MariaDB</h3>
-          <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-            Database relasional standar untuk menghubungkan banyak kasir ke satu server pusat.
-          </p>
+        <!-- Target Topology Footer -->
+        <div class="pt-3.5 mt-4 border-t border-line text-xs text-ink-faint">
+          {engine.suitableFor}
         </div>
-      </div>
-
-      <div class="pt-3 mt-3 border-t border-border text-xs text-text-muted">
-        Cocok untuk multi-kasir
-      </div>
-    </button>
-
-    <!-- PostgreSQL -->
-    <button
-      type="button"
-      onclick={() => selectEngine('postgresql')}
-      class="p-4 rounded-lg border text-left transition-colors cursor-pointer flex flex-col justify-between {config.type === 'postgresql' ? 'border-brand bg-brand/5 ring-1 ring-brand/30' : 'border-border bg-surface hover:bg-subtle/50'}"
-    >
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="w-10 h-10 rounded border border-border bg-subtle/40 p-1.5 flex items-center justify-center">
-            <img src="/img/postgresql.svg" alt="PostgreSQL" class="w-full h-full object-contain" />
-          </div>
-          {#if config.type === 'postgresql'}
-            <CheckCircle2 class="w-4 h-4 text-brand shrink-0" />
-          {/if}
-        </div>
-
-        <div>
-          <h3 class="font-medium text-text-primary text-sm">PostgreSQL</h3>
-          <p class="text-xs text-text-secondary mt-1 leading-relaxed">
-            Database relasional tangguh untuk kebutuhan data besar dan integritas tinggi.
-          </p>
-        </div>
-      </div>
-
-      <div class="pt-3 mt-3 border-t border-border text-xs text-text-muted">
-        Skala besar & handal
-      </div>
-    </button>
-  </div>
-
-  <!-- Note -->
-  <div class="p-3.5 rounded-lg bg-subtle/60 border border-border text-xs text-text-secondary">
-    {#if config.type === 'sqlite'}
-      Database SQLite akan otomatis dibuat sebagai berkas lokal di direktori data aplikasi.
-    {:else}
-      Pastikan server {config.type === 'mysql' ? 'MySQL' : 'PostgreSQL'} Anda sudah aktif dan port dapat diakses dari mesin ini.
-    {/if}
+      </button>
+    {/each}
   </div>
 </div>

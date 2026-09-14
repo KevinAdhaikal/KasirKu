@@ -4,7 +4,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { auth } from '../stores/auth.svelte';
+  import { auth, getCookie } from '../stores/auth.svelte';
   import { router } from '../stores/router.svelte';
   import { toast } from '../stores/toast.svelte';
   import { sse } from '../stores/sse.svelte';
@@ -13,9 +13,9 @@
   import ThemeToggle from '../components/layout/ThemeToggle.svelte';
   import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-svelte';
 
-  let username = $state(typeof window !== 'undefined' ? localStorage.getItem('username') || '' : '');
-  let password = $state('');
-  let rememberMe = $state(true);
+  let username = $state(typeof window !== 'undefined' ? getCookie('username') || localStorage.getItem('username') || '' : '');
+  let password = $state(typeof window !== 'undefined' ? getCookie('password') || localStorage.getItem('password') || '' : '');
+  let rememberPassword = $state(typeof window !== 'undefined' ? !!(getCookie('password') || localStorage.getItem('password') || localStorage.getItem('remember_password')) : true);
   let showPassword = $state(false);
   let loading = $state(false);
   let errorMessage = $state<string | null>(null);
@@ -23,13 +23,14 @@
   let passwordError = $state<string | null>(null);
 
   onMount(() => {
-    // Otomatis fokus ke input username
     const usernameEl = document.getElementById('login-username') as HTMLInputElement | null;
-    if (usernameEl) {
-      usernameEl.focus();
-      if (username) {
-        usernameEl.select();
-      }
+    const passwordEl = document.getElementById('login-password') as HTMLInputElement | null;
+    if (username && password) {
+      usernameEl?.focus();
+    } else if (username) {
+      passwordEl?.focus();
+    } else {
+      usernameEl?.focus();
     }
   });
 
@@ -54,7 +55,7 @@
 
     loading = true;
     try {
-      await auth.login(username.trim(), password, rememberMe);
+      await auth.login(username.trim(), password, rememberPassword);
       sse.connect();
       router.navigate('/');
     } catch (err: any) {
@@ -184,10 +185,11 @@
           <label class="flex items-center gap-2 cursor-pointer select-none text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <input
               type="checkbox"
-              bind:checked={rememberMe}
-              class="rounded border-[var(--border-contrast)] text-[var(--accent-fg)] focus:ring-0 focus:ring-offset-0"
+              id="remember_password"
+              bind:checked={rememberPassword}
+              class="rounded border-[var(--border-contrast)] text-[var(--brand)] focus:ring-0 focus:ring-offset-0"
             />
-            <span>Ingat username</span>
+            <span>Remember my Account</span>
           </label>
         </div>
 

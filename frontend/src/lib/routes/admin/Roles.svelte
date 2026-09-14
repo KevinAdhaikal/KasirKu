@@ -468,12 +468,10 @@
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-4">
     <div class="flex items-center gap-2.5">
-      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-        Roles
+      <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+        <ShieldAlert class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+        <span>Roles</span>
       </h1>
-      <span class="text-xs font-mono px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
-        {roleList.length} Hak Akses
-      </span>
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
@@ -689,6 +687,7 @@
       bind:value={formRoleName}
       placeholder="contoh: Kasir Toko, Gudang & Logistik, Supervisor"
       hint="Masukkan nama role yang akan dibuat. Nama role harus unik dan menggambarkan fungsinya."
+      autofocus
       error={roleNameError}
       oninput={() => {
         if (formRoleName.trim()) roleNameError = null;
@@ -781,6 +780,7 @@
         bind:value={editRoleName}
         placeholder="Role Name"
         hint="Nama role dapat diubah jika diperlukan."
+        autofocus
         error={editRoleNameError}
         oninput={() => {
           if (editRoleName.trim()) editRoleNameError = null;
