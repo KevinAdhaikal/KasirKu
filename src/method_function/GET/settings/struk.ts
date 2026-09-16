@@ -16,21 +16,27 @@
 import { user_session_interface } from "../../../user_session/user_session";
 import { global } from "../../../global";
 import { getDb, getSchema } from "../../../database/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = getDb();
-    const { roles, struk_settings } = getSchema();
+    const { roles, settings } = getSchema();
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
 
     const [res] = await db
-        .select()
-        .from(struk_settings)
-        .where(eq(struk_settings.id, 1))
-        .limit(1);
+        .select({
+            store_struk: settings.value,
+        })
+        .from(settings)
+        .where(
+            and(
+                eq(settings.section, "store"),
+                eq(settings.key, "struk"),
+            )
+        );
 
     return new Response(JSON.stringify(res), {
         status: 200,

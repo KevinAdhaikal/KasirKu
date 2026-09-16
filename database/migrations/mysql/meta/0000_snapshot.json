@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "84afbca1-1f3b-4258-8417-e2f02ea536f5",
+  "id": "2bdffab7-4606-4162-86fc-6c4ae1edb47b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "barang": {
@@ -177,6 +177,44 @@
       "compositePrimaryKeys": {
         "barang_masuk_id": {
           "name": "barang_masuk_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "kasirku": {
+      "name": "kasirku",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "k": {
+          "name": "k",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "v": {
+          "name": "v",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "kasirku_id": {
+          "name": "kasirku_id",
           "columns": [
             "id"
           ]
@@ -669,11 +707,18 @@
           "notNull": true,
           "autoincrement": true
         },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "key": {
           "name": "key",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "value": {
@@ -687,7 +732,7 @@
           "name": "type",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_ms": {

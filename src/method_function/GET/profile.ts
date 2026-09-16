@@ -14,7 +14,6 @@
 */
 
 import { user_session_interface } from "../../user_session/user_session";
-import { global } from "../../global";
 import { getDb, getSchema } from "../../database/schema";
 import { eq } from "drizzle-orm";
 

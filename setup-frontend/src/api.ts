@@ -147,7 +147,12 @@ export async function pollPing(targetUrl: string, maxAttempts = 40, intervalMs =
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${targetUrl}/ping`, { signal: controller.signal });
+      const res = await fetch(`${targetUrl}/ping`, { 
+        signal: controller.signal,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
       clearTimeout(timeoutId);
       if (res.ok) {
         return true;

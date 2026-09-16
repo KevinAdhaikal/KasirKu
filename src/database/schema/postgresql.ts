@@ -113,9 +113,16 @@ export const retur_barang = pgTable("retur_barang", {
 
 export const settings = pgTable("settings", {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-    key: text("key"),
+    section: text("section").notNull(),
+    key: text("key").notNull(),
     value: text("value"),
-    type: text("type"),
+    type: text("type").notNull(),
     created_ms: bigint("created_ms", { mode: "number" }),
     modified_ms: bigint("modified_ms", { mode: "number" }),
+});
+
+export const kasirku = pgTable("kasirku", {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    key: text("k").notNull(),
+    value: text("v").notNull()
 });

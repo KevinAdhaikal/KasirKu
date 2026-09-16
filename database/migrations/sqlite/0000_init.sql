@@ -23,6 +23,12 @@ CREATE TABLE `barang_masuk` (
 	FOREIGN KEY (`barang_id`) REFERENCES `barang`(`id`) ON UPDATE cascade ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `kasirku` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`k` text NOT NULL,
+	`v` text NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `kategori_barang` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`nama_kategori` text NOT NULL,
@@ -93,9 +99,10 @@ CREATE TABLE `roles` (
 CREATE UNIQUE INDEX `roles_name_unique` ON `roles` (`name`);--> statement-breakpoint
 CREATE TABLE `settings` (
 	`id` integer PRIMARY KEY NOT NULL,
-	`key` text,
+	`section` text NOT NULL,
+	`key` text NOT NULL,
 	`value` text,
-	`type` text,
+	`type` text NOT NULL,
 	`created_ms` integer,
 	`modified_ms` integer
 );

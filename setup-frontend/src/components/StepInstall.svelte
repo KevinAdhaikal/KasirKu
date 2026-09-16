@@ -122,7 +122,7 @@
       const protocol = serverConfig.protocol;
       const port = serverConfig.port;
       const portPart = (protocol === 'http' && port === 80) || (protocol === 'https' && port === 443) ? '' : `:${port}`;
-      const targetUrl = `${protocol}://${hostname}${portPart}`;
+      const targetUrl = `http://${hostname}${portPart}`;
       state.redirectUrl = targetUrl;
 
       const isUp = await pollPing(targetUrl, 30, 1500);

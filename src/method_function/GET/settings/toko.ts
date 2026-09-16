@@ -16,21 +16,38 @@
 import { user_session_interface } from "../../../user_session/user_session";
 import { global } from "../../../global";
 import { getDb, getSchema } from "../../../database/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = getDb();
-    const { roles, store_settings } = getSchema();
+    const { roles, settings } = getSchema();
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
     
-    const [res] = await db
-        .select()
-        .from(store_settings)
-        .where(eq(store_settings.id, 1))
-        .limit(1);
+    const rows = await db
+        .select({
+            key: settings.key,
+            value: settings.value,
+        })
+        .from(settings)
+        .where(
+            and(
+                eq(settings.section, "store"),
+                inArray(settings.key, [
+                    "name",
+                    "desc",
+                    "address",
+                    "phone_num",
+                    "email"
+                ])
+            )
+        );
+
+    const res = Object.fromEntries(
+        rows.map((row: {key: string, value: any}) => [row.key, row.value])
+    );
     
     return new Response(JSON.stringify(res), {status: 200});
 }

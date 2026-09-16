@@ -42,6 +42,7 @@ export interface StoreConfig {
   store_desc: string;
   store_address: string;
   store_phone_num: string;
+  store_email: string;
 }
 
 export interface InstallProgressState {

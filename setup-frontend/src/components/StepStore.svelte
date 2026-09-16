@@ -68,6 +68,20 @@
       />
     </div>
 
+    <!-- Email -->
+    <div>
+      <label for="store-email" class="block text-sm font-semibold text-ink mb-2">
+        Email Toko <span class="text-ink-faint font-normal">(opsional)</span>
+      </label>
+      <input
+        id="store-email"
+        type="text"
+        bind:value={config.store_email}
+        placeholder="Contoh: 0812-3456-7890"
+        class="w-full px-4 py-2.5 rounded-xl border border-line bg-surface text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
+      />
+    </div>
+
     <!-- Store Address -->
     <div>
       <label for="store-address" class="block text-sm font-semibold text-ink mb-2">

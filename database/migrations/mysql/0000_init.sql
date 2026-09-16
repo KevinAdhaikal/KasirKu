@@ -23,6 +23,13 @@ CREATE TABLE `barang_masuk` (
 	CONSTRAINT `barang_masuk_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
+CREATE TABLE `kasirku` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`k` text NOT NULL,
+	`v` text NOT NULL,
+	CONSTRAINT `kasirku_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 CREATE TABLE `kategori_barang` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`nama_kategori` text NOT NULL,
@@ -96,9 +103,10 @@ CREATE TABLE `roles` (
 --> statement-breakpoint
 CREATE TABLE `settings` (
 	`id` int AUTO_INCREMENT NOT NULL,
-	`key` text,
+	`section` text NOT NULL,
+	`key` text NOT NULL,
 	`value` text,
-	`type` text,
+	`type` text NOT NULL,
 	`created_ms` bigint,
 	`modified_ms` bigint,
 	CONSTRAINT `settings_id` PRIMARY KEY(`id`)

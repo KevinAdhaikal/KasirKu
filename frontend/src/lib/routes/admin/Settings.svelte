@@ -33,12 +33,10 @@
   export interface StoreSettings {
     id: number;
     name: string | null;
-    description: string | null;
+    desc: string | null;
     address: string | null;
-    no_phone: string | null;
+    phone_num: string | null;
     email: string | null;
-    created_ms?: number;
-    modified_ms?: number;
   }
 
   export interface StrukSettings {
@@ -77,9 +75,9 @@
 
       if (storeRes) {
         namaToko = storeRes.name || '';
-        deskripsiToko = storeRes.description || '';
+        deskripsiToko = storeRes.desc || '';
         alamatToko = storeRes.address || '';
-        teleponToko = storeRes.no_phone || '';
+        teleponToko = storeRes.phone_num || '';
         emailToko = storeRes.email || '';
       }
 

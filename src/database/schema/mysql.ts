@@ -113,9 +113,16 @@ export const retur_barang = mysqlTable("retur_barang", {
 
 export const settings = mysqlTable("settings", {
     id: int("id").primaryKey().autoincrement(),
-    key: text("key"),
+    section: text("section").notNull(),
+    key: text("key").notNull(),
     value: text("value"),
-    type: text("type"),
+    type: text("type").notNull(),
     created_ms: bigint("created_ms", { mode: "number" }),
     modified_ms: bigint("modified_ms", { mode: "number" }),
+});
+
+export const kasirku = mysqlTable("kasirku", {
+    id: int("id").primaryKey().autoincrement(),
+    key: text("k").notNull(),
+    value: text("v").notNull()
 });

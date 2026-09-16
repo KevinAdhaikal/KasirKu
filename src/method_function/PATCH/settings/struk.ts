@@ -13,7 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { global } from "../../../global";
 import { getSchema, getDb } from "../../../database/schema";
 
@@ -22,7 +22,7 @@ export default async function(req: Request, token: string) {
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
     const db = getDb();
-    const { roles, struk_settings } = getSchema();
+    const { roles, settings } = getSchema();
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
@@ -35,13 +35,18 @@ export default async function(req: Request, token: string) {
     });
     
     await db
-        .update(struk_settings)
+        .update(settings)
         .set({
-            content: user_input ?? null,
-            modified_ms: Date.now()
+            value: user_input ?? null,
+            modified_ms: Date.now(),
         })
-        .where(eq(struk_settings.id, 1))
-    .execute();
+        .where(
+            and(
+                eq(settings.section, "store"),
+                eq(settings.key, "struk"),
+            )
+        )
+        .execute();
 
     global.sse_clients.broadcast(JSON.stringify({
         type: 8,

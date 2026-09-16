@@ -15,7 +15,7 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { getDb, getSchema } from "../../database/schema";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = getDb();
@@ -28,12 +28,15 @@ export default async function(req: Request, url: URL, user_info: user_session_in
         })
         .from(settings)
         .where(
-            inArray(settings.key, [
-                "store_name",
-                "store_desc",
-                "store_address",
-                "store_phone_num",
-            ])
+            and(
+                eq(settings.section, "store"),
+                inArray(settings.key, [
+                    "name",
+                    "desc",
+                    "address",
+                    "phone_num",
+                ])
+            )
         );
 
     return new Response(JSON.stringify({store: toko_settings}), {

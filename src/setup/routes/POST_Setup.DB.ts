@@ -2,6 +2,24 @@ import { current_config } from "..";
 import { sql_connection } from "../../utils/utils";
 import { mkdir } from "node:fs/promises";
 import { Database } from "bun:sqlite";
+import { Connection } from "mysql2/promise";
+import { Client } from "pg";
+
+async function insert_rows_mysql(conn: NonNullable<Connection>, table: string, rows: Record<string, unknown>[]) {
+    if (rows.length === 0) return;
+    const columns = Object.keys(rows[0]);
+    const placeholders = rows.map(() => `(${columns.map(() => "?").join(", ")})`).join(", ");
+    const values = rows.flatMap(row => columns.map(column => row[column]));
+    await conn.query(`INSERT INTO \`${table}\` (${columns.map(c => `\`${c}\``).join(", ")}) VALUES ${placeholders}`, values);
+}
+
+async function insert_rows_pg(conn: NonNullable<Client>, table: string, rows: Record<string, unknown>[]) {
+    if (rows.length === 0) return;
+    const columns = Object.keys(rows[0]);
+    const values = rows.flatMap(row => columns.map(column => row[column]));
+    const placeholders = rows.map((_, row_index) => `(${columns.map((_, column_index) => `$${row_index * columns.length + column_index + 1}`).join(", ")})`).join(", ");
+    await conn.query(`INSERT INTO "${table}" (${columns.map(c => `"${c}"`).join(", ")}) VALUES ${placeholders}`, values);
+}
 
 export async function POST_Setup_DB(req: Request) {
     let req_json: Record<string, any>;
@@ -43,7 +61,7 @@ export async function POST_Setup_DB(req: Request) {
                 await (
                     sql_conn.ms_conn
                     ? sql_conn.ms_conn.query("SELECT 1 FROM kasirku WHERE k = 'version' LIMIT 1")
-                    : sql_conn.pg_conn?.query("SELECT 1 FROM kasirku WHERE k = 'version' LIMIT 1")
+                    : sql_conn.pg_conn!.query("SELECT 1 FROM kasirku WHERE k = 'version' LIMIT 1")
                 );
             } catch(_) {
                 db_new_migrate = false;
@@ -87,8 +105,8 @@ export async function POST_Setup_DB(req: Request) {
                 
                 await sql_conn.ms_conn.end();
                 sql_conn = await sql_connection(db_type, db_host, db_port, "", db_user, db_pass);
-                await sql_conn.ms_conn?.query(`CREATE DATABASE "${db_name}"`);
-                await sql_conn.ms_conn?.end();
+                await sql_conn.ms_conn!.query(`CREATE DATABASE "${db_name}"`);
+                await sql_conn.ms_conn!.end();
                 sql_conn = await sql_connection(db_type, db_host, db_port, db_name, db_user, db_pass);
             }
 
@@ -100,15 +118,15 @@ export async function POST_Setup_DB(req: Request) {
             });
 
             if (db_new_migrate && migrated_data) {
-                /*await sql_conn.ms_conn?.query("BEGIN");
+                await sql_conn.ms_conn!.query("BEGIN");
                 try {
                     await insert_rows_mysql(sql_conn.ms_conn!, "kategori_barang", migrated_data.kategori_barang);
 
-                    await sql_conn.ms_conn?.query("COMMIT");
+                    await sql_conn.ms_conn!.query("COMMIT");
                 } catch (error) {
-                    await sql_conn.ms_conn?.query("ROLLBACK");
+                    await sql_conn.ms_conn!.query("ROLLBACK");
                     throw error;
-                }*/
+                }
             }
             
             current_config.db_type = "mysql";
@@ -144,10 +162,10 @@ export async function POST_Setup_DB(req: Request) {
                     db_new_migrate = false;
                 }
             
-                await sql_conn.pg_conn?.end();
+                await sql_conn.pg_conn!.end();
                 sql_conn = await sql_connection(db_type, db_host, db_port, "", db_user, db_pass);
-                await sql_conn.pg_conn?.query(`CREATE DATABASE "${db_name}"`);
-                await sql_conn.pg_conn?.end();
+                await sql_conn.pg_conn!.query(`CREATE DATABASE "${db_name}"`);
+                await sql_conn.pg_conn!.end();
                 sql_conn = await sql_connection(db_type, db_host, db_port, db_name, db_user, db_pass);
             }
 
@@ -159,15 +177,14 @@ export async function POST_Setup_DB(req: Request) {
             });
 
             if (db_new_migrate && migrated_data) {
-                /*await sql_conn.pg_conn?.query("BEGIN");
+                await sql_conn.pg_conn!.query("BEGIN");
                 try {
                     await insert_rows_pg(sql_conn.pg_conn!, "kategori_barang", migrated_data.kategori_barang);
-
-                    await sql_conn.pg_conn?.query("COMMIT");
+                    await sql_conn.pg_conn!.query("COMMIT");
                 } catch (error) {
-                    await sql_conn.pg_conn?.query("ROLLBACK");
+                    await sql_conn.pg_conn!.query("ROLLBACK");
                     throw error;
-                }*/
+                }
             }
 
             current_config.db_type = "postgresql";

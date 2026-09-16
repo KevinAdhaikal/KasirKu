@@ -13,7 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { global } from "../../../global";
 import { getSchema, getDb } from "../../../database/schema";
 
@@ -22,7 +22,7 @@ export default async function(req: Request, token: string) {
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
     const db = getDb();
-    const { roles, store_settings } = getSchema();
+    const { roles, settings } = getSchema();
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
@@ -37,31 +37,42 @@ export default async function(req: Request, token: string) {
     const email_toko = user_input.get("email_toko");
 
     const phoneRegex = /^[0-9+\-\s()]+$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (telepon_toko && !phoneRegex.test(telepon_toko.trim())) {
         return new Response("Bad Request", {
             status: 400
         });
     }
-    if (email_toko && !emailRegex.test(email_toko.trim())) {
-        return new Response("Bad Request", {
-            status: 400
-        });
-    }
+
+    const now = Date.now();
 
     await db
-        .update(store_settings)
+        .update(settings)
         .set({
-            name: nama_toko,
-            description: deskripsi_toko,
-            address: alamat_toko,
-            no_phone: telepon_toko,
-            email: email_toko,
-            modified_ms: Date.now()
+            value: sql`
+                CASE ${settings.key}
+                    WHEN 'name' THEN ${nama_toko}
+                    WHEN 'desc' THEN ${deskripsi_toko}
+                    WHEN 'address' THEN ${alamat_toko}
+                    WHEN 'phone_num' THEN ${telepon_toko}
+                    WHEN 'email' THEN ${email_toko}
+                    ELSE ${settings.value}
+                END
+            `,
+            modified_ms: now,
         })
-        .where(eq(store_settings.id, 1))
-    .execute();
+        .where(
+            and(
+                eq(settings.section, "store"),
+                inArray(settings.key, [
+                    "name",
+                    "desc",
+                    "address",
+                    "phone_num",
+                ])
+            )
+        )
+        .execute();
 
     global.sse_clients.broadcast(JSON.stringify({
         type: 8,
@@ -71,8 +82,7 @@ export default async function(req: Request, token: string) {
                 name: nama_toko,
                 description: deskripsi_toko,
                 address: alamat_toko,
-                no_phone: telepon_toko,
-                email: email_toko
+                no_phone: telepon_toko
             }
         }
     }));
