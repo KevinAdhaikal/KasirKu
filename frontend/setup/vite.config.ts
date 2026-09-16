@@ -14,7 +14,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../src/setup/html',
+    outDir: '../../src/setup/dist',
     emptyOutDir: true,
   },
   server: {

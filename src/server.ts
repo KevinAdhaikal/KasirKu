@@ -173,12 +173,12 @@ export function main() {
             }
 
             // Static Frontend & SPA Fallback
-            let targetPath = `./html${pathname}`;
+            let targetPath = `./dist${pathname}`;
             let file = Bun.file(targetPath);
             let exists = await file.exists();
 
             if (pathname === "/" || pathname === "/index.html") {
-                targetPath = "./html/index.html";
+                targetPath = "./dist/index.html";
                 file = Bun.file(targetPath);
                 exists = await file.exists();
             }
@@ -188,7 +188,7 @@ export function main() {
                 const hasExt = pathname.includes(".") && !pathname.endsWith(".html");
                 if (!hasExt) {
                     // Fall back to index.html for SPA client-side routing
-                    targetPath = "./html/index.html";
+                    targetPath = "./dist/index.html";
                     file = Bun.file(targetPath);
                     exists = await file.exists();
                 }

@@ -82,14 +82,14 @@ export async function setup_http_main() {
         if (req.method === "GET") {
             let pathname = url.pathname.replace(/\/+/g, "/");
 
-            if (pathname === "/favicon.ico") return new Response(Bun.file("./html/favicon.ico"));
+            if (pathname === "/favicon.ico") return new Response(Bun.file("./dist/favicon.ico"));
             if (!pathname.startsWith("/")) return Response.redirect(new URL("/", req.url), 302);
 
             if (pathname.endsWith("/")) pathname += "index.html";
             if (pathname.endsWith(".")) pathname = pathname.slice(0, -1) + ".html";
             if (!pathname.includes(".")) pathname += ".html";
 
-            let file = Bun.file(`./src/setup/html${pathname}`);
+            let file = Bun.file(`./src/setup/dist${pathname}`);
 
             if (!await file.exists()) return new Response("Not Found", {status: 404});
             return new Response(file, {

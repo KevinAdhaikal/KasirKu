@@ -16,8 +16,8 @@
 import { migrate_up } from "./src/database/migrate"
 import { setActiveSchema, setActiveDb } from "./src/database/schema";
 import { readdirSync, statSync } from "node:fs";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
-
 import { loadEnvFile } from "node:process";
 
 async function load_methods(baseDir: string, rootDir: string, cache: Record<string, any>) {
@@ -70,9 +70,15 @@ function check_env_file() {
     return true;
 }
 
+async function check_ver_db() {
+
+}
+
 async function prepare() {
+    console.log("[LOG] Preparing Server...");
+
+    await mkdir("./profile_img", { recursive: true });
     const global = (await import("./src/global")).global;
-    await Bun.$`bun src/prepare.ts`;
 
     switch(Bun.env.DB_TYPE) {
         case "sqlite": {
@@ -91,7 +97,7 @@ async function prepare() {
             const sqliteSchema = await import("./src/database/schema/sqlite");
             setActiveSchema(sqliteSchema);
             setActiveDb(global.database);
-
+            
             break;
         }
         case "mysql": {
@@ -137,8 +143,11 @@ async function prepare() {
             process.exit(0);
         }
     }
+
     await load_methods("./src/method_function", "./src/method_function", global.method_cache);
     await migrate_up(global.database, Bun.env.DB_TYPE);
+
+    await check_ver_db();
     
     console.log("[LOG] All ready!");
 }

@@ -23,6 +23,7 @@ export default async function(req: Request, token: string) {
 
     const db = getDb();
     const schema = getSchema();
+    
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
