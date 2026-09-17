@@ -15,14 +15,13 @@
 
 import { eq, and } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const { roles, pembukuan } = getSchema();
+    const db = global.database;
+    const { roles, pembukuan } = global.schema;
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 

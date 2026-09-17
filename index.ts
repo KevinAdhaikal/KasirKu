@@ -14,7 +14,6 @@
 */
 
 import { migrate_up } from "./src/database/migrate"
-import { setActiveSchema, setActiveDb } from "./src/database/schema";
 import { readdirSync, statSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -70,10 +69,6 @@ function check_env_file() {
     return true;
 }
 
-async function check_ver_db() {
-
-}
-
 async function prepare() {
     console.log("[LOG] Preparing Server...");
 
@@ -94,9 +89,7 @@ async function prepare() {
 
             const sqlite = new Database(`database/${Bun.env.DB_NAME}.db`);
             global.database = drizzle({ client: sqlite });
-            const sqliteSchema = await import("./src/database/schema/sqlite");
-            setActiveSchema(sqliteSchema);
-            setActiveDb(global.database);
+            global.schema = await import("./src/database/schema/sqlite");
             
             break;
         }
@@ -113,9 +106,7 @@ async function prepare() {
             });
 
             global.database = drizzle({ client: pool });
-            const mysqlSchema = await import("./src/database/schema/mysql");
-            setActiveSchema(mysqlSchema);
-            setActiveDb(global.database);
+            global.schema = (await import("./src/database/schema/mysql")) as any;
 
             break;
         }
@@ -131,10 +122,7 @@ async function prepare() {
                 database: Bun.env.DB_NAME
             });
             global.database = drizzle({ client: pool });
-
-            const pgSchema = await import("./src/database/schema/postgresql");
-            setActiveSchema(pgSchema);
-            setActiveDb(global.database);
+            global.schema = (await import("./src/database/schema/postgresql")) as any;
 
             break;
         }
@@ -145,9 +133,7 @@ async function prepare() {
     }
 
     await load_methods("./src/method_function", "./src/method_function", global.method_cache);
-    await migrate_up(global.database, Bun.env.DB_TYPE);
-
-    await check_ver_db();
+    await migrate_up(global.database, Bun.env.DB_TYPE as any);
     
     console.log("[LOG] All ready!");
 }

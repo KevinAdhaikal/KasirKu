@@ -120,9 +120,3 @@ export const settings = pgTable("settings", {
     created_ms: bigint("created_ms", { mode: "number" }),
     modified_ms: bigint("modified_ms", { mode: "number" }),
 });
-
-export const kasirku = pgTable("kasirku", {
-    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-    key: text("k").notNull(),
-    value: text("v").notNull()
-});

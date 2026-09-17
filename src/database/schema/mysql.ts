@@ -120,9 +120,3 @@ export const settings = mysqlTable("settings", {
     created_ms: bigint("created_ms", { mode: "number" }),
     modified_ms: bigint("modified_ms", { mode: "number" }),
 });
-
-export const kasirku = mysqlTable("kasirku", {
-    id: int("id").primaryKey().autoincrement(),
-    key: text("k").notNull(),
-    value: text("v").notNull()
-});

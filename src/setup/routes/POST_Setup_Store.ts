@@ -127,31 +127,37 @@ export async function POST_Setup_Store(req: Request) {
                 ($21, $22, $23, $24, $25, $25),
                 ($26, $27, $28, $29, $30, $30)`,
             [
+                settings[0].section,
                 settings[0].key,
                 settings[0].value,
                 settings[0].type,
                 now,
 
+                settings[1].section,
                 settings[1].key,
                 settings[1].value,
                 settings[1].type,
                 now,
 
+                settings[2].section,
                 settings[2].key,
                 settings[2].value,
                 settings[2].type,
                 now,
 
+                settings[3].section,
                 settings[3].key,
                 settings[3].value,
                 settings[3].type,
                 now,
 
+                settings[4].section,
                 settings[4].key,
                 settings[4].value,
                 settings[4].type,
                 now,
 
+                settings[5].section,
                 settings[5].key,
                 settings[5].value,
                 settings[5].type,

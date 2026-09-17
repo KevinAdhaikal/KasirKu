@@ -15,12 +15,11 @@
 
 import { user_session_interface } from "../../../user_session/user_session";
 import { global } from "../../../global";
-import { getDb, getSchema } from "../../../database/schema";
 import { and, eq, inArray } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = getDb();
-    const { roles, settings } = getSchema();
+    const db = global.database;
+    const { roles, settings } = global.schema;
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     

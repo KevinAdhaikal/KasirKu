@@ -15,7 +15,6 @@
 
 import { eq } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 import { check_image_type, check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
@@ -33,8 +32,8 @@ export default async function(req: Request, token: string) {
         || !/^[a-z0-9_]+$/.test(new_username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
     ) return new Response("Bad Request", {status: 400});
 
-    const db = getDb();
-    const { users } = getSchema();
+    const db = global.database;
+    const { users } = global.schema;
 
     let body_res = "";
     let header_res: any = {}

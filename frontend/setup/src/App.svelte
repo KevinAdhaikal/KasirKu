@@ -38,8 +38,7 @@
     port: 3306,
     name: 'kasirku',
     user: 'root',
-    pass: '',
-    db_new_migrate: false,
+    pass: ''
   });
 
   let adminConfig = $state<AdminConfig>({
@@ -53,7 +52,7 @@
     store_name: '',
     store_desc: '',
     store_address: '',
-    store_phone_num: '',
+    store_phone_num: ''
   });
 
   let migrationModalOpen = $state(false);
@@ -65,7 +64,6 @@
   }
 
   function handleMigrationChoice(resetDb: boolean) {
-    dbConfig.db_new_migrate = resetDb;
     migrationModalOpen = false;
     currentStep = 5;
   }
@@ -90,7 +88,13 @@
     } else if (currentStep === 3) {
       currentStep = 4;
     } else if (currentStep === 4) {
-      await stepDbConfigRef?.proceed();
+      checkingDb = true;
+      try {
+        const ok = await stepDbConfigRef?.proceed();
+        if (ok) currentStep = 5;
+      } finally {
+        checkingDb = false;
+      }
     } else if (currentStep === 5) {
       const ok = stepAdminRef?.proceed();
       if (ok) currentStep = 6;

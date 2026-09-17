@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "2bdffab7-4606-4162-86fc-6c4ae1edb47b",
+  "id": "c581f2fe-aff8-47ff-86dd-42a0e891ff29",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "barang": {
@@ -177,44 +177,6 @@
       "compositePrimaryKeys": {
         "barang_masuk_id": {
           "name": "barang_masuk_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "kasirku": {
-      "name": "kasirku",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "k": {
-          "name": "k",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "v": {
-          "name": "v",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "kasirku_id": {
-          "name": "kasirku_id",
           "columns": [
             "id"
           ]

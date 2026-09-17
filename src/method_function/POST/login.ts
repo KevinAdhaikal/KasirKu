@@ -15,7 +15,6 @@
 
 import { eq } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_input = new URLSearchParams(await req.text());
@@ -25,8 +24,8 @@ export default async function(req: Request, token: string) {
     
     if (!username || !password) return new Response("Bad Request", {status: 400});
     
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     
     const [row] = await db
     .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})

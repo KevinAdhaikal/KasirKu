@@ -23,12 +23,6 @@ CREATE TABLE `barang_masuk` (
 	FOREIGN KEY (`barang_id`) REFERENCES `barang`(`id`) ON UPDATE cascade ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `kasirku` (
-	`id` integer PRIMARY KEY NOT NULL,
-	`k` text NOT NULL,
-	`v` text NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE `kategori_barang` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`nama_kategori` text NOT NULL,

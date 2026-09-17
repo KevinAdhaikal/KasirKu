@@ -33,9 +33,7 @@ async function stop_server() {
         bun_serve.stop();
         if (bun_serve2) bun_serve2.stop();
 
-        if (global.database) {
-            try { (global.database as any).destroy?.(); } catch(e) {}
-        }
+        Bun.env.DB_TYPE?.lastIndexOf("sql") === 0 ? (global.database as any).$client.close() : await (global.database as any).$client.end();
 
         global.sse_clients.destroy();
         global.rate_limit.destroy();

@@ -28,43 +28,15 @@ export async function testDbConnection(config: DatabaseConfig): Promise<{ succes
     user: config.user,
     pass: config.pass,
   };
+
   const res = await fetch('/test_connection', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+  
   await handleResponse(res);
   return { success: true };
-}
-
-export async function checkOldDb(config: DatabaseConfig): Promise<{ isOld: boolean; version?: string }> {
-  const payload = {
-    type: config.type,
-    host: config.host,
-    port: Number(config.port),
-    name: config.name,
-    user: config.user,
-    pass: config.pass,
-  };
-  const res = await fetch('/check_old_db', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (res.status === 200) {
-    let data;
-    try {
-      data = await res.json();
-    } catch {
-      data = {};
-    }
-    return { isOld: true, version: data?.version || data?.msg || '' };
-  } else if (res.status === 201) {
-    return { isOld: false };
-  } else {
-    const errText = await res.text();
-    throw new Error(errText || 'Gagal memeriksa status database.');
-  }
 }
 
 export async function checkCertificate(certBase64: string, keyBase64: string): Promise<boolean> {
@@ -84,8 +56,7 @@ export async function setupDatabase(config: DatabaseConfig): Promise<void> {
     port: Number(config.port),
     name: config.name,
     user: config.user,
-    pass: config.pass,
-    db_new_migrate: config.db_new_migrate,
+    pass: config.pass
   };
   const res = await fetch('/setup_db', {
     method: 'POST',

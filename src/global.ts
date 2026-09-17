@@ -16,17 +16,16 @@
 import { user_session } from "./user_session/user_session";
 import { sse_server } from "./sse_server/sse_server";
 import { rate_limit } from "./rate_limit/rate_limit";
-import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import type { MySql2Database } from "drizzle-orm/mysql2";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type * as schemaType from "./database/schema/mysql";
 
-const current_date = new Date()
+const current_date = new Date();
 
 export const global = {
     // date
     get date() {
-        current_date.setTime(Date.now())
-        return current_date
+        current_date.setTime(Date.now());
+        return current_date;
     },
 
     user_sessions: null as unknown as user_session,
@@ -40,7 +39,10 @@ export const global = {
     rate_limit: null as unknown as rate_limit,
 
     // Database (Drizzle instance)
-    database: null as unknown as BaseSQLiteDatabase<any, any> | MySql2Database<any> | NodePgDatabase<any>,
+    database: null as any,
+
+    // Database Schema
+    schema: null as any,
 
     // Permissions
     permissions: {
@@ -52,4 +54,4 @@ export const global = {
     },
 
     method_cache: {} as Record<string, any>
-}
+};

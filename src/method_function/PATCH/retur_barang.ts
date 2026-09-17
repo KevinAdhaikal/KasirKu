@@ -13,16 +13,15 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const { roles, retur_barang, barang } = getSchema();
+    const db = global.database;
+    const { roles, retur_barang, barang } = global.schema;
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
@@ -46,8 +45,7 @@ export default async function(req: Request, token: string) {
 
     const res = await db.select({ jumlah_barang: retur_barang.jumlah_barang, barang_id: retur_barang.barang_id })
     .from(retur_barang)
-    .where(eq(retur_barang.id, id))
-    .where(eq(retur_barang.tanggal_key, tanggal_key))
+    .where(and(eq(retur_barang.id, id), eq(retur_barang.tanggal_key, tanggal_key)))
     .limit(1)
     .then((r: any) => r[0]);
 
@@ -64,8 +62,7 @@ export default async function(req: Request, token: string) {
                 jumlah_barang,
                 modified_ms: now
             })
-            .where(eq(retur_barang.id, id))
-            .where(eq(retur_barang.tanggal_key, tanggal_key))
+            .where(and(eq(retur_barang.id, id), eq(retur_barang.tanggal_key, tanggal_key)))
             .execute();
 
             await trx

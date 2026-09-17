@@ -15,7 +15,6 @@
 
 import { eq } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 import { get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
@@ -29,8 +28,8 @@ export default async function(req: Request, token: string) {
     
     if (!old_pass || !new_pass || new_pass.length < 8) return new Response("Bad Request", {status: 400});
                 
-    const db = getDb();
-    const { users } = getSchema();
+    const db = global.database;
+    const { users } = global.schema;
     
     const user = await db
     .select({ password_hash: users.password_hash })

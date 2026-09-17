@@ -14,12 +14,12 @@
 */
 
 import { user_session_interface } from "../../user_session/user_session";
-import { getDb, getSchema } from "../../database/schema";
+import { global } from "../../global";
 import { and, eq, inArray } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = getDb();
-    const { settings } = getSchema();
+    const db = global.database;
+    const { settings } = global.schema;
 
     const toko_settings = await db
         .select({

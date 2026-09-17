@@ -13,16 +13,15 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
             
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
@@ -39,17 +38,21 @@ export default async function(req: Request, token: string) {
         const res = await db
         .select({id: schema.pembukuan.id})
         .from(schema.pembukuan)
-        .where(eq(schema.pembukuan.id, id))
-        .where(eq(schema.pembukuan.tanggal_key, tanggal_key))
-        .where(eq(schema.pembukuan.tipe, 1))
+        .where(and(
+            eq(schema.pembukuan.id, id),
+            eq(schema.pembukuan.tanggal_key, tanggal_key),
+            eq(schema.pembukuan.tipe, 1)
+        ))
         .limit(1);
 
         if (res.length > 0) {
             await db
             .delete(schema.pembukuan)
-            .where(eq(schema.pembukuan.id, id))
-            .where(eq(schema.pembukuan.tanggal_key, tanggal_key))
-            .where(eq(schema.pembukuan.tipe, 1))
+            .where(and(
+                eq(schema.pembukuan.id, id),
+                eq(schema.pembukuan.tanggal_key, tanggal_key),
+                eq(schema.pembukuan.tipe, 1)
+            ))
             .execute();
 
             global.sse_clients.broadcast(JSON.stringify({

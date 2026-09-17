@@ -27,7 +27,6 @@ export interface DatabaseConfig {
   name: string;
   user: string;
   pass: string;
-  db_new_migrate: boolean;
 }
 
 export interface AdminConfig {
@@ -42,7 +41,6 @@ export interface StoreConfig {
   store_desc: string;
   store_address: string;
   store_phone_num: string;
-  store_email: string;
 }
 
 export interface InstallProgressState {

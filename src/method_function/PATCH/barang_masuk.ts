@@ -13,16 +13,15 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
-    const db = getDb();
-    const { roles, barang_masuk, barang } = getSchema();
+    const db = global.database;
+    const { roles, barang_masuk, barang } = global.schema;
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
@@ -46,10 +45,9 @@ export default async function(req: Request, token: string) {
     
     const res = await db.select({ jumlah_barang: barang_masuk.jumlah_barang, barang_id: barang_masuk.barang_id })
     .from(barang_masuk)
-    .where(eq(barang_masuk.id, id))
-    .where(eq(barang_masuk.tanggal_key, tanggal_key))
+    .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
     .limit(1)
-.then((r: any) => r[0]);
+    .then((r: any) => r[0]);
 
     if (!res) return new Response("Not Found", {status: 404});
 
@@ -63,8 +61,7 @@ export default async function(req: Request, token: string) {
                 jumlah_barang,
                 modified_ms: now
             })
-            .where(eq(barang_masuk.id, id))
-            .where(eq(barang_masuk.tanggal_key, tanggal_key))
+            .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
             .execute();
             
             await trx

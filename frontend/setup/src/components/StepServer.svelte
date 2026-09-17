@@ -104,8 +104,8 @@
       await checkCertificate(config.tls.cert, config.tls.key);
       certValid = true;
       return true;
-    } catch (err: any) {
-      certError = err.message || 'Sertifikat tidak valid atau pasangan kunci privat tidak cocok.';
+    } catch (_) {
+      certError = 'Sertifikat tidak valid atau pasangan kunci privat tidak cocok.';
       return false;
     } finally {
       certTesting = false;

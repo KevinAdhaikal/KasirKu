@@ -16,11 +16,10 @@
 import { sql, eq } from "drizzle-orm";
 import { global } from "../../global";
 import { user_session_interface } from "../../user_session/user_session";
-import { getDb, getSchema } from "../../database/schema";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = getDb();
-    const { roles } = getSchema();
+    const db = global.database;
+    const { roles } = global.schema;
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
 
     if (!res_role) return new Response("Internal Server Error", {status: 500});
@@ -37,7 +36,7 @@ export default async function(req: Request, url: URL, user_info: user_session_in
         total_harga_jual: sql<number>`(SELECT SUM(total_harga_jual) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_jual'),
         jumlah_uang: sql<number>`(SELECT SUM(jumlah_uang) FROM pembukuan WHERE tanggal_key = ${tanggal_key} AND tipe = 1)`.as('jumlah_uang')
     })
-    .from(sql`(SELECT 1)`);
+    .from(sql`(SELECT 1) AS dummy`);
     
     return new Response(JSON.stringify(res), {status: 200});
 }

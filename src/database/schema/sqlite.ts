@@ -120,9 +120,3 @@ export const settings = sqliteTable("settings", {
     created_ms: integer("created_ms"),
     modified_ms: integer("modified_ms"),
 });
-
-export const kasirku = sqliteTable("kasirku", {
-    id: integer("id").primaryKey(),
-    key: text("k").notNull(),
-    value: text("v").notNull()
-});

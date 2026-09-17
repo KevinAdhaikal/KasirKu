@@ -21,8 +21,7 @@ import { Database } from "bun:sqlite";
 
 // routes
 import { POST_Test_Connection } from "./routes/POST_Test_Connection";
-import { POST_Check_Old_DB } from "./routes/POST_Check_Old_DB";
-import { POST_Setup_DB } from "./routes/POST_Setup.DB";
+import { POST_Setup_DB } from "./routes/POST_Setup_DB";
 import { POST_Setup_Server } from "./routes/POST_Setup_Server";
 import { POST_Setup_Store } from "./routes/POST_Setup_Store";
 import { POST_Setup_Final } from "./routes/POST_Setup_Final";
@@ -108,9 +107,6 @@ export async function setup_http_main() {
                 }
                 case "/check_certificate": {
                     return POST_Check_Cert(req);
-                }
-                case "/check_old_db": {
-                    return POST_Check_Old_DB(req);
                 }
                 case "/setup_server": {
                     return POST_Setup_Server(req);

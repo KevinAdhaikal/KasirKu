@@ -43,7 +43,6 @@ export async function POST_Setup_Admin(req: Request) {
                 [username, full_name, password_hash, null, 1, now, now]
             );
         }
-
         else if (current_config.db_type === "postgresql") {
             const conn = current_config.temp.pg_conn;
             if (!conn) throw new Error("PostgreSQL connection is not available");
@@ -72,9 +71,9 @@ export async function POST_Setup_Admin(req: Request) {
             current_config.temp.setup_done = [0, 0, 0, 0];
             return new Response("Bad Request", {status: 400});
         }
-    } catch (err) {
+    } catch (err: any) {
         current_config.temp.setup_done = [0, 0, 0, 0];
-        return new Response(err instanceof Error ? err.message : "Failed to create admin user", { status: 403 });
+        return new Response(err.message, {status: 403});
     }
 
     current_config.temp.setup_done[3] = 1;

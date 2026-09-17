@@ -7,7 +7,7 @@
     EyeOff
   } from 'lucide-svelte';
   import type { DatabaseConfig } from '../types';
-  import { testDbConnection, checkOldDb } from '../api';
+  import { testDbConnection } from '../api';
 
   interface Props {
     config: DatabaseConfig;
@@ -32,6 +32,11 @@
   let portError = $state('');
   let fieldErrors = $state<{ host?: string; name?: string; user?: string }>({});
 
+  function resetConnectionStatus() {
+    connectionSuccess = false;
+    connectionError = '';
+  }
+
   function handlePortKeyDown(e: KeyboardEvent) {
     const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
     if (allowedKeys.includes(e.key) || (e.ctrlKey || e.metaKey)) {
@@ -44,6 +49,7 @@
   }
 
   function handlePortInput(e: Event) {
+    resetConnectionStatus();
     const target = e.target as HTMLInputElement;
     const sanitized = target.value.replace(/\D/g, '').slice(0, 5);
     target.value = sanitized;
@@ -61,7 +67,7 @@
     }
   }
 
-  async function handleTestConnection() {
+  async function handleTestConnection(): Promise<boolean> {
     fieldErrors = {};
     connectionError = '';
     connectionSuccess = false;
@@ -78,23 +84,33 @@
     if (!config.name?.trim()) {
       fieldErrors.name = 'Nama basis data wajib diisi.';
       hasError = true;
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(config.name.trim())) {
+      fieldErrors.name = 'Nama database hanya boleh karakter alfanumerik, _ dan -.';
+      hasError = true;
     }
     if (!config.user?.trim()) {
       fieldErrors.user = 'Nama pengguna (user) basis data wajib diisi.';
       hasError = true;
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(config.user.trim())) {
+      fieldErrors.user = 'Nama pengguna hanya boleh karakter alfanumerik, _ dan -.';
+      hasError = true;
     }
 
-    if (hasError) return;
+    if (hasError) return false;
 
     testingConnection = true;
+    checkingDb = true;
 
     try {
       await testDbConnection(config);
       connectionSuccess = true;
+      return true;
     } catch (err: any) {
       connectionError = err.message || 'Gagal tersambung ke database. Periksa host, port, dan kredensial autentikasi.';
+      return false;
     } finally {
       testingConnection = false;
+      checkingDb = false;
     }
   }
 
@@ -116,51 +132,13 @@
       return true;
     }
 
-    let hasError = false;
-    if (!config.host?.trim()) {
-      fieldErrors.host = 'Host basis data wajib diisi.';
-      hasError = true;
-    }
-    if (!config.port || config.port < 1 || config.port > 65535) {
-      portError = 'Port harus berada di rentang 1 – 65535.';
-      hasError = true;
-    }
-    if (!config.name?.trim()) {
-      fieldErrors.name = 'Nama basis data wajib diisi.';
-      hasError = true;
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(config.name.trim())) {
-      fieldErrors.name = 'Nama database hanya boleh karakter alfanumerik, _ dan -.';
-      hasError = true;
-    }
-    if (!config.user?.trim()) {
-      fieldErrors.user = 'Nama pengguna basis data wajib diisi.';
-      hasError = true;
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(config.user.trim())) {
-      fieldErrors.user = 'Nama pengguna hanya boleh karakter alfanumerik, _ dan -.';
-      hasError = true;
-    }
-
-    if (hasError) {
+    const ok = await handleTestConnection();
+    if (!ok) {
       return false;
     }
 
-    checkingDb = true;
-
-    try {
-      const result = await checkOldDb(config);
-      if (result.isOld) {
-        onOldDbFound(result.version);
-      } else {
-        config.db_new_migrate = false;
-        onNext?.();
-      }
-      return true;
-    } catch (err: any) {
-      connectionError = err.message || 'Koneksi ke database gagal saat memeriksa skema tabel.';
-      return false;
-    } finally {
-      checkingDb = false;
-    }
+    onNext?.();
+    return true;
   }
 </script>
 
@@ -237,7 +215,7 @@
             type="text"
             bind:value={config.host}
             placeholder="localhost atau 127.0.0.1"
-            oninput={() => { fieldErrors.host = undefined; }}
+            oninput={() => { fieldErrors.host = undefined; resetConnectionStatus(); }}
             class="w-full px-4 py-2.5 rounded-xl border text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30 {fieldErrors.host ? 'border-danger bg-danger/5 text-danger' : 'border-line bg-surface'}"
           />
           {#if fieldErrors.host}
@@ -283,7 +261,7 @@
           type="text"
           bind:value={config.name}
           placeholder="kasirku"
-          oninput={() => { fieldErrors.name = undefined; }}
+          oninput={() => { fieldErrors.name = undefined; resetConnectionStatus(); }}
           class="w-full px-4 py-2.5 rounded-xl border text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30 {fieldErrors.name ? 'border-danger bg-danger/5 text-danger' : 'border-line bg-surface'}"
         />
         {#if fieldErrors.name}
@@ -306,7 +284,7 @@
             type="text"
             bind:value={config.user}
             placeholder={config.type === 'mysql' ? 'root' : 'postgres'}
-            oninput={() => { fieldErrors.user = undefined; }}
+            oninput={() => { fieldErrors.user = undefined; resetConnectionStatus(); }}
             class="w-full px-4 py-2.5 rounded-xl border text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30 {fieldErrors.user ? 'border-danger bg-danger/5 text-danger' : 'border-line bg-surface'}"
           />
           {#if fieldErrors.user}
@@ -328,6 +306,7 @@
               type={showPassword ? 'text' : 'password'}
               bind:value={config.pass}
               placeholder="Kata sandi database"
+              oninput={() => { resetConnectionStatus(); }}
               class="w-full px-4 py-2.5 pr-12 rounded-xl border border-line bg-surface text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
             />
             <button
@@ -365,11 +344,11 @@
         <button
           type="button"
           onclick={handleTestConnection}
-          disabled={testingConnection || !config.host || !config.name || !config.user}
+          disabled={testingConnection || checkingDb || !config.host || !config.name || !config.user}
           class="px-4 py-2 rounded-xl border border-line bg-surface hover:bg-subtle text-sm font-medium text-ink transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2 ml-auto shadow-xs"
         >
-          <RefreshCw class="w-4 h-4 text-brand {testingConnection ? 'animate-spin' : ''}" />
-          <span>{testingConnection ? 'Menguji...' : 'Uji Koneksi'}</span>
+          <RefreshCw class="w-4 h-4 text-brand {testingConnection || checkingDb ? 'animate-spin' : ''}" />
+          <span>{testingConnection || checkingDb ? 'Menguji...' : 'Uji Koneksi'}</span>
         </button>
       </div>
     </div>

@@ -13,16 +13,15 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
@@ -39,8 +38,7 @@ export default async function(req: Request, token: string) {
     const [res] = await db
     .select({jumlah_barang: schema.barang_masuk.jumlah_barang, barang_id: schema.barang_masuk.barang_id})
     .from(schema.barang_masuk)
-    .where(eq(schema.barang_masuk.id, id))
-    .where(eq(schema.barang_masuk.tanggal_key, tanggal_key))
+    .where(and(eq(schema.barang_masuk.id, id), eq(schema.barang_masuk.tanggal_key, tanggal_key)))
     .limit(1);
 
     if (!res) return new Response("Not Found", {status: 404});
@@ -55,7 +53,7 @@ export default async function(req: Request, token: string) {
             .where(eq(schema.barang.id, res.barang_id))
             .execute();
             
-            await trx.delete(schema.barang_masuk).where(eq(schema.barang_masuk.id, id)).where(eq(schema.barang_masuk.tanggal_key, tanggal_key)).execute();
+            await trx.delete(schema.barang_masuk).where(and(eq(schema.barang_masuk.id, id), eq(schema.barang_masuk.tanggal_key, tanggal_key))).execute();
             const [row] = await trx.select({stok_barang: schema.barang.stok_barang}).from(schema.barang).where(eq(schema.barang.id, res.barang_id)).limit(1);
             return row?.stok_barang;
         });
