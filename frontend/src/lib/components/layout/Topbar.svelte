@@ -49,8 +49,6 @@
     '/profile': { title: 'Profile', section: 'User', icon: UserCircle },
   };
 
-  const currentMeta = $derived(routeTitles[router.currentPath] || { title: 'KasirKu', section: 'Halaman', icon: null });
-
   async function handleLogout() {
     const confirmed = await dialog.confirm({
       title: 'Keluar dari Akun KasirKu',
@@ -90,18 +88,6 @@
     >
       <PanelLeft class="w-4 h-4" />
     </button>
-
-    <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 min-w-0">
-      <span class="hidden sm:inline font-medium uppercase tracking-wider text-[10px] text-neutral-400 dark:text-neutral-500">{currentMeta.section}</span>
-      <span class="hidden sm:inline text-neutral-300 dark:text-neutral-700">/</span>
-      <span class="font-semibold text-neutral-900 dark:text-neutral-100 truncate text-sm flex items-center gap-1.5">
-        {#if currentMeta.icon}
-          {@const MetaIcon = currentMeta.icon}
-          <MetaIcon class="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" strokeWidth={1.75} />
-        {/if}
-        <span>{currentMeta.title}</span>
-      </span>
-    </div>
   </div>
 
   <!-- Right: Shortcuts, Status & Controls -->

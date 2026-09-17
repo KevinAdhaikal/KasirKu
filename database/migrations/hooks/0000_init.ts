@@ -13,6 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { password } from "bun";
 import type { DatabaseType, MigrationDb, MigrationSchema } from "../../../src/database/migrate";
 
 export default async function(db: MigrationDb, dbType: DatabaseType) {
@@ -55,14 +56,6 @@ export default async function(db: MigrationDb, dbType: DatabaseType) {
         },
         {
             section: "store",
-            key: "email",
-            value: "",
-            type: "string",
-            created_ms: now,
-            modified_ms: now
-        },
-        {
-            section: "store",
             key: "struk",
             value: "",
             type: "string",
@@ -70,4 +63,36 @@ export default async function(db: MigrationDb, dbType: DatabaseType) {
             modified_ms: now
         }
     ]);
+
+    // ini untuk roles
+    await db.insert(schema.roles).values([
+        {
+            name: "Administrator",
+            permission_level: 1,
+            created_ms: now,
+            modified_ms: now
+        }
+    ]);
+
+    // ini untuk users
+    await db.insert(schema.users).values([
+        {
+            username: "admin",
+            full_name: "Administrator",
+            password_hash: "",
+            profile_img: "",
+            role_id: 1,
+            created_ms: now,
+            modified_ms: now
+        }
+    ]);
+
+    // ini buat inisialisasi kategori barang
+    await db.insert(schema.kategori_barang).values([
+        {
+            nama_kategori: "Tidak Ada",
+            created_ms: now,
+            modified_ms: now
+        }
+    ])
 }

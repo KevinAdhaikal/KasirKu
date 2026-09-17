@@ -16,6 +16,25 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('codemirror') || id.includes('@codemirror') || id.includes('@lezer')) {
+              return 'codemirror';
+            }
+            if (id.includes('lucide-svelte')) {
+              return 'lucide-icons';
+            }
+            if (id.includes('svelte')) {
+              return 'svelte-core';
+            }
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
   server: {
     port: 5173,

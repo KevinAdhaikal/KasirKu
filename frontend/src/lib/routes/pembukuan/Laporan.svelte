@@ -620,19 +620,30 @@
               </tr>
             {/each}
           </tbody>
+          {#if sortedPenjualan.length > 0}
+            <tfoot class="border-t-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/90 dark:bg-neutral-900/90 font-semibold text-xs text-neutral-900 dark:text-neutral-100 sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+              <tr>
+                <td class="px-4 py-2.5 font-semibold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                  <span>Total Item: <strong class="tabular-nums font-bold">{formatNumber(totalQty)} unit</strong></span>
+                </td>
+                <td class="px-4 py-2.5"></td>
+                <td class="px-4 py-2.5 text-center tabular-nums font-semibold text-neutral-700 dark:text-neutral-300">
+                  {formatNumber(totalQty)}
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums text-neutral-500 font-medium">
+                  {formatRupiah(totalHpp)}
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums font-bold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                  {formatRupiah(totalOmzet)}
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                  +{formatRupiah(labaKotor)}
+                </td>
+              </tr>
+            </tfoot>
+          {/if}
         </table>
       </div>
-
-      <!-- Summary Info Strip (Plain text, not badges) -->
-      {#if sortedPenjualan.length > 0}
-        <div class="px-4 py-2.5 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-          <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
-            <span>Total Item: <strong class="text-neutral-900 dark:text-neutral-100 tabular-nums">{formatNumber(totalQty)} unit</strong></span>
-            <span>Total Omzet: <strong class="text-neutral-900 dark:text-neutral-100 tabular-nums">{formatRupiah(totalOmzet)}</strong></span>
-            <span>Total Laba Kotor: <strong class="text-emerald-600 dark:text-emerald-400 tabular-nums">+{formatRupiah(labaKotor)}</strong></span>
-          </div>
-        </div>
-      {/if}
 
       <!-- Pagination & Total Indicator with Limit -->
       <TablePagination
@@ -715,17 +726,23 @@
               </tr>
             {/each}
           </tbody>
+          {#if sortedPengeluaran.length > 0}
+            <tfoot class="border-t-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/90 dark:bg-neutral-900/90 font-semibold text-xs text-neutral-900 dark:text-neutral-100 sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+              <tr>
+                <td class="px-4 py-2.5 font-semibold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                  <span>Total: <strong class="tabular-nums font-bold">{sortedPengeluaran.length} beban</strong></span>
+                </td>
+                <td class="px-4 py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
+                  Total Pengeluaran
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
+                  -{formatRupiah(totalPengeluaran)}
+                </td>
+              </tr>
+            </tfoot>
+          {/if}
         </table>
       </div>
-
-      <!-- Summary Info Strip (Plain text, not badges) -->
-      {#if sortedPengeluaran.length > 0}
-        <div class="px-4 py-2.5 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-          <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
-            <span>Total Pengeluaran: <strong class="text-red-600 dark:text-red-400 tabular-nums">-{formatRupiah(totalPengeluaran)}</strong> ({sortedPengeluaran.length} beban)</span>
-          </div>
-        </div>
-      {/if}
 
       <!-- Pagination & Total Indicator with Limit -->
       <TablePagination

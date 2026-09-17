@@ -38,8 +38,7 @@ export default async function(req: Request, url: URL, user_info: user_session_in
                     "name",
                     "desc",
                     "address",
-                    "phone_num",
-                    "email"
+                    "phone_num"
                 ])
             )
         );

@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import Modal from '../ui/Modal.svelte';
   import Button from '../ui/Button.svelte';
   import { auth } from '../../stores/auth.svelte';
-  import { formatRupiah, formatNumber, formatDate } from '../../utils/format';
+  import { api } from '../../api/api';
+  import { renderReceiptHtml, type StoreInfo } from '../../utils/receipt';
   import { Printer, Check, ArrowLeft, RefreshCw } from 'lucide-svelte';
   import type { ReceiptData } from './PaymentModal.svelte';
 
@@ -15,9 +17,35 @@
   let { open = $bindable(false), data = null, onclose }: Props = $props();
 
   let receiptWidth = $state<'58mm' | '80mm'>('58mm');
+  let strukTemplate = $state<string | null>(null);
 
   function handlePrint() {
-    window.print();
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(receiptHtml);
+      doc.close();
+      iframe.contentWindow?.focus();
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }, 1000);
+      }, 250);
+    } else {
+      window.print();
+    }
   }
 
   function handleClose() {
@@ -37,9 +65,38 @@
     }
   }
 
-  const storeName = $derived(auth.publicInfo?.store_name?.trim() || 'KASIRKU POS');
-  const storeAddress = $derived(auth.publicInfo?.store_address?.trim() || '');
-  const storePhone = $derived(auth.publicInfo?.store_phone_num?.trim() || '');
+  const storeInfo = $derived<StoreInfo>({
+    name: auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
+    desc: auth.publicInfo?.store_desc?.trim() || '',
+    address: auth.publicInfo?.store_address?.trim() || '',
+    phone_num: auth.publicInfo?.store_phone_num?.trim() || '',
+  });
+
+  const receiptHtml = $derived(
+    renderReceiptHtml(strukTemplate, data, storeInfo)
+  );
+
+  async function loadStrukTemplate() {
+    try {
+      const res = await api.get<{ store_struk?: string | null; content?: string | null }>('/api/settings/struk');
+      const val = res?.store_struk ?? res?.content;
+      if (val && val.trim()) {
+        strukTemplate = val;
+      }
+    } catch {
+      // use default template
+    }
+  }
+
+  onMount(() => {
+    loadStrukTemplate();
+  });
+
+  $effect(() => {
+    if (open) {
+      loadStrukTemplate();
+    }
+  });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -86,92 +143,20 @@
       </Button>
     </div>
 
-    <!-- Receipt Thermal Paper Container -->
-    <div class="bg-[var(--bg-subtle)] p-3 sm:p-5 rounded-lg border border-neutral-200 dark:border-neutral-800 flex justify-center overflow-x-auto">
+    <!-- Receipt Thermal Paper Container via Isolated Iframe -->
+    <div class="bg-[var(--bg-subtle)] p-3 sm:p-5 rounded-lg border border-neutral-200 dark:border-neutral-800 flex justify-center overflow-x-auto min-h-[440px]">
       <div
-        id="thermal-receipt"
-        class={`bg-white text-black p-4 sm:p-6 shadow-sm border border-neutral-200 font-mono text-xs transition-all duration-150 ${
-          receiptWidth === '58mm' ? 'w-[280px] sm:w-[310px]' : 'w-[360px] sm:w-[400px]'
-        }`}
-        style="line-height: 1.4;"
+        class="bg-white rounded shadow-sm border border-neutral-300 dark:border-neutral-700 overflow-hidden transition-all duration-150 {
+          receiptWidth === '58mm' ? 'w-[300px]' : 'w-[380px]'
+        }"
       >
-        <!-- Store Header -->
-        <div class="text-center pb-2">
-          <p class="font-bold text-sm uppercase tracking-wide">{storeName}</p>
-          {#if storeAddress}
-            <p class="text-[11px] text-neutral-700 mt-0.5">{storeAddress}</p>
-          {/if}
-          {#if storePhone}
-            <p class="text-[11px] text-neutral-700">Telp: {storePhone}</p>
-          {/if}
-        </div>
-
-        <div class="border-b border-dashed border-neutral-400 my-2"></div>
-
-        <!-- Metadata -->
-        {#if data}
-          <div class="text-[11px] space-y-0.5 text-neutral-800">
-            <div class="flex justify-between">
-              <span>No. Struk</span>
-              <span class="font-semibold">{data.receiptNo}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Tanggal</span>
-              <span>{formatDate(data.timestamp)}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Kasir</span>
-              <span>{data.cashierName}</span>
-            </div>
-          </div>
-
-          <div class="border-b border-dashed border-neutral-400 my-2"></div>
-
-          <!-- Items Table -->
-          <div class="space-y-2 text-[11px]">
-            {#each data.items as item}
-              {@const subtotal = item.harga_jual * item.jumlah_barang}
-              <div>
-                <p class="font-medium text-neutral-900 truncate">{item.nama_barang}</p>
-                <div class="flex justify-between text-neutral-700 pl-1">
-                  <span>{formatNumber(item.jumlah_barang)} x {formatRupiah(item.harga_jual)}</span>
-                  <span class="font-semibold text-neutral-900">{formatRupiah(subtotal)}</span>
-                </div>
-              </div>
-            {/each}
-          </div>
-
-          <div class="border-b border-dashed border-neutral-400 my-2"></div>
-
-          <!-- Financial Summary -->
-          <div class="space-y-1 text-[11px]">
-            <div class="flex justify-between text-neutral-700">
-              <span>Total Item</span>
-              <span class="font-medium">{formatNumber(data.totalItems)} pcs</span>
-            </div>
-            <div class="flex justify-between text-xs font-bold pt-0.5 text-neutral-950">
-              <span>TOTAL BELANJA</span>
-              <span>{formatRupiah(data.totalAmount)}</span>
-            </div>
-            <div class="flex justify-between text-neutral-800 pt-0.5">
-              <span>TUNAI</span>
-              <span class="font-semibold">{formatRupiah(data.cashPaid)}</span>
-            </div>
-            <div class="flex justify-between text-neutral-800">
-              <span>KEMBALIAN</span>
-              <span class="font-semibold">{formatRupiah(data.changeAmount)}</span>
-            </div>
-          </div>
-
-          <div class="border-b border-dashed border-neutral-400 my-3"></div>
-
-          <!-- Receipt Footer Note -->
-          <div class="text-center text-[10px] text-neutral-600 space-y-1">
-            <p class="font-semibold uppercase tracking-wider">*** TERIMA KASIH ***</p>
-            <p>Barang yang sudah dibeli tidak dapat ditukar atau dikembalikan.</p>
-            <p class="text-[9px] text-neutral-400 pt-1">KasirKu POS System</p>
-          </div>
-        {/if}
+        <!-- Render Dynamic HTML Receipt Content in Isolated Iframe -->
+        <iframe
+          title="Struk Penjualan"
+          srcdoc={receiptHtml}
+          class="w-full h-[480px] border-0 bg-white block"
+          sandbox="allow-same-origin"
+        ></iframe>
       </div>
     </div>
   </div>

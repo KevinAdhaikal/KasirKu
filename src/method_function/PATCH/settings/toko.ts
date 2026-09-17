@@ -33,7 +33,6 @@ export default async function(req: Request, token: string) {
     const deskripsi_toko = user_input.get("deskripsi_toko");
     const alamat_toko = user_input.get("alamat_toko");
     const telepon_toko = user_input.get("telepon_toko");
-    const email_toko = user_input.get("email_toko");
 
     const phoneRegex = /^[0-9+\-\s()]+$/;
 
@@ -54,7 +53,6 @@ export default async function(req: Request, token: string) {
                     WHEN 'desc' THEN ${deskripsi_toko}
                     WHEN 'address' THEN ${alamat_toko}
                     WHEN 'phone_num' THEN ${telepon_toko}
-                    WHEN 'email' THEN ${email_toko}
                     ELSE ${settings.value}
                 END
             `,
