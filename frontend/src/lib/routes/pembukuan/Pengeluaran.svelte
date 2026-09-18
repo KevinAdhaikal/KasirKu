@@ -594,11 +594,6 @@
           if (parseIDR(formNominal) <= 0) nominalError = 'Nominal pengeluaran harus lebih besar dari Rp0,00.';
         }}
       />
-      {#if parseIDR(formNominal) > 0}
-        <p class="text-xs font-mono text-neutral-500 dark:text-neutral-400 mt-1.5">
-          Terbilang: <span class="font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(parseIDR(formNominal))}</span>
-        </p>
-      {/if}
     </div>
 
     <!-- Quick Presets -->

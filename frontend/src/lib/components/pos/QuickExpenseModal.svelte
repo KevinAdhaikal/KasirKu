@@ -119,11 +119,6 @@
           if (parseIDR(nominalRaw) <= 0) nominalError = 'Nominal pengeluaran harus lebih besar dari Rp0.';
         }}
       />
-      {#if parseIDR(nominalRaw) > 0}
-        <p class="text-xs font-mono text-neutral-500 dark:text-neutral-400 mt-1">
-          Terbilang: <span class="font-semibold text-neutral-900 dark:text-neutral-100">{nominalFormatted}</span>
-        </p>
-      {/if}
     </div>
 
     <!-- Quick Presets -->

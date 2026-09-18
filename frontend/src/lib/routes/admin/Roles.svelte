@@ -87,7 +87,7 @@
       bit: Permissions.MANAGE_PEMBUKUAN, // 8 (1 << 3)
       id: 'perm_pembukuan',
       label: 'Pembukuan & Finansial',
-      description: 'Melihat log riwayat penjualan, mencatat beban pengeluaran toko, dan laporan laba rugi.',
+      description: 'Melihat log riwayat penjualan, mencatat pengeluaran operasional toko, dan laporan keuangan.',
       icon: BookOpen,
     },
     {

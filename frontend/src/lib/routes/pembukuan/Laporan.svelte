@@ -334,8 +334,8 @@
   <div class="p-5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs space-y-4">
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Tren Pendapatan vs Beban Harian</h2>
-        <p class="text-[11px] text-neutral-500">Perbandingan transaksi omzet penjualan kasir dan pengeluaran per hari.</p>
+        <h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Tren Pendapatan vs Pengeluaran Harian</h2>
+        <p class="text-[11px] text-neutral-500">Perbandingan omzet penjualan kasir dan pengeluaran operasional toko per hari.</p>
       </div>
 
       <div class="flex items-center gap-4 text-xs font-mono">
@@ -345,7 +345,7 @@
         </div>
         <div class="flex items-center gap-1.5">
           <div class="w-3 h-3 rounded-xs bg-red-500"></div>
-          <span class="text-neutral-600 dark:text-neutral-400 text-[11px]">Beban</span>
+          <span class="text-neutral-600 dark:text-neutral-400 text-[11px]">Pengeluaran</span>
         </div>
       </div>
     </div>
@@ -368,7 +368,7 @@
 
           {#each dailyStats as day}
             {@const omzetHeight = Math.max(4, Math.round((day.omzet / chartMaxVal) * 160))}
-            {@const bebanHeight = Math.max(4, Math.round((day.pengeluaran / chartMaxVal) * 160))}
+            {@const pengeluaranHeight = Math.max(4, Math.round((day.pengeluaran / chartMaxVal) * 160))}
             <div class="flex-1 flex flex-col items-center justify-end h-full gap-1 group relative">
               <!-- Bars pair -->
               <div class="flex items-end gap-0.5 sm:gap-1 w-full max-w-[24px]">
@@ -379,12 +379,12 @@
                   title={`Omzet: ${formatRupiah(day.omzet)}`}
                 ></div>
 
-                <!-- Beban Bar -->
+                <!-- Pengeluaran Bar -->
                 {#if day.pengeluaran > 0}
                   <div
                     class="flex-1 bg-red-500 rounded-t-xs hover:opacity-80 transition-all cursor-pointer"
-                    style="height: {bebanHeight}px;"
-                    title={`Beban: ${formatRupiah(day.pengeluaran)}`}
+                    style="height: {pengeluaranHeight}px;"
+                    title={`Pengeluaran: ${formatRupiah(day.pengeluaran)}`}
                   ></div>
                 {/if}
               </div>
@@ -398,7 +398,7 @@
               <div class="absolute bottom-full mb-2 hidden group-hover:flex flex-col p-2 rounded bg-[var(--brand)] text-[var(--accent-fg)] text-[10px] font-mono shadow-xl z-20 pointer-events-none whitespace-nowrap">
                 <span class="font-bold">{formatTanggalKey(day.dateKey)}</span>
                 <span>Omzet: {formatRupiah(day.omzet)}</span>
-                <span>Beban: {formatRupiah(day.pengeluaran)}</span>
+                <span>Pengeluaran: {formatRupiah(day.pengeluaran)}</span>
                 <span class="font-bold border-t border-white/20 dark:border-black/20 mt-1 pt-0.5">
                   Laba: {formatRupiah(day.omzet - day.pengeluaran)}
                 </span>
@@ -419,7 +419,7 @@
         class="py-3 border-b-2 transition-colors {activeTab === 'summary' ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white font-semibold' : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
         onclick={() => (activeTab = 'summary')}
       >
-        Ringkasan Laba Rugi
+        Ringkasan Keuangan
       </button>
       <button
         type="button"
@@ -437,14 +437,14 @@
       </button>
     </div>
 
-    <!-- Tab 1: Ringkasan Laba Rugi (Balance Table) -->
+    <!-- Tab 1: Ringkasan Keuangan (Balance Table) -->
     {#if activeTab === 'summary'}
       <div class="p-6">
         <div class="max-w-2xl mx-auto space-y-4">
           <div class="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-800 text-xs">
             <!-- Arus Pendapatan -->
             <div class="p-3.5 bg-[var(--bg-subtle)]/60 flex items-center justify-between font-semibold">
-              <span>A. PENDAPATAN OPERASIONAL</span>
+              <span>A. TOTAL PENDAPATAN (OMZET)</span>
               <span></span>
             </div>
             <div class="p-3.5 flex items-center justify-between">
@@ -454,7 +454,7 @@
 
             <!-- HPP -->
             <div class="p-3.5 bg-[var(--bg-subtle)]/60 flex items-center justify-between font-semibold">
-              <span>B. HARGA POKOK PENJUALAN (HPP)</span>
+              <span>B. MODAL DASAR BARANG (HPP)</span>
               <span></span>
             </div>
             <div class="p-3.5 flex items-center justify-between">
@@ -464,25 +464,25 @@
 
             <!-- Laba Kotor Highlight -->
             <div class="p-3.5 bg-emerald-50/40 dark:bg-emerald-950/20 flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-400">
-              <span>LABA KOTOR (GROSS PROFIT)</span>
+              <span>KEUNTUNGAN KOTOR (LABA KOTOR)</span>
               <span class="font-mono text-sm">+{formatRupiah(labaKotor)}</span>
             </div>
 
-            <!-- Beban Operasional -->
+            <!-- Pengeluaran Toko -->
             <div class="p-3.5 bg-[var(--bg-subtle)]/60 flex items-center justify-between font-semibold">
-              <span>C. BEBAN OPERASIONAL TOKO</span>
+              <span>C. PENGELUARAN OPERASIONAL TOKO</span>
               <span></span>
             </div>
             <div class="p-3.5 flex items-center justify-between">
-              <span class="text-neutral-600 dark:text-neutral-400 pl-4">Biaya Listrik, Perlengkapan, Operasional</span>
+              <span class="text-neutral-600 dark:text-neutral-400 pl-4">Biaya Listrik, Perlengkapan, Operasional Kas</span>
               <span class="font-mono font-medium text-red-600 dark:text-red-400">({formatRupiah(totalPengeluaran)})</span>
             </div>
 
             <!-- Laba Bersih Final -->
             <div class="p-4 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between font-bold text-sm">
               <div class="space-y-0.5">
-                <span>LABA BERSIH (NET PROFIT)</span>
-                <span class="block text-[11px] font-normal text-neutral-500">Margin Bersih: {netMarginPct}%</span>
+                <span>KEUNTUNGAN BERSIH (LABA BERSIH)</span>
+                <span class="block text-[11px] font-normal text-neutral-500">Margin Keuntungan Bersih: {netMarginPct}%</span>
               </div>
               <span class="font-mono text-lg {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
                 {labaBersih >= 0 ? '+' : ''}{formatRupiah(labaBersih)}
@@ -609,16 +609,28 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-            {#each paginatedPenjualan as p}
-              <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
-                <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{p.no_struk}</td>
-                <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(p.created_ms)}</td>
-                <td class="px-4 py-2.5 text-center text-xs tabular-nums font-medium text-neutral-700 dark:text-neutral-300">{formatNumber(p.total_barang)}</td>
-                <td class="px-4 py-2.5 text-right text-xs tabular-nums text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
-                <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
-                <td class="px-4 py-2.5 text-right text-xs tabular-nums font-medium text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+            {#if paginatedPenjualan.length === 0}
+              <tr>
+                <td colspan="6" class="px-4 py-12 text-center text-neutral-400">
+                  <Receipt class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
+                  <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada riwayat transaksi penjualan</p>
+                  <p class="text-[11px] text-neutral-400 mt-0.5">
+                    Tidak ditemukan transaksi penjualan kasir pada rentang tanggal {startDate} s/d {endDate}
+                  </p>
+                </td>
               </tr>
-            {/each}
+            {:else}
+              {#each paginatedPenjualan as p}
+                <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
+                  <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{p.no_struk}</td>
+                  <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(p.created_ms)}</td>
+                  <td class="px-4 py-2.5 text-center text-xs tabular-nums font-medium text-neutral-700 dark:text-neutral-300">{formatNumber(p.total_barang)}</td>
+                  <td class="px-4 py-2.5 text-right text-xs tabular-nums text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
+                  <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
+                  <td class="px-4 py-2.5 text-right text-xs tabular-nums font-medium text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+                </tr>
+              {/each}
+            {/if}
           </tbody>
           {#if sortedPenjualan.length > 0}
             <tfoot class="border-t-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/90 dark:bg-neutral-900/90 font-semibold text-xs text-neutral-900 dark:text-neutral-100 sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
@@ -703,7 +715,7 @@
                   class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
                   onclick={() => togglePengeluaranSort('jumlah_uang')}
                 >
-                  <span>Nominal Beban</span>
+                  <span>Nominal Pengeluaran</span>
                   {#if pengeluaranSortKey === 'jumlah_uang'}
                     {#if pengeluaranSortAsc}
                       <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
@@ -718,19 +730,31 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-            {#each paginatedPengeluaran as exp}
-              <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
-                <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(exp.created_ms)}</td>
-                <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{exp.deskripsi}</td>
-                <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+            {#if paginatedPengeluaran.length === 0}
+              <tr>
+                <td colspan="3" class="px-4 py-12 text-center text-neutral-400">
+                  <TrendingDown class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
+                  <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada data pengeluaran operasional</p>
+                  <p class="text-[11px] text-neutral-400 mt-0.5">
+                    Tidak ditemukan catatan pengeluaran toko pada rentang tanggal {startDate} s/d {endDate}
+                  </p>
+                </td>
               </tr>
-            {/each}
+            {:else}
+              {#each paginatedPengeluaran as exp}
+                <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
+                  <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(exp.created_ms)}</td>
+                  <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{exp.deskripsi}</td>
+                  <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+                </tr>
+              {/each}
+            {/if}
           </tbody>
           {#if sortedPengeluaran.length > 0}
             <tfoot class="border-t-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/90 dark:bg-neutral-900/90 font-semibold text-xs text-neutral-900 dark:text-neutral-100 sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
               <tr>
                 <td class="px-4 py-2.5 font-semibold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
-                  <span>Total: <strong class="tabular-nums font-bold">{sortedPengeluaran.length} beban</strong></span>
+                  <span>Total: <strong class="tabular-nums font-bold">{sortedPengeluaran.length} pengeluaran</strong></span>
                 </td>
                 <td class="px-4 py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
                   Total Pengeluaran
@@ -761,7 +785,7 @@
 <div id="financial-print-report" class="hidden print:block font-sans text-black p-8 bg-white max-w-4xl mx-auto text-xs">
   <div class="text-center pb-4 border-b-2 border-black">
     <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo.store_name || 'KASIRKU POS'}</h1>
-    <p class="text-sm font-semibold mt-0.5">LAPORAN KEUANGAN & LABA RUGI</p>
+    <p class="text-sm font-semibold mt-0.5">LAPORAN RINGKASAN KEUANGAN</p>
     <p class="text-xs mt-1">Periode: {formatTanggalIndo(startDate)} s/d {formatTanggalIndo(endDate)}</p>
     {#if auth.publicInfo.store_address}
       <p class="text-[10px] text-neutral-600">{auth.publicInfo.store_address}</p>
@@ -782,19 +806,19 @@
           <td class="p-2 text-right font-mono font-bold">{formatRupiah(totalOmzet)}</td>
         </tr>
         <tr>
-          <td class="p-2 font-medium">Harga Pokok Penjualan (HPP)</td>
+          <td class="p-2 font-medium">Modal Dasar Barang Terjual (HPP)</td>
           <td class="p-2 text-right font-mono">({formatRupiah(totalHpp)})</td>
         </tr>
         <tr class="bg-neutral-50 font-bold">
-          <td class="p-2">LABA KOTOR (GROSS PROFIT)</td>
+          <td class="p-2">KEUNTUNGAN KOTOR (LABA KOTOR)</td>
           <td class="p-2 text-right font-mono">+{formatRupiah(labaKotor)}</td>
         </tr>
         <tr>
-          <td class="p-2 font-medium">Total Beban & Pengeluaran Toko</td>
+          <td class="p-2 font-medium">Total Pengeluaran Toko</td>
           <td class="p-2 text-right font-mono text-red-600">({formatRupiah(totalPengeluaran)})</td>
         </tr>
         <tr class="bg-neutral-100 font-bold text-sm border-t-2 border-black">
-          <td class="p-2.5">LABA / RUGI BERSIH (NET PROFIT)</td>
+          <td class="p-2.5">KEUNTUNGAN BERSIH (LABA BERSIH)</td>
           <td class="p-2.5 text-right font-mono">{formatRupiah(labaBersih)}</td>
         </tr>
       </tbody>

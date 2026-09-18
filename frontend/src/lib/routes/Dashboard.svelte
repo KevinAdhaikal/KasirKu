@@ -327,15 +327,15 @@
             </div>
           </div>
 
-          <!-- Kiri 2: Beban Pengeluaran -->
+          <!-- Kiri 2: Pengeluaran Toko -->
           <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex items-center justify-center shrink-0">
                 <TrendingDown class="w-4 h-4" />
               </div>
               <div class="min-w-0">
-                <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Beban Pengeluaran</span>
-                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Operasional kas & beban toko</span>
+                <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Pengeluaran Toko</span>
+                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Operasional kas & pengeluaran toko</span>
               </div>
             </div>
             <div class="text-right shrink-0">
@@ -382,7 +382,7 @@
               </div>
               <div class="min-w-0">
                 <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 block tracking-tight">Laba Bersih</span>
-                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Setelah seluruh beban operasional</span>
+                <span class="text-[11px] text-neutral-500 dark:text-neutral-400">Setelah seluruh pengeluaran operasional</span>
               </div>
             </div>
             <div class="text-right shrink-0">
