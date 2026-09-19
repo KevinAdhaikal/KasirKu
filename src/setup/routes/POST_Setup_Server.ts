@@ -7,7 +7,7 @@ export async function POST_Setup_Server(req: Request) {
 
     try {
         req_json = await req.json();
-    } catch(_) {
+    } catch {
         current_config.temp.setup_done = [0, 0, 0, 0];
         return new Response("Bad Request", { status: 400 });
     }

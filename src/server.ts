@@ -225,7 +225,11 @@ export function main() {
         }
 
         // POST, PATCH, DELETE
-        else if (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE") {
+        else if (
+            req.method === "POST" ||
+            req.method === "PATCH" ||
+            req.method === "DELETE"
+        ) {
             if (!global.rate_limit.check(remote_ip)) {
                 return with_cors(new Response("Too Many Requests", { status: 429 }), req);
             }

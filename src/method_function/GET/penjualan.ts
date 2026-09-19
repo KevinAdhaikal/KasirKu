@@ -15,7 +15,7 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = global.database;
@@ -26,7 +26,8 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
 
     const user_input = url.searchParams;
-    const tanggal_key = Number(user_input.get("tanggal_key"));
+    const tanggal_start = Number(user_input.get("tanggal_start"));
+    const tanggal_end = Number(user_input.get("tanggal_end"));
     const id = Number(user_input.get("id"));
 
     let res;
@@ -50,9 +51,15 @@ export default async function(req: Request, url: URL, user_info: user_session_in
         Number.isNaN(id) || !id
     ) {
         if (
-            Number.isNaN(tanggal_key)
+            Number.isNaN(tanggal_start) || !tanggal_start ||
+            Number.isNaN(tanggal_end) || !tanggal_end
         ) return new Response("Bad Request", { status: 400 });
-        res = await baseQuery.where(eq(penjualan.tanggal_key, tanggal_key));
+        res = await baseQuery.where(
+            and(
+                gte(penjualan.tanggal_key, tanggal_start),
+                lte(penjualan.tanggal_key, tanggal_end)
+            )
+        );
     } else {
         res = await baseQuery
             .where(eq(penjualan.id, id))

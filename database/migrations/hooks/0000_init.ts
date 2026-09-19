@@ -13,7 +13,6 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { password } from "bun";
 import type { DatabaseType, MigrationDb, MigrationSchema } from "../../../src/database/migrate";
 
 export default async function(db: MigrationDb, dbType: DatabaseType) {

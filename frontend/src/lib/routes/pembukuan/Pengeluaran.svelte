@@ -109,11 +109,7 @@
       const endKey = getTanggalKey(endDate);
 
       let res: any;
-      if (startKey === endKey) {
-        res = await api.get(`/api/pengeluaran?tanggal_key=${startKey}`);
-      } else {
-        res = await api.get(`/api/pengeluaran?tanggal_start=${startKey}&tanggal_end=${endKey}`);
-      }
+      res = await api.get(`/api/pengeluaran?tanggal_start=${startKey}&tanggal_end=${endKey}`);
 
       const list = typeof res === 'string' ? JSON.parse(res) : (Array.isArray(res) ? res : []);
       pengeluaranList = list;
