@@ -27,15 +27,18 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const tanggal_start = Number(user_input.get("tanggal_start"));
     const tanggal_end = Number(user_input.get("tanggal_end"));
 
-    if (isNaN(tanggal_start) || isNaN(tanggal_end) || !tanggal_start || !tanggal_end) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(tanggal_start) || !tanggal_start ||
+        Number.isNaN(tanggal_end) || !tanggal_end
+    ) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .select({
-        nama_barang: penjualan_item.nama_barang,
-        jumlah: sql<number>`sum(${penjualan_item.jumlah})`.as('jumlah')
-    })
-    .from(penjualan_item)
-    .where(and(gte(penjualan_item.tanggal_key, tanggal_start), lte(penjualan_item.tanggal_key, tanggal_end)))
+        .select({
+            nama_barang: penjualan_item.nama_barang,
+            jumlah: sql<number>`sum(${penjualan_item.jumlah})`.as('jumlah')
+        })
+        .from(penjualan_item)
+        .where(and(gte(penjualan_item.tanggal_key, tanggal_start), lte(penjualan_item.tanggal_key, tanggal_end)))
     .groupBy(penjualan_item.nama_barang);
 
     return new Response(JSON.stringify(res), {status: 200});

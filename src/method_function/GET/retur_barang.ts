@@ -28,34 +28,38 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const user_input = url.searchParams;
 
     const tanggal_key = Number(user_input.get("tanggal_key"));
-    if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Reuqest", {status: 400});
+    if (
+        Number.isNaN(tanggal_key) || !tanggal_key
+    ) return new Response("Bad Reuqest", {status: 400});
 
     const id = Number(user_input.get("id"));
     let res;
 
-    if (!isNaN(id) && id) {
+    if (
+        !Number.isNaN(id) && id
+    ) {
         res = await db
-        .select({
-            nama_barang: barang.nama_barang,
-            barcode_barang: barang.barcode_barang,
-            deskripsi: retur_barang.deskripsi,
-            jumlah_barang: retur_barang.jumlah_barang
-        })
-        .from(retur_barang)
-        .innerJoin(barang, eq(barang.id, retur_barang.barang_id))
-        .where(eq(retur_barang.id, id))
-        .limit(1)
+            .select({
+                nama_barang: barang.nama_barang,
+                barcode_barang: barang.barcode_barang,
+                deskripsi: retur_barang.deskripsi,
+                jumlah_barang: retur_barang.jumlah_barang
+            })
+            .from(retur_barang)
+            .innerJoin(barang, eq(barang.id, retur_barang.barang_id))
+            .where(eq(retur_barang.id, id))
+            .limit(1)
         .then((r: any) => r[0]);
     } else {
         res = await db
-        .select({
-            id: retur_barang.id,
-            nama_barang: barang.nama_barang,
-            deskripsi: retur_barang.deskripsi,
-            jumlah_barang: retur_barang.jumlah_barang
-        })
-        .from(retur_barang)
-        .innerJoin(barang, eq(barang.id, retur_barang.barang_id))
+            .select({
+                id: retur_barang.id,
+                nama_barang: barang.nama_barang,
+                deskripsi: retur_barang.deskripsi,
+                jumlah_barang: retur_barang.jumlah_barang
+            })
+            .from(retur_barang)
+            .innerJoin(barang, eq(barang.id, retur_barang.barang_id))
         .where(eq(retur_barang.tanggal_key, tanggal_key));
     }
 

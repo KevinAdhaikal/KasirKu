@@ -34,9 +34,9 @@ export default async function(req: Request, token: string) {
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
 
     if (
-        isNaN(barang_id) || !barang_id
-        || !deskripsi
-        || isNaN(jumlah_barang) || !jumlah_barang
+        Number.isNaN(barang_id) || !barang_id ||
+        !deskripsi ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
     let res_data;
@@ -48,9 +48,9 @@ export default async function(req: Request, token: string) {
     try {
         res_data = await db.transaction(async (trx: any) => {
             await trx.update(schema.barang)
-            .set({
-                stok_barang: sql`stok_barang - ${jumlah_barang}`
-            })
+                .set({
+                    stok_barang: sql`stok_barang - ${jumlah_barang}`
+                })
             .where(eq(schema.barang.id, barang_id));
             
             const [returResult] = await trx.insert(schema.retur_barang).values({

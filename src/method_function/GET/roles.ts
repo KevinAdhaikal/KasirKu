@@ -26,7 +26,7 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
 
     const res = await db
-    .select()
+        .select()
     .from(roles);
 
     return new Response(JSON.stringify(res), {status: 200});

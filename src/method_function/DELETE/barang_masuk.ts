@@ -33,12 +33,15 @@ export default async function(req: Request, token: string) {
     const id = Number(user_input.get("id"));
     const tanggal_key = Number(user_input.get("tanggal_key"));
 
-    if (isNaN(id) || !id || isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key
+    ) return new Response("Bad Request", {status: 400});
 
     const [res] = await db
-    .select({jumlah_barang: schema.barang_masuk.jumlah_barang, barang_id: schema.barang_masuk.barang_id})
-    .from(schema.barang_masuk)
-    .where(and(eq(schema.barang_masuk.id, id), eq(schema.barang_masuk.tanggal_key, tanggal_key)))
+        .select({jumlah_barang: schema.barang_masuk.jumlah_barang, barang_id: schema.barang_masuk.barang_id})
+        .from(schema.barang_masuk)
+        .where(and(eq(schema.barang_masuk.id, id), eq(schema.barang_masuk.tanggal_key, tanggal_key)))
     .limit(1);
 
     if (!res) return new Response("Not Found", {status: 404});
@@ -47,13 +50,22 @@ export default async function(req: Request, token: string) {
     try {
         stok_barang = await db.transaction(async (trx: any) => {
             await trx.update(schema.barang)
-            .set({
-                stok_barang: sql`stok_barang - ${res.jumlah_barang}`
-            })
-            .where(eq(schema.barang.id, res.barang_id))
+                .set({
+                    stok_barang: sql`stok_barang - ${res.jumlah_barang}`
+                })
+                .where(eq(schema.barang.id, res.barang_id))
             .execute();
             
-            await trx.delete(schema.barang_masuk).where(and(eq(schema.barang_masuk.id, id), eq(schema.barang_masuk.tanggal_key, tanggal_key))).execute();
+            await trx
+                .delete(schema.barang_masuk)
+                .where(
+                    and(
+                        eq(schema.barang_masuk.id, id),
+                        eq(schema.barang_masuk.tanggal_key, tanggal_key)
+                    )
+                )
+            .execute();
+            
             const [row] = await trx.select({stok_barang: schema.barang.stok_barang}).from(schema.barang).where(eq(schema.barang.id, res.barang_id)).limit(1);
             return row?.stok_barang;
         });

@@ -32,15 +32,17 @@ export default async function(req: Request, token: string) {
     const id = Number(user_input.get("id"));
     const recursive = user_input.get("recursive");
     
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id
+    ) return new Response("Bad Request", {status: 400});
     
     if (id === 1) return new Response("1", {status: 403});
                 
     if (!recursive) {
         const [res] = await db
-            .select({exists: sql`1`.as('exists')})
-            .from(schema.users)
-            .where(eq(schema.users.role_id, id))
+                .select({exists: sql`1`.as('exists')})
+                .from(schema.users)
+                .where(eq(schema.users.role_id, id))
             .limit(1);
             
         if (res) return new Response("2", { status: 403 });
@@ -48,8 +50,8 @@ export default async function(req: Request, token: string) {
     
     try {
         await db
-        .delete(schema.roles)
-        .where(eq(schema.roles.id, id))
+            .delete(schema.roles)
+            .where(eq(schema.roles.id, id))
         .execute();
     } catch (e) {
         console.log("An error occured in delete_method.ts at /role:", e);

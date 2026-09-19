@@ -2,13 +2,6 @@ import { current_config, stop_server } from "..";
 
 export async function POST_Setup_Final(req: Request) {
     if (current_config.temp.setup_done.every(v => v === 1)) {
-        if (!["sqlite", "mysql", "postgresql"].includes(current_config.db_type)) {
-            current_config.temp.setup_done = [0, 0, 0, 0];
-            return new Response("Bad Request", {
-                status: 400
-            });
-        }
-
         const env = `APP_LISTEN_PORT=${current_config.listen_port}
 APP_USE_TLS=${current_config.use_tls ? 1 : ''}
 DB_TYPE=${current_config.db_type}

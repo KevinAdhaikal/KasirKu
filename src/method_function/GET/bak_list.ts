@@ -28,15 +28,17 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const user_input = url.searchParams;
 
     const id = Number(user_input.get("id"));
-    if (isNaN(id) || !id) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id
+    ) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .select({
-        nama_barang: barang.nama_barang,
-        stok_barang: barang.stok_barang,
-        harga_jual: barang.harga_jual
-    })
-    .from(barang)
+        .select({
+            nama_barang: barang.nama_barang,
+            stok_barang: barang.stok_barang,
+            harga_jual: barang.harga_jual
+        })
+        .from(barang)
     .where(eq(barang.kategori_barang_id, id));
 
     return new Response(JSON.stringify(res), {status: 200});

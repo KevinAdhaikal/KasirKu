@@ -69,7 +69,7 @@ export default async function(req: Request, token: string) {
                 ])
             )
         )
-        .execute();
+    .execute();
 
     global.sse_clients.broadcast(JSON.stringify({
         type: 8,

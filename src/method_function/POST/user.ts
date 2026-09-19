@@ -36,9 +36,10 @@ export default async function(req: Request, token: string) {
     const role_id = Number(user_input.get("role_id"));
 
     if (
-        !username || !full_name || !password || !role_id || isNaN(role_id) // kalo misalnya username, full_name, password dan role_id nya ga ada
-        || password.length < 8 // kalo misalnya password nya kurang dari 8 length nya
-        || !/^[a-z0-9_]+$/.test(username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !username || !/^[a-z0-9_]+$/.test(username) || // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !full_name ||
+        !password || password.length < 8 || // kalo misalnya password nya kurang dari 8 length nya
+        isNaN(role_id) || !role_id // kalo misalnya username, full_name, password dan role_id nya ga ada
     ) return new Response("Bad Request", {status: 400});
 
     const now = Date.now();

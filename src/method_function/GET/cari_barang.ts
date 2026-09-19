@@ -29,7 +29,9 @@ export default async function(req: Request, url: URL, user_info: user_session_in
 
     const barang_name = <string>user_input.get("barang"); // nama barang and barcode barang
     const bm = <string>user_input.get("bm"); // apakah cari barang ini untuk barang masuk?
-    if (!barang_name) return new Response("Bad Request", {status: 400});
+    if (
+        !barang_name
+    ) return new Response("Bad Request", {status: 400});
 
     const searchCondition = or(
         eq(barang.barcode_barang, barang_name),
@@ -39,13 +41,13 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     let res;
     if (bm) {
         res = await db
-        .select()
-        .from(barang)
+            .select()
+            .from(barang)
         .where(searchCondition);
     } else {
         res = await db
-        .select()
-        .from(barang)
+            .select()
+            .from(barang)
         .where(and(gt(barang.stok_barang, 0), searchCondition));
     }
     

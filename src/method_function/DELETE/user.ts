@@ -30,15 +30,17 @@ export default async function(req: Request, token: string) {
     const user_input = new URLSearchParams(await req.text());
     
     const id = Number(user_input.get("id"));
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id
+    ) return new Response("Bad Request", {status: 400});
     
     if (id === user_info.user_id) return new Response("1", {status: 403});
     if (id === 1) return new Response("2", {status: 403});
     
     try {
         await db
-        .delete(schema.users)
-        .where(eq(schema.users.id, id))
+            .delete(schema.users)
+            .where(eq(schema.users.id, id))
         .execute();
     } catch (e) {
         console.log("An error occured in delete_method.ts at /user:", e);

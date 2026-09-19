@@ -27,15 +27,17 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     
     const user_input = url.searchParams;
     const tanggal_key = Number(user_input.get("tanggal_key")); 
-    if (isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400}); 
+    if (
+        Number.isNaN(tanggal_key) || !tanggal_key
+    ) return new Response("Bad Request", {status: 400}); 
     
     const [res] = await db
-    .select({
-        total_barang: sql<number>`(SELECT SUM(total_barang) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_barang'),
-        total_harga_modal: sql<number>`(SELECT SUM(total_harga_modal) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_modal'),
-        total_harga_jual: sql<number>`(SELECT SUM(total_harga_jual) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_jual'),
-        jumlah_uang: sql<number>`(SELECT SUM(jumlah_uang) FROM pembukuan WHERE tanggal_key = ${tanggal_key} AND tipe = 1)`.as('jumlah_uang')
-    })
+        .select({
+            total_barang: sql<number>`(SELECT SUM(total_barang) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_barang'),
+            total_harga_modal: sql<number>`(SELECT SUM(total_harga_modal) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_modal'),
+            total_harga_jual: sql<number>`(SELECT SUM(total_harga_jual) FROM penjualan WHERE tanggal_key = ${tanggal_key})`.as('total_harga_jual'),
+            jumlah_uang: sql<number>`(SELECT SUM(jumlah_uang) FROM pembukuan WHERE tanggal_key = ${tanggal_key} AND tipe = 1)`.as('jumlah_uang')
+        })
     .from(sql`(SELECT 1) AS dummy`);
     
     return new Response(JSON.stringify(res), {status: 200});

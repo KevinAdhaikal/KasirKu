@@ -32,27 +32,30 @@ export default async function(req: Request, token: string) {
     const id = Number(user_input.get("id"));
     const tanggal_key = Number(user_input.get("tanggal_key"));
 
-    if (isNaN(id) || isNaN(tanggal_key) || !id || !tanggal_key) return new Response("", {status: 400});
+    if (
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key
+    ) return new Response("", {status: 400});
 
     try {
         const res = await db
-        .select({id: schema.pembukuan.id})
-        .from(schema.pembukuan)
-        .where(and(
-            eq(schema.pembukuan.id, id),
-            eq(schema.pembukuan.tanggal_key, tanggal_key),
-            eq(schema.pembukuan.tipe, 1)
-        ))
-        .limit(1);
-
-        if (res.length > 0) {
-            await db
-            .delete(schema.pembukuan)
+            .select({id: schema.pembukuan.id})
+            .from(schema.pembukuan)
             .where(and(
                 eq(schema.pembukuan.id, id),
                 eq(schema.pembukuan.tanggal_key, tanggal_key),
                 eq(schema.pembukuan.tipe, 1)
             ))
+        .limit(1);
+
+        if (res.length > 0) {
+            await db
+                .delete(schema.pembukuan)
+                .where(and(
+                    eq(schema.pembukuan.id, id),
+                    eq(schema.pembukuan.tanggal_key, tanggal_key),
+                    eq(schema.pembukuan.tipe, 1)
+                ))
             .execute();
 
             global.sse_clients.broadcast(JSON.stringify({

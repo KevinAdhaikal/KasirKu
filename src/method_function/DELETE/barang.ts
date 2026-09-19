@@ -31,18 +31,25 @@ export default async function(req: Request, token: string) {
     
     const id = Number(user_input.get("id"));
     
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id
+    ) return new Response("Bad Request", {status: 400});
     
     const [res] = await db
-    .select({kategori_barang_id: schema.barang.kategori_barang_id})
-    .from(schema.barang)
-    .where(eq(schema.barang.id, id))
+        .select({kategori_barang_id: schema.barang.kategori_barang_id})
+        .from(schema.barang)
+        .where(eq(schema.barang.id, id))
     .limit(1);
     
     if (!res) return new Response("Not Found", { status: 404 });
     
     try {
-        await db.delete(schema.barang).where(eq(schema.barang.id, id)).execute();
+        await db
+            .delete(schema.barang)
+            .where(
+                eq(schema.barang.id, id)
+            )
+        .execute();
     } catch (e) {
         console.log("An error occured in delete_method.ts at /barang:", e);
         return new Response("Internal Server Error", { status: 500 });

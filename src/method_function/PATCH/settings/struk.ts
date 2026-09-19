@@ -29,22 +29,22 @@ export default async function(req: Request, token: string) {
     
     const user_input = await req.text();
 
-    if (!user_input || user_input.length >= 65535) return new Response("Bad Request", {
-        status: 400
-    });
+    if (
+        !user_input || user_input.length >= 65535
+    ) return new Response("Bad Request", {status: 400});
     
     await db
         .update(settings)
-        .set({
-            value: user_input ?? null,
-            modified_ms: Date.now(),
-        })
-        .where(
-            and(
-                eq(settings.section, "store"),
-                eq(settings.key, "struk"),
+            .set({
+                value: user_input ?? null,
+                modified_ms: Date.now(),
+            })
+            .where(
+                and(
+                    eq(settings.section, "store"),
+                    eq(settings.key, "struk"),
+                )
             )
-        )
         .execute();
 
     global.sse_clients.broadcast(JSON.stringify({

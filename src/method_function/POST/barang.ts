@@ -36,8 +36,15 @@ export default async function(req: Request, token: string) {
     const harga_modal = Number(user_input.get("harga_modal"));
     const harga_jual = Number(user_input.get("harga_jual"));
     let barcode_barang = <string | null>user_input.get("barcode_barang");
-            
-    if (!nama_barang || isNaN(kategori_barang_id) || !stok_barang || isNaN(stok_barang) || !kategori_barang_id || !harga_modal || !harga_jual) return new Response("Bad Request", {status: 400});
+
+    if (
+        !nama_barang ||
+        Number.isNaN(kategori_barang_id) || !kategori_barang_id ||
+        Number.isNaN(stok_barang) ||
+        Number.isNaN(harga_modal) || !harga_modal ||
+        Number.isNaN(harga_jual) || !harga_jual
+    ) return new Response("Bad Request", {status: 400});
+
     if (!barcode_barang || !barcode_barang.length) barcode_barang = null;
 
     const now = Date.now();

@@ -32,7 +32,10 @@ export default async function(req: Request, token: string) {
     const deskripsi = <string>user_input.get("deskripsi");
     const nominal = Number(user_input.get("nominal"));
 
-    if (!deskripsi || !nominal) return new Response("Bad Reuqest", {status: 400});
+    if (
+        !deskripsi ||
+        Number.isNaN(nominal) || !nominal
+    ) return new Response("Bad Reuqest", {status: 400});
     
     const date = global.date;
     const now = date.getTime();

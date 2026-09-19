@@ -20,49 +20,49 @@ export async function POST_Setup_Store(req: Request) {
     if (current_config.db_type === "mysql") {
         const conn = current_config.temp.ms_conn;
 
-        await conn.query(`UPDATE settings SET value = ? WHERE section = 'store' AND \`key\` = 'name'`,
-            [store_name]
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'name'`,
+            [store_name, now, now]
         );
-        await conn.query(`UPDATE settings SET value = ? WHERE section = 'store' AND \`key\` = 'desc'`,
-            [store_desc]
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'desc'`,
+            [store_desc, now, now]
         );
-        await conn.query(`UPDATE settings SET value = ? WHERE section = 'store' AND \`key\` = 'address'`,
-            [store_address]
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'address'`,
+            [store_address, now, now]
         );
-        await conn.query(`UPDATE settings SET value = ? WHERE section = 'store' AND \`key\` = 'phone_num'`,
-            [store_phone_num]
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'phone_num'`,
+            [store_phone_num, now, now]
         );
     }
     else if (current_config.db_type === "postgresql") {
         const conn = current_config.temp.pg_conn;
 
-        await conn.query(`UPDATE settings SET value = $1 WHERE section = 'store' AND "key" = 'name'`,
-            [store_name]
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'name'`,
+            [store_name, now, now]
         );
-        await conn.query(`UPDATE settings SET value = $1 WHERE section = 'store' AND "key" = 'desc'`,
-            [store_desc]
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'desc'`,
+            [store_desc, now, now]
         );
-        await conn.query(`UPDATE settings SET value = $1 WHERE section = 'store' AND "key" = 'address'`,
-            [store_address]
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'address'`,
+            [store_address, now, now]
         );
-        await conn.query(`UPDATE settings SET value = $1 WHERE section = 'store' AND "key" = 'phone_num'`,
-            [store_phone_num]
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'phone_num'`,
+            [store_phone_num, now, now]
         );
     }
     else if (current_config.db_type === "sqlite") {
         const conn = current_config.temp.sqlite_conn;
 
-        conn.run(`UPDATE settings SET value = ? WHERE section = 'store' AND "key" = 'name'`,
-            [store_name]
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'name'`,
+            [store_name, now, now]
         );
-        conn.run(`UPDATE settings SET value = ? WHERE section = 'store' AND "key" = 'desc'`,
-            [store_desc]
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'desc'`,
+            [store_desc, now, now]
         );
-        conn.run(`UPDATE settings SET value = ? WHERE section = 'store' AND "key" = 'address'`,
-            [store_address]
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'address'`,
+            [store_address, now, now]
         );
-        conn.run(`UPDATE settings SET value = ? WHERE section = 'store' AND "key" = 'phone_num'`,
-            [store_phone_num]
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'phone_num'`,
+            [store_phone_num, now, now]
         );
     }
     else {

@@ -34,7 +34,9 @@ export default async function(req: Request, token: string) {
     const new_role_name = <string>user_input.get("new_role_name");
     let new_permission_level = <null | number>Number(user_input.get("new_permission_level"));
 
-    if (!id || isNaN(id) || !new_role_name || isNaN(<number>new_permission_level) || (<number>new_permission_level & global.permissions.ADMINISTRATOR)) return new Response("Bad Request", {status: 400});
+    if (
+        !id || isNaN(id) ||
+        !new_role_name || isNaN(<number>new_permission_level) || (<number>new_permission_level & global.permissions.ADMINISTRATOR)) return new Response("Bad Request", {status: 400});
 
     try {
         const role = await db

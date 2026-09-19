@@ -18,7 +18,6 @@ import { global } from "../../global";
 import { check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
-    // add role (administrator permission only)
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
@@ -34,7 +33,10 @@ export default async function(req: Request, token: string) {
     const role_name = <string>user_input.get("role_name");
     const permission_level = Number(user_input.get("permission_level"));
 
-    if (!role_name || isNaN(permission_level) || (permission_level & global.permissions.ADMINISTRATOR)) return new Response("Bad Request", {status: 400});
+    if (
+        !role_name ||
+        Number.isNaN(permission_level) || !permission_level || (permission_level & global.permissions.ADMINISTRATOR)
+    ) return new Response("Bad Request", {status: 400});
 
     const now = Date.now();
     try {

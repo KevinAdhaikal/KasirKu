@@ -35,18 +35,18 @@ export default async function(req: Request, token: string) {
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
     
     if (
-        isNaN(id) || !id
-        || isNaN(tanggal_key) || !tanggal_key
-        || !deskripsi
-        || isNaN(jumlah_barang) || !jumlah_barang
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key ||
+        !deskripsi ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
     const now = Date.now();
     
     const res = await db.select({ jumlah_barang: barang_masuk.jumlah_barang, barang_id: barang_masuk.barang_id })
-    .from(barang_masuk)
-    .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
-    .limit(1)
+        .from(barang_masuk)
+        .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
+        .limit(1)
     .then((r: any) => r[0]);
 
     if (!res) return new Response("Not Found", {status: 404});
@@ -55,21 +55,21 @@ export default async function(req: Request, token: string) {
     try {
         stok_barang = await db.transaction(async (trx: any) => {
             await trx
-            .update(barang_masuk)
-            .set({
-                deskripsi,
-                jumlah_barang,
-                modified_ms: now
-            })
-            .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
+                .update(barang_masuk)
+                .set({
+                    deskripsi,
+                    jumlah_barang,
+                    modified_ms: now
+                })
+                .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
             .execute();
             
             await trx
-            .update(barang)
-            .set({
-                stok_barang: sql`${barang.stok_barang} + ${jumlah_barang - res.jumlah_barang}`
-            })
-            .where(eq(barang.id, res.barang_id))
+                .update(barang)
+                .set({
+                    stok_barang: sql`${barang.stok_barang} + ${jumlah_barang - res.jumlah_barang}`
+                })
+                .where(eq(barang.id, res.barang_id))
             .execute();
         });
     }

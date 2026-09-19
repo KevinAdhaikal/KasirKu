@@ -37,12 +37,15 @@ export default async function(req: Request, token: string) {
     let new_password = <string | null>user_input.get("new_password");
 
     if (
-        !id || isNaN(id) || !new_username || !new_full_name
-        || !/^[a-z0-9_]+$/.test(new_username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !id || isNaN(id) ||
+        !new_username ||
+        !new_full_name ||
+        !/^[a-z0-9_]+$/.test(new_username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
     ) return new Response("Bad Request", {status: 400});
     if (id === user_info.user_id) return new Response("1", {status: 403}); // you can't edit your own user account!
     if (id === 1) return new Response("2", {status: 403}); // you can't edit default account!
 
+    
     if (new_password && new_password.length >= 8) new_password = get_password_hash_only(Bun.password.hashSync(new_password, {
             algorithm: "argon2id",
             timeCost: global.ph_timecost,
@@ -52,10 +55,10 @@ export default async function(req: Request, token: string) {
     else new_password = null;
             
     const res = await db
-    .select({ role_id: users.role_id })
-    .from(users)
-    .where(eq(users.id, id))
-    .limit(1)
+        .select({ role_id: users.role_id })
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1)
     .then((r: any) => r[0]);
 
     if (!res) return new Response("Not Found", { status: 404 });
@@ -70,9 +73,9 @@ export default async function(req: Request, token: string) {
         if (new_password) updateData.password_hash = new_password;
 
         await db
-        .update(users)
-        .set(updateData)
-        .where(eq(users.id, id))
+            .update(users)
+            .set(updateData)
+            .where(eq(users.id, id))
         .execute();
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("3", {status: 403});

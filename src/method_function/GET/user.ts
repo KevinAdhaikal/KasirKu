@@ -28,19 +28,21 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const user_input = url.searchParams;
     const id = Number(user_input.get("id"));
 
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id 
+    ) return new Response("Bad Request", {status: 400});
 
     const [res] = await db
-    .select({
-        username: users.username,
-        full_name: users.full_name,
-        role_id: users.role_id,
-        profile_img: users.profile_img,
-        created_ms: users.created_ms,
-        modified_ms: users.modified_ms
-    })
-    .from(users)
-    .where(eq(users.id, id))
+        .select({
+            username: users.username,
+            full_name: users.full_name,
+            role_id: users.role_id,
+            profile_img: users.profile_img,
+            created_ms: users.created_ms,
+            modified_ms: users.modified_ms
+        })
+        .from(users)
+        .where(eq(users.id, id))
     .limit(1);
 
     if (!res) return new Response("Not Found", {status: 404});

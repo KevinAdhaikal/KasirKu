@@ -31,22 +31,24 @@ export default async function(req: Request, url: URL, user_info: user_session_in
                     
     let res;
     const baseQuery = db
-    .select({
-        id: barang.id,
-        nama_barang: barang.nama_barang,
-        stok_barang: barang.stok_barang,
-        kategori_barang_id: barang.kategori_barang_id,
-        harga_modal: barang.harga_modal,
-        harga_jual: barang.harga_jual,
-        barcode_barang: barang.barcode_barang,
-        created_ms: barang.created_ms,
-        modified_ms: barang.modified_ms,
-        nama_kategori: kategori_barang.nama_kategori
-    })
-    .from(barang)
+        .select({
+            id: barang.id,
+            nama_barang: barang.nama_barang,
+            stok_barang: barang.stok_barang,
+            kategori_barang_id: barang.kategori_barang_id,
+            harga_modal: barang.harga_modal,
+            harga_jual: barang.harga_jual,
+            barcode_barang: barang.barcode_barang,
+            created_ms: barang.created_ms,
+            modified_ms: barang.modified_ms,
+            nama_kategori: kategori_barang.nama_kategori
+        })
+        .from(barang)
     .innerJoin(kategori_barang, eq(barang.kategori_barang_id, kategori_barang.id));
 
-    if (isNaN(id) || !id) res = await baseQuery;
+    if (
+        Number.isNaN(id) || !id
+    ) res = await baseQuery;
     else res = await baseQuery.where(eq(barang.id, id)).limit(1).then((r: any) => r[0]);
     
     return new Response(JSON.stringify(res), {status: 200});

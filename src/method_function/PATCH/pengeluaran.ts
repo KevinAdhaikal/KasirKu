@@ -34,22 +34,27 @@ export default async function(req: Request, token: string) {
     const deskripsi = <string>user_input.get("deskripsi");
     const nominal = Number(user_input.get("nominal"));
 
-    if (isNaN(id) || isNaN(tanggal_key) || !tanggal_key || !id || !deskripsi || !nominal) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key ||
+        !deskripsi ||
+        Number.isNaN(nominal) || !nominal
+    ) return new Response("Bad Request", {status: 400});
 
     let res;
     try {
         res = await db
-        .update(pembukuan)
-        .set({
-            deskripsi,
-            jumlah_uang: nominal,
-            modified_ms: Date.now()
-        })
-        .where(and(
-            eq(pembukuan.id, id),
-            eq(pembukuan.tanggal_key, tanggal_key),
-            eq(pembukuan.tipe, 1)
-        ))
+            .update(pembukuan)
+            .set({
+                deskripsi,
+                jumlah_uang: nominal,
+                modified_ms: Date.now()
+            })
+            .where(and(
+                eq(pembukuan.id, id),
+                eq(pembukuan.tanggal_key, tanggal_key),
+                eq(pembukuan.tipe, 1)
+            ))
         .execute();
     } catch(e) {
         console.log("Unexpected error in patch_method.ts at /pengeluaran:", e);

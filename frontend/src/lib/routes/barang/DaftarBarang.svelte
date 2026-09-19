@@ -831,9 +831,6 @@
                   <div class="font-medium text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
                     {item.nama_barang}
                   </div>
-                  <div class="text-[10px] text-neutral-400">
-                    ID #{item.id}
-                  </div>
                 </td>
 
                 <!-- Barcode -->

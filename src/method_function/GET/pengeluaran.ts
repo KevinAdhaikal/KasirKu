@@ -30,19 +30,23 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const id = Number(user_input.get("id"));
 
     let res;
-    if (!isNaN(id) && id) {
+    if (
+        !Number.isNaN(id) && id
+    ) {
         res = await db
-        .select()
-        .from(pembukuan)
-        .where(and(eq(pembukuan.tipe, 1), eq(pembukuan.id, id)))
-        .limit(1)
+            .select()
+            .from(pembukuan)
+            .where(and(eq(pembukuan.tipe, 1), eq(pembukuan.id, id)))
+            .limit(1)
         .then((r: any) => r[0]);
     } else {
-        if (isNaN(tanggal_key)) return new Response("Bad Request", { status: 400 });
+        if (
+            Number.isNaN(tanggal_key)
+        ) return new Response("Bad Request", { status: 400 });
         
         res = await db
-        .select()
-        .from(pembukuan)
+            .select()
+            .from(pembukuan)
         .where(and(eq(pembukuan.tipe, 1), eq(pembukuan.tanggal_key, tanggal_key)));
     }
 

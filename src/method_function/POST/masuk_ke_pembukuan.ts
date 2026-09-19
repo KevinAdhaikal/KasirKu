@@ -50,9 +50,9 @@ export default async function(req: Request, token: string) {
         total_barang += data.jumlah_barang;
         
         const [barang] = await db
-        .select({nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang, harga_modal: schema.barang.harga_modal, harga_jual: schema.barang.harga_jual})
-        .from(schema.barang)
-        .where(eq(schema.barang.id, data.id))
+            .select({nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang, harga_modal: schema.barang.harga_modal, harga_jual: schema.barang.harga_jual})
+            .from(schema.barang)
+            .where(eq(schema.barang.id, data.id))
         .limit(1);
         
         if (!barang) return new Response("Not Found", { status: 404 });

@@ -16,7 +16,13 @@ export async function POST_Test_Connection(req: Request) {
     const db_user = typeof req_json.user === "string" ? req_json.user.trim() : "";
     const db_pass = typeof req_json.pass === "string" ? req_json.pass : "";
     
-    if (!db_type || !db_host || !Number.isInteger(db_port) || db_port < 1 || db_port > 65535 || !db_name || !db_user) {
+    if (
+        !db_type ||
+        !db_host ||
+        !Number.isInteger(db_port) || db_port < 1 || db_port > 65535 ||
+        !db_name ||
+        !db_user
+    ) {
         return new Response("Bad Request", { status: 400 });
     }
 

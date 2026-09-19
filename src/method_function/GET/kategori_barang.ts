@@ -29,7 +29,9 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const id = Number(user_input.get("id"));
 
     let res;
-    if (isNaN(id) || !id) res = await db.select().from(kategori_barang);
+    if (
+        Number.isNaN(id) || !id
+    ) res = await db.select().from(kategori_barang);
     else res = await db.select().from(kategori_barang).where(eq(kategori_barang.id, id)).limit(1).then((r: any) => r[0]);
                 
     return new Response(JSON.stringify(res), {status: 200});

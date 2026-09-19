@@ -26,8 +26,8 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.DASHBOARD))) return new Response("0", {status: 403});
 
     const res = await db
-    .select({ nama_barang: barang.nama_barang })
-    .from(barang)
+        .select({ nama_barang: barang.nama_barang })
+        .from(barang)
     .where(lte(barang.stok_barang, 0));
 
     return new Response(JSON.stringify(res), {status: 200});

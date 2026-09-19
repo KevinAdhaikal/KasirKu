@@ -28,9 +28,9 @@ export default async function(req: Request, token: string) {
     const schema = global.schema;
     
     const [row] = await db
-    .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})
-    .from(schema.users)
-    .where(eq(schema.users.username, username))
+        .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})
+        .from(schema.users)
+        .where(eq(schema.users.username, username))
     .limit(1);
     
     if (!row) return new Response("Forbidden", { status: 403 });

@@ -26,16 +26,18 @@ export default async function(req: Request, token: string) {
     const old_pass = <string>user_input.get("old_pass");
     const new_pass = <string>user_input.get("new_pass");
     
-    if (!old_pass || !new_pass || new_pass.length < 8) return new Response("Bad Request", {status: 400});
+    if (!old_pass ||
+        !new_pass || new_pass.length < 8
+    ) return new Response("Bad Request", {status: 400});
                 
     const db = global.database;
     const { users } = global.schema;
     
     const user = await db
-    .select({ password_hash: users.password_hash })
-    .from(users)
-    .where(eq(users.id, user_info.user_id))
-    .limit(1)
+        .select({ password_hash: users.password_hash })
+        .from(users)
+        .where(eq(users.id, user_info.user_id))
+        .limit(1)
     .then((r: any) => r[0]);
     
     if (!user) return new Response("Internal Server Error", { status: 500 });
@@ -51,13 +53,13 @@ export default async function(req: Request, token: string) {
         );
         
         await db.update(users)
-        .set({
-            password_hash: new_hash_pass,
-            modified_ms: Date.now()
-        })
-        .where(eq(users.id, user_info.user_id))
+            .set({
+                password_hash: new_hash_pass,
+                modified_ms: Date.now()
+            })
+            .where(eq(users.id, user_info.user_id))
         .execute();
-                    
+
         global.sse_clients.remove_by_user_id(user_info.user_id);
         global.user_sessions.revoke_all_by_userid(user_info.user_id);
         

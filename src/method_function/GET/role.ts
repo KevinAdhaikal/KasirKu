@@ -29,15 +29,17 @@ export default async function(req: Request, url: URL, user_info: user_session_in
 
     const id = Number(user_input.get("id"));
 
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        !id || Number.isNaN(id)
+    ) return new Response("Bad Request", {status: 400});
 
     const [res] = await db
-    .select()
-    .from(roles)
-    .where(eq(roles.id, id))
+        .select()
+        .from(roles)
+        .where(eq(roles.id, id))
     .limit(1);
 
     if (!res) return new Response("Not Found", {status: 404});
-                
+
     return new Response(JSON.stringify(res), {status: 200});
 }

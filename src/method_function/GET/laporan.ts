@@ -30,16 +30,19 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const tanggal_start = Number(user_input.get("tanggal_start"));
     const tanggal_end = Number(user_input.get("tanggal_end"));
     
-    if (isNaN(tanggal_start) || isNaN(tanggal_end) || !tanggal_start || !tanggal_end) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(tanggal_start) || !tanggal_start ||
+        Number.isNaN(tanggal_end) ||  !tanggal_end
+    ) return new Response("Bad Request", {status: 400});
 
     const penjualan_res = await db
-    .select()
-    .from(penjualan)
+        .select()
+        .from(penjualan)
     .where(and(gte(penjualan.tanggal_key, tanggal_start), lte(penjualan.tanggal_key, tanggal_end)));
 
     const pengeluaran_res = await db
-    .select()
-    .from(pembukuan)
+        .select()
+        .from(pembukuan)
     .where(and(eq(pembukuan.tipe, 1), gte(pembukuan.tanggal_key, tanggal_start), lte(pembukuan.tanggal_key, tanggal_end)));
 
     return new Response(JSON.stringify({

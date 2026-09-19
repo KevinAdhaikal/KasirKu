@@ -33,16 +33,19 @@ export default async function(req: Request, token: string) {
     const id = Number(user_input.get("id"));
     const nama_kategori = <string>user_input.get("nama_kategori");
 
-    if (isNaN(id) || !id || !nama_kategori) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id ||
+        !nama_kategori
+    ) return new Response("Bad Request", {status: 400});
 
     try {
         await db
-        .update(kategori_barang)
-        .set({
-            nama_kategori,
-            modified_ms: Date.now()
-        })
-        .where(eq(kategori_barang.id, id))
+            .update(kategori_barang)
+            .set({
+                nama_kategori,
+                modified_ms: Date.now()
+            })
+            .where(eq(kategori_barang.id, id))
         .execute();
     } catch(e) {
         if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});

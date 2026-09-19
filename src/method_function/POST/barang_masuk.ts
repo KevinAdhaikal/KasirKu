@@ -32,13 +32,17 @@ export default async function(req: Request, token: string) {
     const barang_id = Number(user_input.get("barang_id"));
     const deskripsi = <string>user_input.get("deskripsi");
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
-                
-    if (isNaN(barang_id) || !barang_id || !deskripsi || isNaN(jumlah_barang) || !jumlah_barang) return new Response("Bad Request", {status: 400});
+
+    if (
+        Number.isNaN(barang_id) || !barang_id ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang ||
+        !deskripsi
+    ) return new Response("Bad Request", {status: 400});
     
     const [res] = await db
-    .select({id: schema.barang.id, nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang})
-    .from(schema.barang)
-    .where(eq(schema.barang.id, barang_id))
+        .select({id: schema.barang.id, nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang})
+        .from(schema.barang)
+        .where(eq(schema.barang.id, barang_id))
     .limit(1);
     
     if (!res) return new Response("1", {status: 404});
@@ -58,13 +62,14 @@ export default async function(req: Request, token: string) {
                 created_ms: now,
                 modified_ms: now
             }).returning();
+
             const insertId = Number(insertResult.id);
             
             await trx
-            .update(schema.barang)
-            .set({
-                stok_barang: sql`stok_barang + ${jumlah_barang}`
-            })
+                .update(schema.barang)
+                .set({
+                    stok_barang: sql`stok_barang + ${jumlah_barang}`
+                })
             .where(eq(schema.barang.id, barang_id));
             
             return insertId;

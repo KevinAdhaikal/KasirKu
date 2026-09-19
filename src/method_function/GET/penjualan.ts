@@ -31,29 +31,32 @@ export default async function(req: Request, url: URL, user_info: user_session_in
 
     let res;
     const baseQuery = db
-    .select({
-        id: penjualan.id,
-        kasir_id: penjualan.kasir_id,
-        no_struk: penjualan.no_struk,
-        total_barang: penjualan.total_barang,
-        total_harga_modal: penjualan.total_harga_modal,
-        total_harga_jual: penjualan.total_harga_jual,
-        tanggal_key: penjualan.tanggal_key,
-        created_ms: penjualan.created_ms,
-        modified_ms: penjualan.modified_ms,
-        nama_kasir: users.full_name
-    })
-    .from(penjualan)
+        .select({
+            id: penjualan.id,
+            kasir_id: penjualan.kasir_id,
+            no_struk: penjualan.no_struk,
+            total_barang: penjualan.total_barang,
+            total_harga_modal: penjualan.total_harga_modal,
+            total_harga_jual: penjualan.total_harga_jual,
+            tanggal_key: penjualan.tanggal_key,
+            created_ms: penjualan.created_ms,
+            modified_ms: penjualan.modified_ms,
+            nama_kasir: users.full_name
+        })
+        .from(penjualan)
     .leftJoin(users, eq(users.id, penjualan.kasir_id));
 
-    if (isNaN(id) || !id) {
-        if (isNaN(tanggal_key)) return new Response("Bad Request", { status: 400 });
-        res = await baseQuery
-        .where(eq(penjualan.tanggal_key, tanggal_key));
+    if (
+        Number.isNaN(id) || !id
+    ) {
+        if (
+            Number.isNaN(tanggal_key)
+        ) return new Response("Bad Request", { status: 400 });
+        res = await baseQuery.where(eq(penjualan.tanggal_key, tanggal_key));
     } else {
         res = await baseQuery
-        .where(eq(penjualan.id, id))
-        .limit(1)
+            .where(eq(penjualan.id, id))
+            .limit(1)
         .then((r: any) => r[0]);
     }
 

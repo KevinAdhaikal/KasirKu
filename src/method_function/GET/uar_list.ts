@@ -29,14 +29,16 @@ export default async function(req: Request, url: URL, user_info: user_session_in
 
     const id = Number(user_input.get("id"));
 
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id 
+    ) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .select({
-        username: users.username,
-        full_name: users.full_name
-    })
-    .from(users)
+        .select({
+            username: users.username,
+            full_name: users.full_name
+        })
+        .from(users)
     .where(eq(users.role_id, id));
 
     if (!res) return new Response("Not Found", {status: 404});
