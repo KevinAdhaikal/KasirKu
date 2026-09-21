@@ -102,7 +102,7 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+    class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden overscroll-contain"
     role="dialog"
     aria-modal="true"
     aria-labelledby={title ? 'modal-title' : undefined}
@@ -120,10 +120,10 @@
     <!-- Modal Content Box -->
     <div
       bind:this={modalBoxEl}
-      class="relative w-full {sizeStyles[size]} rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-2xl z-10 transition-transform my-8 flex flex-col max-h-[90vh]"
+      class="relative w-full {sizeStyles[size]} rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-2xl z-10 transition-transform my-auto flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3.5rem)] overscroll-contain"
     >
       {#if title}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200/80 dark:border-neutral-800">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200/80 dark:border-neutral-800 flex-shrink-0">
           <div>
             <h2 id="modal-title" class="text-base font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
             {#if description}
@@ -141,12 +141,12 @@
         </div>
       {/if}
 
-      <div class="px-6 py-5 overflow-y-auto flex-1 modal-body-content">
+      <div class="px-6 py-5 overflow-y-auto overscroll-contain flex-1 min-h-0 modal-body-content">
         {@render children?.()}
       </div>
 
       {#if footer}
-        <div class="px-6 py-3.5 border-t border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/40 rounded-b-lg flex items-center justify-end gap-2.5">
+        <div class="px-6 py-3.5 border-t border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/40 rounded-b-lg flex items-center justify-end gap-2.5 flex-shrink-0">
           {@render footer()}
         </div>
       {/if}

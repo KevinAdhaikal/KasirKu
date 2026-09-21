@@ -102,7 +102,6 @@ async function update_old_db(db: any) {
                 } catch {}
             }
 
-            // Matikan foreign keys sementara untuk membersihkan tabel lama
             await db.run(sql.raw("PRAGMA foreign_keys = OFF;"));
             for (const table of [...tableKeys, "daftar_barang", "kasirku"]) {
                 try { await db.run(sql.raw(`DROP TABLE IF EXISTS "${table}";`)); } catch {}
@@ -158,7 +157,6 @@ async function update_old_db(db: any) {
                 } catch {}
             }
 
-            // Hapus tabel lama dengan CASCADE agar relasi foreign key tidak menghalangi
             for (const table of [...tableKeys, "daftar_barang", "kasirku"]) {
                 try { await db.execute(sql.raw(`DROP TABLE IF EXISTS "${table}" CASCADE;`)); } catch {}
             }
@@ -173,7 +171,6 @@ async function update_old_db(db: any) {
     await migrate_up(db, Bun.env.DB_TYPE as any);
     const schema = (await import(`./src/database/schema/${Bun.env.DB_TYPE}`)) as any;
 
-    // Bersihkan data seed default dari hook 0000_init agar tidak bertabrakan dengan ID dari data lama
     try {
         if (backup_table.users.length > 0) await db.delete(schema.users);
         if (backup_table.roles.length > 0) await db.delete(schema.roles);
@@ -197,7 +194,6 @@ async function update_old_db(db: any) {
         }
     }
 
-    // Restore data berurutan sesuai relasi FK
     if (backup_table.roles.length > 0) await insertRows(schema.roles, backup_table.roles);
     if (backup_table.users.length > 0) await insertRows(schema.users, backup_table.users);
     if (backup_table.kategori_barang.length > 0) await insertRows(schema.kategori_barang, backup_table.kategori_barang);
@@ -215,7 +211,6 @@ async function update_old_db(db: any) {
     if (backup_table.pembukuan.length > 0) await insertRows(schema.pembukuan, backup_table.pembukuan);
     if (backup_table.retur_barang.length > 0) await insertRows(schema.retur_barang, backup_table.retur_barang);
 
-    // Di PostgreSQL, sinkronkan sequence identity agar operasi INSERT selanjutnya tidak bentrok ID
     if (isPg) {
         for (const tableName of tableKeys) {
             try {

@@ -32,6 +32,7 @@
     RefreshCw,
     CheckCircle2,
     AlertCircle,
+    AlertTriangle,
     Eye,
     Printer,
     Sparkles,
@@ -71,10 +72,14 @@
 
   // Struk HTML form state
   let strukContent = $state('');
+  let initialStrukContent = $state('');
   let isSavingStruk = $state(false);
   let strukErrorMessage = $state<string | null>(null);
   let previewWidth = $state<'58mm' | '80mm'>('58mm');
   let copiedVariable = $state<string | null>(null);
+  let showResetModal = $state(false);
+
+  const isStrukChanged = $derived(strukContent !== initialStrukContent);
 
   // Variable modal dialog state
   let showVariableModal = $state(false);
@@ -124,8 +129,8 @@
     renderReceiptHtml(strukContent, sampleReceiptData, sampleStoreInfo)
   );
 
-  async function fetchData() {
-    loading = true;
+  async function fetchData(silent = false) {
+    if (!silent) loading = true;
     try {
       const [storeRes, strukRes] = await Promise.all([
         api.get<StoreSettings>('/api/settings/toko'),
@@ -142,14 +147,17 @@
       if (strukRes) {
         const rawContent = strukRes.store_struk ?? strukRes.content ?? strukRes.value ?? '';
         // If content is empty, initialize with the standard preset
-        strukContent = rawContent.trim() ? rawContent : RECEIPT_PRESETS[0].template;
+        const loaded = rawContent.trim() ? rawContent : RECEIPT_PRESETS[0].template;
+        strukContent = loaded;
+        initialStrukContent = loaded;
       } else {
         strukContent = RECEIPT_PRESETS[0].template;
+        initialStrukContent = RECEIPT_PRESETS[0].template;
       }
     } catch (err: any) {
       toast.error('Gagal memuat pengaturan toko: ' + (err.message || ''));
     } finally {
-      loading = false;
+      if (!silent) loading = false;
     }
   }
 
@@ -195,11 +203,13 @@
 
   async function handleSaveStruk(e: Event) {
     e.preventDefault();
+    if (isSavingStruk) return;
     strukErrorMessage = null;
 
     isSavingStruk = true;
     try {
       await api.patch('/api/settings/struk', strukContent);
+      initialStrukContent = strukContent;
       toast.success('Format HTML struk belanja berhasil disimpan.');
     } catch (err: any) {
       strukErrorMessage = err.message || 'Gagal menyimpan format struk.';
@@ -259,8 +269,13 @@
   onMount(() => {
     fetchData();
     sseUnsub = sse.subscribe((event) => {
-      if (event?.code === 'UPDATE_TOKO_SETTING' || event?.code === 'UPDATE_STRUK_SETTING') {
-        fetchData();
+      if (event?.code === 'UPDATE_TOKO_SETTING') {
+        fetchData(true);
+      } else if (event?.code === 'UPDATE_STRUK_SETTING') {
+        // Jangan timpa jika sedang proses simpan sendiri
+        if (!isSavingStruk) {
+          fetchData(true);
+        }
       }
     });
   });
@@ -498,7 +513,9 @@
               type="button"
               variant="secondary"
               size="sm"
-              onclick={() => applyPreset(RECEIPT_PRESETS[0].template)}
+              disabled={!isStrukChanged || isSavingStruk}
+              onclick={() => (showResetModal = true)}
+              title={isStrukChanged ? 'Kembalikan template ke kode awal' : 'Tidak ada perubahan untuk direset'}
             >
               <RotateCcw class="w-3.5 h-3.5" />
               <span>Reset Default</span>
@@ -508,6 +525,7 @@
               type="button"
               variant="primary"
               size="sm"
+              disabled={isSavingStruk}
               loading={isSavingStruk}
               onclick={handleSaveStruk}
             >
@@ -617,17 +635,17 @@
     </div>
 
     <!-- Variables Table -->
-    <div class="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden max-h-[380px] overflow-y-auto">
-      <table class="w-full text-left text-xs border-collapse">
-        <thead class="bg-neutral-100 dark:bg-neutral-900/80 text-neutral-600 dark:text-neutral-400 sticky top-0 border-b border-neutral-200 dark:border-neutral-800">
+    <div class="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden max-h-[380px] overflow-y-auto overscroll-contain bg-[var(--bg-surface)]">
+      <table class="w-full text-left text-xs border-separate border-spacing-0">
+        <thead class="sticky top-0 z-20">
           <tr>
-            <th class="py-2.5 px-3 font-semibold">Variabel Tag</th>
-            <th class="py-2.5 px-3 font-semibold">Keterangan</th>
-            <th class="py-2.5 px-3 font-semibold">Contoh Output</th>
-            <th class="py-2.5 px-3 text-right font-semibold">Aksi</th>
+            <th class="py-2.5 px-3 font-semibold bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-20">Variabel Tag</th>
+            <th class="py-2.5 px-3 font-semibold bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-20">Keterangan</th>
+            <th class="py-2.5 px-3 font-semibold bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-20">Contoh Output</th>
+            <th class="py-2.5 px-3 text-right font-semibold bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-20">Aksi</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+        <tbody>
           {#if filteredVariables.length === 0}
             <tr>
               <td colspan="4" class="py-6 text-center text-neutral-400">
@@ -637,18 +655,18 @@
           {:else}
             {#each filteredVariables as variable}
               <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors">
-                <td class="py-2.5 px-3">
+                <td class="py-2.5 px-3 border-b border-neutral-100 dark:border-neutral-800/60">
                   <span class="inline-block font-mono text-[11px] font-semibold text-[var(--brand-ink)] dark:text-[var(--brand)] bg-[var(--brand-soft)] dark:bg-[var(--brand-soft)]/20 px-2 py-0.5 rounded border border-[var(--border-subtle)]">
                     {variable.key}
                   </span>
                 </td>
-                <td class="py-2.5 px-3 text-neutral-800 dark:text-neutral-200">
+                <td class="py-2.5 px-3 text-neutral-800 dark:text-neutral-200 border-b border-neutral-100 dark:border-neutral-800/60">
                   {variable.label}
                 </td>
-                <td class="py-2.5 px-3 text-neutral-500 dark:text-neutral-400 font-mono text-[11px]">
+                <td class="py-2.5 px-3 text-neutral-500 dark:text-neutral-400 font-mono text-[11px] border-b border-neutral-100 dark:border-neutral-800/60">
                   {variable.example}
                 </td>
-                <td class="py-2.5 px-3 text-right">
+                <td class="py-2.5 px-3 text-right border-b border-neutral-100 dark:border-neutral-800/60">
                   <button
                     type="button"
                     onclick={() => copyVariable(variable.key)}
@@ -678,6 +696,46 @@
   {#snippet footer()}
     <Button variant="secondary" size="sm" onclick={() => (showVariableModal = false)}>
       <span>Tutup</span>
+    </Button>
+  {/snippet}
+</Modal>
+
+<!-- Modal Dialog: Konfirmasi Reset Template Struk -->
+<Modal
+  bind:open={showResetModal}
+  title="Konfirmasi Reset Template Struk"
+  size="sm"
+>
+  <div class="space-y-3">
+    <div class="p-3 rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
+      <AlertTriangle class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+      <div class="space-y-1">
+        <p class="font-semibold">Peringatan: Perubahan Belum Disimpan</p>
+        <p class="text-neutral-600 dark:text-neutral-400 leading-relaxed">
+          Semua perubahan pada kode HTML template struk yang belum disimpan akan hilang dan dikembalikan ke kode awal yang tersimpan.
+        </p>
+      </div>
+    </div>
+    <p class="text-xs text-neutral-600 dark:text-neutral-400">
+      Apakah Anda yakin ingin mengembalikan template ke kode awal?
+    </p>
+  </div>
+
+  {#snippet footer()}
+    <Button variant="secondary" size="sm" onclick={() => (showResetModal = false)}>
+      <span>Batal</span>
+    </Button>
+    <Button
+      variant="danger"
+      size="sm"
+      onclick={() => {
+        strukContent = initialStrukContent;
+        showResetModal = false;
+        toast.info('Template struk berhasil dikembalikan ke kode awal.');
+      }}
+    >
+      <RotateCcw class="w-3.5 h-3.5" />
+      <span>Ya, Kembalikan ke Awal</span>
     </Button>
   {/snippet}
 </Modal>
