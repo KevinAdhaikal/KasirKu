@@ -13,16 +13,19 @@
       (function() {
         try {
           const stored = localStorage.getItem('theme');
-          if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          const isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
             document.documentElement.classList.add('dark');
+            document.documentElement.style.backgroundColor = '#0b151a';
           } else {
             document.documentElement.classList.remove('dark');
+            document.documentElement.style.backgroundColor = '#f5f9fb';
           }
         } catch (e) {}
       })();
     </script>
   </head>
-  <body class="bg-[#fafafa] text-[#09090b] dark:bg-[#000000] dark:text-[#ededed] antialiased selection:bg-neutral-900 selection:text-white dark:selection:bg-neutral-100 dark:selection:text-neutral-900 min-h-screen">
+  <body class="bg-[var(--bg-canvas,#f5f9fb)] text-[var(--text-primary)] dark:bg-[var(--bg-canvas,#0b151a)] dark:text-[var(--text-primary)] antialiased selection:bg-neutral-900 selection:text-white dark:selection:bg-neutral-100 dark:selection:text-neutral-900 min-h-screen">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

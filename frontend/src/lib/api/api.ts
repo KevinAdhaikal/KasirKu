@@ -35,6 +35,9 @@ export async function request<T = any>(
 
   if (res.status === 401) {
     localStorage.removeItem('token');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    }
     throw new ApiError(401, 'Sesi telah berakhir atau server sedang offline.');
   }
 

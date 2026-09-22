@@ -2,7 +2,8 @@
 import { progress } from './progress.svelte';
 
 function normalizeRoute(p: string): string {
-  let cleaned = p.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+  const pathname = p.split('?')[0].split('#')[0];
+  let cleaned = pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
   if (!cleaned.startsWith('/')) cleaned = '/' + cleaned;
   cleaned = cleaned.replace(/\/$/, '') || '/';
   if (cleaned === '/dashboard') cleaned = '/';
@@ -13,14 +14,16 @@ function normalizeRoute(p: string): string {
 }
 
 class RouterStore {
-  currentPath = $state(typeof window !== 'undefined' ? window.location.pathname : '/');
+  currentPath = $state(typeof window !== 'undefined' ? normalizeRoute(window.location.pathname) : '/');
+  search = $state(typeof window !== 'undefined' ? window.location.search : '');
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('popstate', () => {
         const prev = this.currentPath;
-        this.currentPath = window.location.pathname;
-        if (normalizeRoute(prev) !== normalizeRoute(this.currentPath)) {
+        this.currentPath = normalizeRoute(window.location.pathname);
+        this.search = window.location.search;
+        if (prev !== this.currentPath) {
           progress.start();
           setTimeout(() => progress.done(), 180);
         }
@@ -45,22 +48,25 @@ class RouterStore {
   navigate(path: string, replace = false) {
     if (typeof window === 'undefined') return;
 
-    // Normalize path
-    let normalized = path.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
-    if (!normalized.startsWith('/')) normalized = '/' + normalized;
+    const parts = path.split('?');
+    const pathname = parts[0];
+    const queryString = parts[1] ? `?${parts[1]}` : '';
+    const normalized = normalizeRoute(pathname);
+    const fullTarget = `${normalized}${queryString}`;
 
-    // If target path is already active / current, do nothing and do not show progress
-    if (this.matches(normalized)) {
+    const currentFull = `${this.currentPath}${this.search}`;
+    if (currentFull === fullTarget) {
       return;
     }
 
     if (replace) {
-      window.history.replaceState({}, '', normalized);
+      window.history.replaceState({}, '', fullTarget);
     } else {
-      window.history.pushState({}, '', normalized);
+      window.history.pushState({}, '', fullTarget);
     }
     progress.start();
     this.currentPath = normalized;
+    this.search = queryString;
     window.scrollTo({ top: 0, behavior: 'instant' });
     setTimeout(() => progress.done(), 180);
   }

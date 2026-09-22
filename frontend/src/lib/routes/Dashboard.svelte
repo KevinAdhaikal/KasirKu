@@ -34,6 +34,7 @@
     Layers,
     ArrowRight,
     ChevronDown,
+    Check
   } from 'lucide-svelte';
 
   interface TotalInfo {
@@ -276,18 +277,9 @@
     <div class="px-5 py-3 border-b border-neutral-200/90 dark:border-neutral-800 flex items-center justify-between gap-3 bg-neutral-50/60 dark:bg-neutral-900/40">
       <div class="flex items-center gap-2">
         <h2 class="text-xs font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider">Overview Finansial</h2>
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Sinkron aktif"></span>
       </div>
 
       <div class="flex items-center gap-3">
-        {#if !showFinancialOverview && !loading}
-          <div class="hidden sm:flex items-center gap-3 text-xs font-medium tabular-nums text-neutral-600 dark:text-neutral-400">
-            <span>Omzet <strong class="text-neutral-900 dark:text-neutral-100"><Rupiah value={omzet} /></strong></span>
-            <span class="text-neutral-300 dark:text-neutral-700">/</span>
-            <span>Bersih <strong class={labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}><Rupiah value={labaBersih} /></strong></span>
-          </div>
-        {/if}
-
         <button
           type="button"
           onclick={toggleFinancialOverview}
@@ -424,10 +416,10 @@
 
   <!-- Content Split: Stock Alert & Date Range Explorer -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Left 1 Col: Peringatan Stok Habis / Kritis -->
+    <!-- Left 1 Col: Peringatan Stok Habis -->
     <div class="lg:col-span-1">
       <Card
-        title="Stok Habis / Kritis"
+        title="Stok Habis"
       >
         {#snippet actions()}
           <Badge variant={barangKosong.length > 0 ? 'danger' : 'success'} class="whitespace-nowrap shrink-0">
@@ -455,12 +447,12 @@
           </div>
         {:else if barangKosong.length === 0}
           <div class="text-center py-10 px-4">
-            <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center font-bold text-sm mb-2.5">
-              ✓
+            <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 dark:border-emerald-500/50 shadow-2xs mx-auto flex items-center justify-center font-bold text-sm mb-2.5">
+              <Check class="w-5 h-5 stroke-[2.5]" />
             </div>
-            <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Inventaris Prima</p>
+            <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Tidak Ada Barang Habis</p>
             <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 max-w-[200px] mx-auto leading-relaxed">
-              Seluruh produk saat ini memiliki kuantitas stok yang aman.
+              Semua produk masih tersedia.
             </p>
           </div>
         {:else}
@@ -599,12 +591,12 @@
         {:else}
           <div class="overflow-x-auto -mx-5 -my-2 max-h-[340px] overflow-y-auto">
             <table class="w-full text-left text-xs border-collapse">
-              <thead class="sticky top-0 bg-[var(--bg-surface)] z-10">
-                <tr class="border-b border-neutral-200/80 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400 text-[11px] font-medium uppercase tracking-wider">
-                  <th class="px-5 py-2.5 font-medium w-12">#</th>
-                  <th class="px-5 py-2.5 font-medium">NAMA PRODUK</th>
-                  <th class="px-5 py-2.5 font-medium text-right">VOLUME TERJUAL</th>
-                  <th class="px-5 py-2.5 font-medium text-right w-28">KONTRIBUSI</th>
+              <thead class="sticky top-0 z-20 bg-[var(--bg-subtle)]">
+                <tr class="text-[var(--text-muted)] text-[11px] font-medium uppercase tracking-wider">
+                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium w-12">#</th>
+                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium">NAMA PRODUK</th>
+                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium text-right">VOLUME TERJUAL</th>
+                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium text-right w-28">KONTRIBUSI</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">

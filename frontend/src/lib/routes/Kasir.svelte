@@ -3,9 +3,10 @@
 </svelte:head>
 
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { cart, type CartItem } from '../stores/cart.svelte';
   import { auth } from '../stores/auth.svelte';
+  import { sse } from '../stores/sse.svelte';
   import { toast } from '../stores/toast.svelte';
   import { dialog } from '../stores/dialog.svelte';
   import { api } from '../api/api';
@@ -82,21 +83,94 @@
   }
 
   function focusSearchInput() {
+    if (sse.status !== 'online') return;
     tick().then(() => {
       searchInputElement?.focus();
       searchInputElement?.select();
+      setTimeout(() => {
+        if (sse.status === 'online' && document.activeElement !== searchInputElement) {
+          searchInputElement?.focus();
+          searchInputElement?.select();
+        }
+      }, 50);
     });
+  }
+
+  // Otomatis kembalikan fokus ke input scan barcode jika modal pencarian ditutup (Esc, X, dll)
+  let prevSearchModalOpen = false;
+  $effect(() => {
+    if (prevSearchModalOpen && !searchModalOpen) {
+      focusSearchInput();
+    }
+    prevSearchModalOpen = searchModalOpen;
+  });
+
+  // Otomatis kembalikan fokus ke input scan barcode jika modal pembayaran ditutup (Esc, X, Batal, dll)
+  let prevPaymentModalOpen = false;
+  $effect(() => {
+    if (prevPaymentModalOpen && !paymentModalOpen) {
+      focusSearchInput();
+    }
+    prevPaymentModalOpen = paymentModalOpen;
+  });
+
+  // Otomatis kembalikan fokus ke input scan barcode jika modal struk belanja ditutup
+  let prevReceiptModalOpen = false;
+  $effect(() => {
+    if (prevReceiptModalOpen && !receiptModalOpen) {
+      focusSearchInput();
+    }
+    prevReceiptModalOpen = receiptModalOpen;
+  });
+
+  // Saat server tersambung kembali secara realtime, otomatis arahkan fokus kembali ke input barcode
+  let prevSseStatus = sse.status;
+  $effect(() => {
+    if (prevSseStatus !== 'online' && sse.status === 'online') {
+      focusSearchInput();
+    }
+    prevSseStatus = sse.status;
+  });
+
+  let isReceiptEnabled = $state(true);
+  let sseUnsub: (() => void) | null = null;
+
+  async function checkReceiptSetting() {
+    try {
+      const res = await api.get<{ enabled?: boolean | string | null }>('/api/settings/struk');
+      if (res && res.enabled !== undefined && res.enabled !== null) {
+        isReceiptEnabled = String(res.enabled).toLowerCase() === 'true' || res.enabled === true;
+      }
+    } catch {}
   }
 
   onMount(() => {
     focusSearchInput();
+    checkReceiptSetting();
     const savedLimit = localStorage.getItem('kasir_table_limit');
     if (savedLimit && LIMIT_OPTIONS.includes(Number(savedLimit))) {
       pageSize = Number(savedLimit);
     }
+
+    sseUnsub = sse.subscribe((event) => {
+      if (event?.code === 'UPDATE_STRUK_SETTING') {
+        if (event?.data?.enabled !== undefined) {
+          isReceiptEnabled = String(event.data.enabled).toLowerCase() === 'true' || event.data.enabled === true;
+        }
+      }
+    });
+  });
+
+  onDestroy(() => {
+    if (sseUnsub) sseUnsub();
   });
 
   async function handleSearch() {
+    if (sse.status !== 'online') {
+      toast.warning('Server sedang terputus (SSE offline). Transaksi dinonaktifkan sementara.');
+      return;
+    }
+
     const query = searchQuery.trim();
     if (!query) {
       toast.warning('Silakan masukkan barcode atau nama produk terlebih dahulu.');
@@ -119,7 +193,6 @@
         const item = res[0];
         const addRes = cart.addItem(item, 1);
         if (addRes.success) {
-          toast.success(`"${item.nama_barang}" ditambahkan.`);
           jumpToItem(item.id);
         } else {
           toast.error(addRes.message || 'Gagal menambahkan produk');
@@ -139,13 +212,35 @@
   }
 
   function handleSearchKeydown(e: KeyboardEvent) {
+    if (sse.status !== 'online') {
+      return;
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault();
       handleSearch();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      searchQuery = '';
+      focusSearchInput();
+    } else if (e.key === 'Delete') {
+      e.preventDefault();
+      handleClearCart();
+    } else if (e.key === 'F8') {
+      e.preventDefault();
+      if (cart.items.length === 0) {
+        toast.warning('Keranjang kasir masih kosong. Tambahkan barang terlebih dahulu.');
+      } else {
+        paymentModalOpen = true;
+      }
     }
   }
 
   function handleGlobalKeydown(e: KeyboardEvent) {
+    if (sse.status !== 'online') {
+      return;
+    }
+
     // If any modal is active, let modal handle keys
     if (searchModalOpen || paymentModalOpen || receiptModalOpen) {
       return;
@@ -159,12 +254,17 @@
         paymentModalOpen = true;
       }
     } else if (e.key === 'Delete') {
-      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
-      if (activeTag !== 'input' && activeTag !== 'textarea') {
+      const activeEl = document.activeElement;
+      const activeTag = (activeEl?.tagName || '').toLowerCase();
+      // Bisa melakukan Delete jika fokus di input scan barcode ATAU bukan sedang di input/textarea lain
+      if (activeEl === searchInputElement || (activeTag !== 'input' && activeTag !== 'textarea')) {
         e.preventDefault();
         handleClearCart();
       }
     } else if (e.key === 'Escape') {
+      if (document.activeElement === searchInputElement) {
+        searchQuery = '';
+      }
       focusSearchInput();
     } else if (e.key === 'PageDown') {
       const activeTag = (document.activeElement?.tagName || '').toLowerCase();
@@ -186,6 +286,10 @@
   }
 
   async function handleClearCart() {
+    if (sse.status !== 'online') {
+      toast.warning('Server sedang terputus (SSE offline). Aksi dinonaktifkan.');
+      return;
+    }
     if (cart.items.length === 0) return;
     const confirmed = await dialog.confirm({
       title: 'Kosongkan Keranjang Kasir?',
@@ -211,7 +315,12 @@
 
   function handlePaymentSuccess(data: ReceiptData) {
     lastReceiptData = data;
-    receiptModalOpen = true;
+    if (isReceiptEnabled) {
+      receiptModalOpen = true;
+    } else {
+      toast.info('Transaksi berhasil disimpan (Pencetakan struk kasir dinonaktifkan).');
+      focusSearchInput();
+    }
   }
 
   function handleReceiptClose() {
@@ -237,7 +346,7 @@
 
 <div class="space-y-6">
   <!-- Top POS Banner / Status Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
     <div>
       <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
         <ShoppingBag class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
@@ -246,22 +355,22 @@
     </div>
 
     <!-- Hotkey Legend -->
-    <div class="hidden md:flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 font-mono">
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
-        <kbd class="font-bold text-neutral-900 dark:text-neutral-100">Enter</kbd>
-        <span>Scan/Cari</span>
+    <div class="hidden md:flex items-center gap-2 select-none">
+      <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] leading-none">
+        <kbd class="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 text-[10px] font-semibold rounded border border-[var(--border-contrast)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs leading-none">Enter</kbd>
+        <span class="text-[var(--text-secondary)] font-medium leading-none">Scan/Cari</span>
       </div>
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
-        <kbd class="font-bold text-neutral-900 dark:text-neutral-100">F8</kbd>
-        <span>Bayar</span>
+      <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] leading-none">
+        <kbd class="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 text-[10px] font-semibold rounded border border-[var(--border-contrast)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs leading-none">F8</kbd>
+        <span class="text-[var(--text-secondary)] font-medium leading-none">Bayar</span>
       </div>
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
-        <kbd class="font-bold text-neutral-900 dark:text-neutral-100">Del</kbd>
-        <span>Kosongkan</span>
+      <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] leading-none">
+        <kbd class="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 text-[10px] font-semibold rounded border border-[var(--border-contrast)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs leading-none">Del</kbd>
+        <span class="text-[var(--text-secondary)] font-medium leading-none">Kosongkan</span>
       </div>
-      <div class="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800">
-        <kbd class="font-bold text-neutral-900 dark:text-neutral-100">Esc</kbd>
-        <span>Reset</span>
+      <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[11px] leading-none">
+        <kbd class="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 text-[10px] font-semibold rounded border border-[var(--border-contrast)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs leading-none">Esc</kbd>
+        <span class="text-[var(--text-secondary)] font-medium leading-none">Reset</span>
       </div>
     </div>
   </div>
@@ -271,59 +380,59 @@
     <!-- Left Column (Span 8): Cart Items List & Search -->
     <div class="lg:col-span-8 space-y-4">
       <!-- Items Card -->
-      <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
+      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
         {#if cart.items.length === 0}
           <div class="p-12 text-center flex flex-col items-center justify-center">
-            <div class="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-neutral-400 dark:text-neutral-600 mb-3">
+            <div class="w-12 h-12 rounded-full bg-[var(--bg-subtle)] flex items-center justify-center text-[var(--text-muted)] mb-3">
               <PackageOpen class="w-6 h-6" />
             </div>
-            <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+            <h3 class="text-sm font-semibold text-[var(--text-primary)]">
               Keranjang Kasir Masih Kosong
             </h3>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm">
-              Arahkan barcode scanner ke produk atau ketik nama barang di kolom bawah, lalu tekan <kbd class="font-mono px-1 py-0.5 rounded border text-[10px] bg-neutral-100 dark:bg-neutral-800">Enter</kbd> untuk menambahkan.
+            <p class="text-xs text-[var(--text-muted)] mt-1 max-w-sm">
+              Arahkan barcode scanner ke produk atau ketik nama barang di kolom bawah, lalu tekan <kbd class="px-1.5 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[10px] font-semibold text-[var(--text-primary)]">Enter</kbd> untuk menambahkan.
             </p>
           </div>
         {:else}
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
-              <thead class="bg-neutral-50/70 dark:bg-neutral-900/40 text-neutral-500 text-[11px] font-medium uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+              <thead class="bg-[var(--bg-subtle)] text-[var(--text-muted)] text-[11px] font-medium border-b border-[var(--border-subtle)]">
                 <tr>
-                  <th class="px-4 py-3 font-medium">NAMA PRODUK</th>
-                  <th class="px-4 py-3 font-medium text-right">HARGA SATUAN</th>
-                  <th class="px-4 py-3 font-medium text-center">JUMLAH (QTY)</th>
-                  <th class="px-4 py-3 font-medium text-right">SUBTOTAL</th>
-                  <th class="px-3 py-3 text-center w-10"></th>
+                  <th class="py-2.5 px-4 font-medium">NAMA PRODUK</th>
+                  <th class="py-2.5 px-4 font-medium text-right">HARGA SATUAN</th>
+                  <th class="py-2.5 px-4 font-medium text-center">JUMLAH (QTY)</th>
+                  <th class="py-2.5 px-4 font-medium text-right">SUBTOTAL</th>
+                  <th class="py-2.5 px-4 text-center w-12">Aksi</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-neutral-200/60 dark:divide-neutral-800/60">
+              <tbody class="divide-y divide-[var(--border-subtle)]">
                 {#each paginatedCartItems as item (item.id)}
                   {@const subtotal = item.harga_jual * item.jumlah_barang}
-                  <tr class="hover:bg-neutral-50/40 dark:hover:bg-neutral-900/30 transition-colors">
+                  <tr class="hover:bg-[var(--bg-hover)] transition-colors">
                     <!-- Name & Barcode -->
-                    <td class="px-4 py-3">
-                      <div class="font-medium text-neutral-900 dark:text-neutral-100">
+                    <td class="py-2.5 px-4">
+                      <div class="font-medium text-[var(--text-primary)]">
                         {item.nama_barang}
                       </div>
                       {#if item.barcode_barang}
-                        <div class="font-mono text-[10px] text-neutral-400 mt-0.5">
+                        <div class="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5">
                           {item.barcode_barang}
                         </div>
                       {/if}
                     </td>
 
                     <!-- Unit Price -->
-                    <td class="px-4 py-3 text-right font-medium text-neutral-700 dark:text-neutral-300">
+                    <td class="py-2.5 px-4 text-right font-medium text-[var(--text-secondary)] tabular-nums">
                       <Rupiah value={item.harga_jual} />
                     </td>
 
                     <!-- Quantity Stepper -->
-                    <td class="px-4 py-3">
+                    <td class="py-2.5 px-4">
                       <div class="flex flex-col items-center gap-1">
-                        <div class="inline-flex items-center border border-neutral-300 dark:border-neutral-700 rounded-md bg-[var(--bg-surface)] overflow-hidden">
+                        <div class="inline-flex items-center border border-[var(--border-subtle)] rounded-md bg-[var(--bg-surface)] overflow-hidden">
                           <button
                             type="button"
-                            class="w-7 h-7 flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:bg-[var(--bg-hover)] transition-colors"
+                            class="w-7 h-7 flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
                             onclick={() => cart.decrement(item.id)}
                             aria-label="Kurangi kuantitas"
                           >
@@ -337,11 +446,11 @@
                             onchange={(e) => handleQtyChange(item.id, e)}
                             aria-label={`Jumlah kuantitas ${item.nama_barang}`}
                             autocomplete="off"
-                            class="w-11 h-7 text-center font-medium tabular-nums text-xs border-x border-neutral-300 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
+                            class="w-11 h-7 text-center font-medium tabular-nums text-xs border-x border-[var(--border-subtle)] bg-transparent text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
                             type="button"
-                            class="w-7 h-7 flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40"
+                            class="w-7 h-7 flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
                             disabled={item.jumlah_barang >= item.stok_barang}
                             onclick={() => cart.increment(item.id)}
                             aria-label="Tambah kuantitas"
@@ -351,22 +460,22 @@
                         </div>
 
                         <!-- Micro stock badge -->
-                        <span class="text-[10px] text-neutral-400 tabular-nums">
+                        <span class="text-[10px] text-[var(--text-muted)] tabular-nums">
                           Sisa: {formatNumber(item.stok_barang)}
                         </span>
                       </div>
                     </td>
 
                     <!-- Subtotal -->
-                    <td class="px-4 py-3 text-right font-bold text-neutral-900 dark:text-neutral-100 text-sm">
+                    <td class="py-2.5 px-4 text-right font-bold text-[var(--text-primary)] tabular-nums text-sm">
                       <Rupiah value={subtotal} />
                     </td>
 
                     <!-- Delete Row -->
-                    <td class="px-3 py-3 text-center">
+                    <td class="py-2.5 px-4 text-center">
                       <button
                         type="button"
-                        class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 shadow-2xs transition-all flex items-center justify-center mx-auto"
+                        class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center mx-auto"
                         onclick={() => cart.removeItem(item.id)}
                         aria-label="Hapus item"
                         title="Hapus dari keranjang"
@@ -394,7 +503,7 @@
 
       <!-- Fast Barcode & Search Bar (Bottom Position) -->
       <div class="relative flex items-center">
-        <div class="absolute left-3.5 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500">
+        <div class="absolute left-3.5 flex items-center pointer-events-none text-[var(--text-muted)]">
           <ScanBarcode class="w-5 h-5" />
         </div>
         <input
@@ -404,9 +513,9 @@
           onkeydown={handleSearchKeydown}
           placeholder="Scan barcode scanner atau ketik nama produk… (Tekan Enter)"
           aria-label="Scan barcode scanner atau ketik nama produk"
-          class="w-full h-12 pl-11 pr-24 rounded-lg border text-sm font-medium transition-colors
-            border-neutral-300 dark:border-neutral-800 bg-[var(--bg-surface)] text-neutral-900 dark:text-neutral-100
-            focus:border-neutral-900 dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/50 shadow-2xs"
+          class="w-full h-12 pl-11 pr-24 rounded-md border text-sm font-medium transition-colors
+            border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)]
+            focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
           autocomplete="off"
         />
         <div class="absolute right-2 flex items-center gap-1">
@@ -425,9 +534,9 @@
 
     <!-- RIGHT PANEL: Checkout & Summary Card (4 cols) -->
     <div class="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
-      <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs p-5 space-y-5">
-        <div class="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-          <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 uppercase tracking-wide">
+      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 space-y-5">
+        <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+          <span class="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">
             Ringkasan Transaksi
           </span>
           {#if cart.items.length > 0}
@@ -439,37 +548,37 @@
 
         <!-- Breakdown List -->
         <div class="space-y-2.5 text-xs">
-          <div class="flex justify-between text-neutral-500 dark:text-neutral-400">
+          <div class="flex justify-between text-[var(--text-muted)]">
             <span>Jumlah Item Fisik</span>
-            <span class="font-medium text-neutral-900 dark:text-neutral-100 tabular-nums">
+            <span class="font-medium text-[var(--text-primary)] tabular-nums">
               {formatNumber(cart.totalItems)} pcs
             </span>
           </div>
 
-          <div class="flex justify-between text-neutral-500 dark:text-neutral-400">
+          <div class="flex justify-between text-[var(--text-muted)]">
             <span>Variasi Produk</span>
-            <span class="font-medium text-neutral-900 dark:text-neutral-100 tabular-nums">
+            <span class="font-medium text-[var(--text-primary)] tabular-nums">
               {cart.items.length} SKU
             </span>
           </div>
 
-          <div class="flex justify-between text-neutral-500 dark:text-neutral-400">
+          <div class="flex justify-between text-[var(--text-muted)]">
             <span>Pajak & Potongan</span>
-            <span class="text-neutral-400 tabular-nums">
-              <span class="text-[10px] text-neutral-400 mr-0.5">Rp</span>0,00
+            <span class="text-[var(--text-muted)] tabular-nums">
+              <span class="text-[10px] text-[var(--text-muted)] mr-0.5">Rp</span>0,00
             </span>
           </div>
         </div>
 
-        <div class="border-t border-neutral-200 dark:border-neutral-800 pt-4">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+        <div class="border-t border-[var(--border-subtle)] pt-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             TOTAL PEMBAYARAN
           </p>
-          <div class="mt-1 flex items-baseline gap-1.5 text-neutral-900 dark:text-neutral-100 flex-wrap">
+          <div class="mt-1 flex items-baseline gap-1.5 text-[var(--text-primary)] flex-wrap">
             <Rupiah
               value={cart.totalAmount}
-              class="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 break-all"
-              prefixClass="text-sm sm:text-base font-semibold text-neutral-400 dark:text-neutral-500 tracking-normal mr-1"
+              class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] break-all"
+              prefixClass="text-sm sm:text-base font-semibold text-[var(--text-muted)] tracking-normal mr-1"
             />
           </div>
         </div>
@@ -499,11 +608,13 @@
   results={searchResults}
   searchQuery={searchQuery}
   onselect={handleProductSelect}
+  onclose={focusSearchInput}
 />
 
 <PaymentModal
   bind:open={paymentModalOpen}
   onsuccess={handlePaymentSuccess}
+  onclose={focusSearchInput}
 />
 
 <ReceiptModal

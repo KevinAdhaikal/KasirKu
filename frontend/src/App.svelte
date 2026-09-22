@@ -26,12 +26,11 @@
   import Settings from './lib/routes/admin/Settings.svelte';
 
   onMount(async () => {
-    progress.start();
     try {
       await auth.init();
 
       if (auth.isAuthenticated) {
-        sse.connect();
+        await sse.connect();
         if (router.currentPath === '/login') {
           router.navigate('/', true);
         }
@@ -40,27 +39,24 @@
           router.navigate('/login', true);
         }
       }
-    } finally {
-      progress.done();
+    } catch {
+      if (router.currentPath !== '/login') {
+        router.navigate('/login', true);
+      }
     }
   });
 
   // Watch route & authentication strictly (untracking SSE status & router reads)
   $effect(() => {
     const isAuth = auth.isAuthenticated;
-    const loading = auth.isLoading;
+    const isInit = auth.isInitialized;
 
-    if (!loading) {
+    if (isInit) {
       untrack(() => {
         if (!isAuth) {
           sse.disconnect();
           if (router.currentPath !== '/login') {
             router.navigate('/login', true);
-          }
-        } else {
-          sse.connect();
-          if (router.currentPath === '/login') {
-            router.navigate('/', true);
           }
         }
       });
@@ -68,53 +64,58 @@
   });
 </script>
 
-<ProgressBar />
-
-{#if !auth.isAuthenticated}
-  <Login />
+{#if !auth.isInitialized}
+  <!-- Blank screen with theme canvas background while verifying session token and credentials -->
+  <div class="min-h-screen w-full bg-[var(--bg-canvas)]" aria-hidden="true"></div>
 {:else}
-  <AppLayout>
-    {#if router.currentPath === '/' || router.currentPath === '/dashboard'}
-      <Dashboard />
-    {:else if router.currentPath === '/profile'}
-      <Profile />
-    {:else if router.currentPath === '/kasir'}
-      <Kasir />
-    {:else if router.currentPath === '/barang/daftar_barang'}
-      <DaftarBarang />
-    {:else if router.currentPath === '/barang/kategori_barang'}
-      <KategoriBarang />
-    {:else if router.currentPath === '/barang/barang_masuk'}
-      <BarangMasuk />
-    {:else if router.currentPath === '/barang/retur_barang'}
-      <ReturBarang />
-    {:else if router.currentPath === '/pembukuan/penjualan' || router.currentPath === '/penjualan'}
-      <Penjualan />
-    {:else if router.currentPath === '/pembukuan/pengeluaran' || router.currentPath === '/pengeluaran'}
-      <Pengeluaran />
-    {:else if router.currentPath === '/pembukuan/laporan' || router.currentPath === '/laporan'}
-      <Laporan />
-    {:else if router.currentPath === '/users'}
-      <Users />
-    {:else if router.currentPath === '/rp'}
-      <Roles />
-    {:else if router.currentPath === '/settings'}
-      <Settings />
-    {:else}
-      <div class="py-16 text-center">
-        <h2 class="text-2xl font-bold font-mono">404</h2>
-        <p class="text-xs text-neutral-500 mt-1">Halaman tidak ditemukan.</p>
-        <button
-          type="button"
-          onclick={() => router.navigate('/')}
-          class="mt-4 px-3 py-1.5 rounded-md border text-xs font-medium hover:bg-[var(--bg-hover)]"
-        >
-          Kembali ke Dashboard
-        </button>
-      </div>
-    {/if}
-  </AppLayout>
-{/if}
+  <ProgressBar />
 
-<ToastContainer />
-<ConfirmDialog />
+  {#if !auth.isAuthenticated}
+    <Login />
+  {:else}
+    <AppLayout>
+      {#if router.currentPath === '/' || router.currentPath === '/dashboard'}
+        <Dashboard />
+      {:else if router.currentPath === '/profile'}
+        <Profile />
+      {:else if router.currentPath === '/kasir'}
+        <Kasir />
+      {:else if router.currentPath === '/barang/daftar_barang'}
+        <DaftarBarang />
+      {:else if router.currentPath === '/barang/kategori_barang'}
+        <KategoriBarang />
+      {:else if router.currentPath === '/barang/barang_masuk'}
+        <BarangMasuk />
+      {:else if router.currentPath === '/barang/retur_barang'}
+        <ReturBarang />
+      {:else if router.currentPath === '/pembukuan/penjualan' || router.currentPath === '/penjualan'}
+        <Penjualan />
+      {:else if router.currentPath === '/pembukuan/pengeluaran' || router.currentPath === '/pengeluaran'}
+        <Pengeluaran />
+      {:else if router.currentPath === '/pembukuan/laporan' || router.currentPath === '/laporan'}
+        <Laporan />
+      {:else if router.currentPath === '/users'}
+        <Users />
+      {:else if router.currentPath === '/rp'}
+        <Roles />
+      {:else if router.currentPath === '/settings'}
+        <Settings />
+      {:else}
+        <div class="py-16 text-center">
+          <h2 class="text-2xl font-bold font-mono">404</h2>
+          <p class="text-xs text-neutral-500 mt-1">Halaman tidak ditemukan.</p>
+          <button
+            type="button"
+            onclick={() => router.navigate('/')}
+            class="mt-4 px-3 py-1.5 rounded-md border text-xs font-medium hover:bg-[var(--bg-hover)]"
+          >
+            Kembali ke Dashboard
+          </button>
+        </div>
+      {/if}
+    </AppLayout>
+  {/if}
+
+  <ToastContainer />
+  <ConfirmDialog />
+{/if}

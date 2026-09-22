@@ -392,15 +392,15 @@
   </div>
 
   <!-- Expenses Table Card -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs border-collapse">
         <thead>
-          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
+          <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('created_ms')}
               >
                 <span>Waktu / Tanggal</span>
@@ -418,7 +418,7 @@
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('deskripsi')}
               >
                 <span>Keterangan / Keperluan</span>
@@ -436,7 +436,7 @@
             <th class="px-4 py-2.5 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none ml-auto text-[11px] font-medium"
                 onclick={() => toggleSort('jumlah_uang')}
               >
                 <span>Nominal Biaya</span>
@@ -454,7 +454,7 @@
             <th class="px-4 py-2.5 text-center">Aksi</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#if loading}
             {#each Array(5) as _}
               <tr class="h-12">

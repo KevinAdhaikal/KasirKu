@@ -3,12 +3,16 @@
   import Sidebar from './Sidebar.svelte';
   import Topbar from './Topbar.svelte';
   import { ui } from '../../stores/ui.svelte';
+  import { sse } from '../../stores/sse.svelte';
+  import { WifiOff, RefreshCw } from 'lucide-svelte';
 
   interface Props {
     children?: Snippet;
   }
 
   let { children }: Props = $props();
+
+  const isSseDown = $derived(sse.status !== 'online');
 </script>
 
 <div class="min-h-screen flex bg-[var(--bg-canvas)] text-neutral-900 dark:text-neutral-100">
@@ -19,7 +23,21 @@
   <div class="flex-1 flex flex-col min-w-0 transition-all duration-200 ease-out {ui.sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}">
     <Topbar ontogglemobile={() => ui.toggleMobileSidebar()} />
 
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+    {#if isSseDown}
+      <div class="bg-red-500/10 dark:bg-red-950/40 border-b border-red-500/20 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-red-700 dark:text-red-400 text-xs transition-all select-none">
+        <div class="flex items-center gap-2 min-w-0">
+          <WifiOff class="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
+          <p class="truncate sm:whitespace-normal font-medium">
+            Koneksi ke server terputus. Seluruh input, tombol aksi, dan konten dinonaktifkan sementara hingga tersambung kembali.
+          </p>
+        </div>
+      </div>
+    {/if}
+
+    <main
+      inert={isSseDown ? true : undefined}
+      class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto transition-all duration-200 {isSseDown ? 'opacity-40 pointer-events-none select-none cursor-not-allowed [&_*]:pointer-events-none' : ''}"
+    >
       {@render children?.()}
     </main>
 

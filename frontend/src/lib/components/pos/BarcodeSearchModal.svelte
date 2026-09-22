@@ -8,7 +8,7 @@
   import { toast } from '../../stores/toast.svelte';
   import { api } from '../../api/api';
   import { formatRupiah, formatNumber } from '../../utils/format';
-  import { Search, Plus, Package, X, Loader2 } from 'lucide-svelte';
+  import { Search, Plus, Package, X, Loader2, Barcode } from 'lucide-svelte';
 
   interface Product {
     id: number;
@@ -24,6 +24,7 @@
     results?: Product[];
     searchQuery?: string;
     onselect?: (product: Product) => void;
+    onclose?: () => void;
   }
 
   let {
@@ -31,6 +32,7 @@
     results = [],
     searchQuery = '',
     onselect,
+    onclose,
   }: Props = $props();
 
   let filterQuery = $state('');
@@ -98,15 +100,19 @@
     }
   }
 
+  function handleModalClose() {
+    open = false;
+    onclose?.();
+  }
+
   function handleSelect(product: Product) {
     const res = cart.addItem(product);
     if (!res.success) {
       toast.error(res.message || 'Gagal menambahkan produk');
       return;
     }
-    toast.success(`"${product.nama_barang}" ditambahkan ke kasir.`);
     onselect?.(product);
-    open = false;
+    handleModalClose();
   }
 </script>
 
@@ -117,12 +123,13 @@
     ? `${displayedProducts.length} hasil untuk "${filterQuery.trim()}".`
     : `Ditemukan ${displayedProducts.length} produk yang cocok.`}
   size="lg"
+  onclose={handleModalClose}
 >
   <!-- Search / Filter Bar Inside Modal -->
   <div class="relative flex items-center mt-1 mb-4">
-    <div class="absolute left-3 flex items-center pointer-events-none text-neutral-400">
+    <div class="absolute left-3 flex items-center pointer-events-none text-[var(--text-muted)]">
       {#if isSearchingRemote}
-        <Loader2 class="w-4 h-4 animate-spin text-neutral-500" />
+        <Loader2 class="w-4 h-4 animate-spin text-[var(--brand)]" />
       {:else}
         <Search class="w-4 h-4" />
       {/if}
@@ -140,16 +147,19 @@
           } else {
             handleRemoteSearch();
           }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          handleModalClose();
         }
       }}
-      class="w-full h-10 pl-9 pr-24 rounded-md border text-xs bg-[var(--bg-surface)] border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/50 transition-colors"
+      class="w-full h-10 pl-9 pr-24 rounded-md border text-xs bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/50 focus:border-[var(--brand)] transition-colors"
     />
     <div class="absolute right-2 flex items-center gap-1">
       {#if filterQuery}
         <button
           type="button"
           onclick={() => { filterQuery = ''; localResults = [...results]; searchInputEl?.focus(); }}
-          class="p-1.5 rounded-md text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-[var(--bg-hover)] transition-colors"
+          class="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
           title="Bersihkan pencarian"
           aria-label="Bersihkan pencarian"
         >
@@ -169,48 +179,56 @@
   </div>
 
   {#if displayedProducts.length === 0}
-    <div class="text-center py-10 px-4 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800">
-      <Package class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-      <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Tidak Ada Produk Cocok</p>
-      <p class="text-[11px] text-neutral-500 mt-1">Coba gunakan kata kunci nama barang atau barcode lain.</p>
+    <div class="text-center py-10 px-4 rounded-md border border-dashed border-[var(--border-subtle)] bg-[var(--bg-subtle)]/40">
+      <Package class="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
+      <p class="text-xs font-semibold text-[var(--text-primary)]">Tidak Ada Produk Cocok</p>
+      <p class="text-[11px] text-[var(--text-muted)] mt-1">Coba gunakan kata kunci nama barang atau barcode lain.</p>
     </div>
   {:else}
-    <div class="overflow-x-auto -mx-6 mt-0 mb-1 max-h-[380px] overflow-y-auto">
-      <table class="w-full text-xs border-collapse">
-        <thead class="sticky top-0 bg-[var(--bg-surface)] z-10">
-          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 text-[10px] font-mono font-semibold uppercase tracking-wider text-center">
-            <th class="px-5 py-2.5 font-medium">NAMA PRODUK</th>
-            <th class="px-5 py-2.5 font-medium">BARCODE</th>
-            <th class="px-5 py-2.5 font-medium text-center">STOK</th>
-            <th class="px-5 py-2.5 font-medium text-right">HARGA JUAL</th>
-            <th class="px-5 py-2.5 font-medium text-center">AKSI</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+    <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+      <div class="max-h-[380px] overflow-y-auto">
+        <table class="w-full text-xs border-collapse">
+          <thead class="sticky top-0 z-20 bg-[var(--bg-subtle)]">
+            <tr class="text-[var(--text-muted)] font-medium text-[11px]">
+              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-left">Nama Produk</th>
+              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-left">Barcode</th>
+              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-center">Stok</th>
+              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-right">Harga Jual</th>
+              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-center w-24">Aksi</th>
+            </tr>
+          </thead>
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#each paginatedProducts as product}
             {@const isOutOfStock = product.stok_barang <= 0}
-            <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
-              <td class="px-5 py-2.5 text-center font-medium text-neutral-900 dark:text-neutral-100">
+            <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+              <td class="py-2.5 px-4 text-left font-medium text-[var(--text-primary)]">
                 {product.nama_barang}
               </td>
-              <td class="px-5 py-2.5 text-center font-mono text-neutral-500 text-[11px]">
-                {product.barcode_barang || '-'}
+              <td class="py-2.5 px-4 text-left tabular-nums text-[var(--text-secondary)]">
+                {#if product.barcode_barang}
+                  <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] font-medium">
+                    <Barcode class="w-3 h-3 opacity-60" />
+                    {product.barcode_barang}
+                  </span>
+                {:else}
+                  <span class="text-[var(--text-muted)] text-[11px]">-</span>
+                {/if}
               </td>
-              <td class="px-5 py-2.5 text-center">
+              <td class="py-2.5 px-4 text-center">
                 {#if isOutOfStock}
                   <Badge variant="danger" size="sm">Habis</Badge>
                 {:else if product.stok_barang <= 5}
                   <Badge variant="warning" size="sm">{product.stok_barang} tersisa</Badge>
                 {:else}
-                  <span class="tabular-nums text-neutral-700 dark:text-neutral-300 font-medium">
+                  <span class="tabular-nums text-[var(--text-primary)] font-medium">
                     {formatNumber(product.stok_barang)}
                   </span>
                 {/if}
               </td>
-              <td class="px-5 py-2.5 text-right font-semibold text-neutral-900 dark:text-neutral-100">
+              <td class="py-2.5 px-4 text-right tabular-nums font-semibold text-[var(--text-primary)]">
                 <Rupiah value={product.harga_jual} />
               </td>
-              <td class="px-5 py-2.5 text-center">
+              <td class="py-2.5 px-4 text-center">
                 <div class="flex items-center justify-center">
                   <Button
                     variant={isOutOfStock ? 'secondary' : 'primary'}
@@ -227,26 +245,27 @@
           {/each}
         </tbody>
       </table>
+      </div>
     </div>
   {/if}
 
   {#snippet footer()}
-    <div class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-500">
+    <div class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
       <div class="flex items-center gap-3">
         <div>
-          Menampilkan <strong class="text-neutral-900 dark:text-neutral-100 tabular-nums">{paginatedProducts.length}</strong> dari <span class="tabular-nums font-medium text-neutral-900 dark:text-neutral-100">{displayedProducts.length}</span> produk
+          Menampilkan <strong class="text-[var(--text-primary)] tabular-nums">{paginatedProducts.length}</strong> dari <span class="tabular-nums font-medium text-[var(--text-primary)]">{displayedProducts.length}</span> produk
         </div>
         {#if displayedProducts.length > 5}
-          <div class="flex items-center gap-1.5 border-l border-neutral-200 dark:border-neutral-800 pl-3">
-            <span class="text-neutral-500 font-medium">Limit:</span>
-            <div class="inline-flex rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 p-0.5" role="group" aria-label="Batas per halaman">
+          <div class="flex items-center gap-1.5 border-l border-[var(--border-subtle)] pl-3">
+            <span class="text-[var(--text-muted)] font-medium">Limit:</span>
+            <div class="inline-flex rounded-md border border-[var(--border-subtle)] bg-[var(--bg-subtle)] p-0.5" role="group" aria-label="Batas per halaman">
               {#each LIMIT_OPTIONS as limitOpt}
                 <button
                   type="button"
                   onclick={() => { pageSize = limitOpt; currentPage = 1; }}
-                  class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition-colors {pageSize === limitOpt
-                    ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-2xs font-bold'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100'}"
+                  class="px-2 py-0.5 rounded text-[11px] font-medium transition-colors {pageSize === limitOpt
+                    ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-2xs font-bold border border-[var(--border-contrast)]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}"
                   aria-pressed={pageSize === limitOpt}
                   aria-label={`Tampilkan ${limitOpt} produk`}
                 >
@@ -269,7 +288,7 @@
           >
             Sebelumnya
           </Button>
-          <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300 tabular-nums px-1">
+          <span class="text-xs text-[var(--text-secondary)] tabular-nums px-1 font-medium">
             {currentPage} / {totalPages}
           </span>
           <Button

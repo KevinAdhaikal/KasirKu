@@ -35,11 +35,16 @@ export default async function(req: Request, url: URL, user_info: user_session_in
                     "desc",
                     "address",
                     "phone_num",
-                ])
+                ]
             )
-        );
+        )
+    );
 
-    return new Response(JSON.stringify({store: toko_settings}), {
+    const store = Object.fromEntries(
+        toko_settings.map(( item: { key: string, value: string }) => [item.key, item.value])
+    );
+
+    return new Response(JSON.stringify({ store }), {
         status: 200,
         headers: {
             "Content-Type": "application/json"

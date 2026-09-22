@@ -498,36 +498,36 @@
   </div>
 
   <!-- Roles Table -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-xs border-collapse">
-        <thead class="bg-neutral-50/70 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 text-neutral-500 uppercase font-mono text-[10px] font-semibold tracking-wider text-center">
+        <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px] text-center">
           <tr>
-            <th class="py-2.5 px-3 text-center w-16 cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('id')}>
+            <th class="py-2.5 px-3 text-center w-16 cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('id')}>
               <div class="inline-flex items-center justify-center gap-1">
                 <span>ID</span>
                 {#if sortField === 'id'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('name')}>
+            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('name')}>
               <div class="inline-flex items-center justify-center gap-1">
-                <span>Role Name</span>
+                <span>Nama Role</span>
                 {#if sortField === 'name'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('created_ms')}>
+            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('created_ms')}>
               <div class="inline-flex items-center justify-center gap-1">
-                <span>Created At</span>
+                <span>Dibuat</span>
                 {#if sortField === 'created_ms'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
@@ -595,7 +595,7 @@
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- ID -->
                 <td class="py-3 px-3 text-center font-medium text-neutral-500 tabular-nums">
-                  #{role.id}
+                  {role.id}
                 </td>
 
                 <!-- Role Name -->

@@ -6,6 +6,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { api } from '../../api/api';
   import { auth, Permissions } from '../../stores/auth.svelte';
+  import { router } from '../../stores/router.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { confirmDialog } from '../../stores/dialog.svelte';
   import { sse } from '../../stores/sse.svelte';
@@ -438,9 +439,22 @@
     }
   }
 
+  function checkUrlCategory() {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const katParam = params.get('kategori') || params.get('category');
+    if (katParam) {
+      const parsed = Number(katParam);
+      if (!isNaN(parsed) && parsed > 0) {
+        selectedKategori = parsed;
+      }
+    }
+  }
+
   // SSE real-time sync
   let unsubscribeSse: (() => void) | null = null;
   onMount(() => {
+    checkUrlCategory();
     loadData();
 
     unsubscribeSse = sse.subscribe((msg) => {
@@ -457,6 +471,12 @@
         }).catch(() => {});
       }
     });
+  });
+
+  $effect(() => {
+    if (router.search) {
+      checkUrlCategory();
+    }
   });
 
   onDestroy(() => {
@@ -487,6 +507,10 @@
     // Sorting
     res.sort((a, b) => {
       switch (sortBy) {
+        case 'id_asc':
+          return a.id - b.id;
+        case 'id_desc':
+          return b.id - a.id;
         case 'nama_asc':
           return a.nama_barang.localeCompare(b.nama_barang, 'id', { sensitivity: 'base' });
         case 'nama_desc':
@@ -537,8 +561,10 @@
     return res;
   });
 
-  function handleHeaderSort(col: 'nama' | 'barcode' | 'kategori' | 'stok' | 'harga_modal' | 'harga_jual' | 'margin') {
-    if (col === 'nama') {
+  function handleHeaderSort(col: 'id' | 'nama' | 'barcode' | 'kategori' | 'stok' | 'harga_modal' | 'harga_jual' | 'margin') {
+    if (col === 'id') {
+      sortBy = sortBy === 'id_asc' ? 'id_desc' : 'id_asc';
+    } else if (col === 'nama') {
       sortBy = sortBy === 'nama_asc' ? 'nama_desc' : 'nama_asc';
     } else if (col === 'barcode') {
       sortBy = sortBy === 'barcode_asc' ? 'barcode_desc' : 'barcode_asc';
@@ -589,7 +615,7 @@
 
 <div class="space-y-6">
   <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
     <div class="flex items-center gap-2.5">
       <h1 class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
         <Package class="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
@@ -668,6 +694,8 @@
         class="w-auto min-w-[140px]"
         selectClass="h-9 text-xs"
       >
+        <option value="id_asc">ID (1-9)</option>
+        <option value="id_desc">ID (9-1)</option>
         <option value="nama_asc">Nama (A-Z)</option>
         <option value="nama_desc">Nama (Z-A)</option>
         <option value="stok_asc">Stok Terendah</option>
@@ -679,15 +707,31 @@
   </div>
 
   <!-- Products Table -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs border-collapse">
         <thead>
-          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
-            <th class="py-2.5 px-3">
+          <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
+            <th class="py-2.5 px-4 w-16">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                onclick={() => handleHeaderSort('id')}
+              >
+                <span>ID</span>
+                {#if sortBy === 'id_asc'}
+                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                {:else if sortBy === 'id_desc'}
+                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                {:else}
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
+                {/if}
+              </button>
+            </th>
+            <th class="py-2.5 px-4">
+              <button
+                type="button"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
                 onclick={() => handleHeaderSort('nama')}
               >
                 <span>Produk</span>
@@ -700,10 +744,10 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3">
+            <th class="py-2.5 px-4">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
                 onclick={() => handleHeaderSort('barcode')}
               >
                 <span>Barcode</span>
@@ -716,10 +760,10 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3">
+            <th class="py-2.5 px-4 text-center">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
                 onclick={() => handleHeaderSort('kategori')}
               >
                 <span>Kategori</span>
@@ -732,10 +776,10 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3 text-right">
+            <th class="py-2.5 px-4 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
                 onclick={() => handleHeaderSort('stok')}
               >
                 <span>Stok</span>
@@ -748,10 +792,10 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3 text-right">
+            <th class="py-2.5 px-4 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
                 onclick={() => handleHeaderSort('harga_modal')}
               >
                 <span>Harga Modal</span>
@@ -764,10 +808,10 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3 text-right">
+            <th class="py-2.5 px-4 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
                 onclick={() => handleHeaderSort('harga_jual')}
               >
                 <span>Harga Jual</span>
@@ -780,10 +824,10 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3 text-right">
+            <th class="py-2.5 px-4 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
                 onclick={() => handleHeaderSort('margin')}
               >
                 <span>Margin / Unit</span>
@@ -796,13 +840,14 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-3 text-center">Aksi</th>
+            <th class="py-2.5 px-4 text-center w-24">Aksi</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#if loading}
             {#each Array(5) as _}
               <tr>
+                <td class="p-3"><Skeleton class="h-4 w-8" /></td>
                 <td class="p-3"><Skeleton class="h-4 w-36" /></td>
                 <td class="p-3"><Skeleton class="h-4 w-20" /></td>
                 <td class="p-3"><Skeleton class="h-4 w-16" /></td>
@@ -815,76 +860,81 @@
             {/each}
           {:else if paginatedBarang.length === 0}
             <tr>
-              <td colspan="8" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
+              <td colspan="9" class="py-12 text-center text-[var(--text-muted)]">
                 <Package class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <p class="font-medium text-xs">Tidak ada data barang yang sesuai.</p>
-                <p class="text-[11px] mt-0.5">Coba ubah kata kunci pencarian atau bersihkan filter.</p>
+                <p class="text-[11px] mt-0.5 opacity-75">Coba ubah kata kunci pencarian atau bersihkan filter.</p>
               </td>
             </tr>
           {:else}
             {#each paginatedBarang as item (item.id)}
               {@const marginVal = item.harga_jual - item.harga_modal}
               {@const marginPercent = item.harga_modal > 0 ? ((marginVal / item.harga_modal) * 100).toFixed(0) : '0'}
-              <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
+              <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                <!-- ID Produk -->
+                <td class="py-2.5 px-4 tabular-nums text-[var(--text-muted)] text-xs font-medium">
+                  {item.id}
+                </td>
+
                 <!-- Nama Produk -->
-                <td class="py-2.5 px-3">
-                  <div class="font-medium text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
+                <td class="py-2.5 px-4">
+                  <div class="font-medium text-[var(--text-primary)] text-xs sm:text-sm">
                     {item.nama_barang}
                   </div>
                 </td>
 
                 <!-- Barcode -->
-                <td class="py-2.5 px-3 tabular-nums">
+                <td class="py-2.5 px-4 tabular-nums">
                   {#if item.barcode_barang}
-                    <span class="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                      <Barcode class="w-3 h-3 text-neutral-400" />
+                    <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] font-medium">
+                      <Barcode class="w-3 h-3 opacity-60" />
                       {item.barcode_barang}
                     </span>
                   {:else}
-                    <span class="text-neutral-400 text-[11px]">-</span>
+                    <span class="text-[var(--text-muted)] text-[11px]">-</span>
                   {/if}
                 </td>
 
                 <!-- Kategori -->
-                <td class="py-2.5 px-3">
-                  <span class="inline-block text-[11px] px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400">
+                <td class="py-2.5 px-4 text-center">
+                  <span class="inline-block text-[11px] px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] font-medium">
                     {item.nama_kategori || 'Tanpa Kategori'}
                   </span>
                 </td>
 
                 <!-- Stok -->
-                <td class="py-2.5 px-3 text-right tabular-nums text-neutral-900 dark:text-neutral-100 font-medium text-xs">
+                <td class="py-2.5 px-4 text-right tabular-nums text-[var(--text-primary)] font-medium text-xs">
                   {formatNumber(item.stok_barang)}
                 </td>
 
                 <!-- Harga Modal -->
-                <td class="py-2.5 px-3 text-right tabular-nums text-neutral-500 text-xs">
+                <td class="py-2.5 px-4 text-right tabular-nums text-[var(--text-muted)] text-xs">
                   {formatRupiah(item.harga_modal)}
                 </td>
 
                 <!-- Harga Jual -->
-                <td class="py-2.5 px-3 text-right tabular-nums font-semibold text-neutral-900 dark:text-neutral-100 text-xs">
+                <td class="py-2.5 px-4 text-right tabular-nums font-semibold text-[var(--text-primary)] text-xs">
                   {formatRupiah(item.harga_jual)}
                 </td>
 
                 <!-- Margin -->
-                <td class="py-2.5 px-3 text-right tabular-nums text-xs">
+                <td class="py-2.5 px-4 text-right tabular-nums text-xs">
                   <div class="text-emerald-600 dark:text-emerald-400 font-medium">
                     +{formatRupiah(marginVal)}
                   </div>
-                  <div class="text-[10px] text-neutral-400">
+                  <div class="text-[10px] text-[var(--text-muted)]">
                     +{marginPercent}%
                   </div>
                 </td>
 
                 <!-- Aksi -->
-                <td class="py-2.5 px-3 text-center">
+                <td class="py-2.5 px-4 text-center">
                   <div class="flex items-center justify-center gap-1.5">
                     <button
                       type="button"
                       onclick={() => openEditModal(item)}
                       title="Edit Produk"
-                      class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 shadow-2xs transition-all flex items-center justify-center"
+                      class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-contrast)] hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-center"
                     >
                       <Pencil class="w-3.5 h-3.5" />
                     </button>
@@ -892,7 +942,7 @@
                       type="button"
                       onclick={() => handleDeleteBarang(item)}
                       title="Hapus Produk"
-                      class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 shadow-2xs transition-all flex items-center justify-center"
+                      class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>

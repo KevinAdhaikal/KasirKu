@@ -1,5 +1,6 @@
 // Svelte 5 Rune-based Auth Store
 import { api } from '../api/api';
+import { sse } from './sse.svelte';
 
 export function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -45,19 +46,8 @@ export interface StorePublicInfo {
 }
 
 class AuthStore {
-  token = $state<string | null>(typeof window !== 'undefined' ? localStorage.getItem('token') : null);
-  user = $state<UserProfile | null>(
-    typeof window !== 'undefined'
-      ? (() => {
-          try {
-            const cached = localStorage.getItem('kasirku_user');
-            return cached ? JSON.parse(cached) : null;
-          } catch {
-            return null;
-          }
-        })()
-      : null
-  );
+  token = $state<string | null>(typeof window !== 'undefined' ? localStorage.getItem('token') || getCookie('token') : null);
+  user = $state<UserProfile | null>(null);
   publicInfo = $state<StorePublicInfo>(
     typeof window !== 'undefined'
       ? (() => {
@@ -93,10 +83,14 @@ class AuthStore {
   constructor() {
     if (typeof window !== 'undefined') {
       (window as any).__AUTH__ = this;
+      window.addEventListener('auth:unauthorized', () => {
+        this.token = null;
+        this.user = null;
+      });
     }
   }
 
-  isAuthenticated = $derived(!!this.token && (!!this.user || !this.isInitialized));
+  isAuthenticated = $derived(this.isInitialized && !!this.token && !!this.user);
 
   can(permission: number): boolean {
     if (!this.user) {
@@ -111,18 +105,25 @@ class AuthStore {
   }
 
   hasSavedCredentials(): boolean {
-    const u = getCookie('username') || (typeof window !== 'undefined' ? localStorage.getItem('username') : null);
-    const p = getCookie('password') || (typeof window !== 'undefined' ? localStorage.getItem('password') : null);
-    return !!u && !!p;
+    const creds = this.getSavedCredentials();
+    return !!creds && !!creds.username && !!creds.password;
   }
 
   getSavedCredentials(): { username: string; password: string } | null {
     const u = getCookie('username') || (typeof window !== 'undefined' ? localStorage.getItem('username') : null);
     const p = getCookie('password') || (typeof window !== 'undefined' ? localStorage.getItem('password') : null);
-    if (u && p) {
-      return { username: u, password: p };
+    if (u && p && u.trim() && p.trim()) {
+      return { username: u.trim(), password: p.trim() };
     }
     return null;
+  }
+
+  clearSavedPassword() {
+    deleteCookie('password');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('password');
+      localStorage.removeItem('remember_password');
+    }
   }
 
   async reloginWithSavedCredentials(): Promise<boolean> {
@@ -147,11 +148,20 @@ class AuthStore {
           setCookie('username', creds.username, 30);
           setCookie('password', creds.password, 30);
         }
-        await Promise.all([this.fetchProfile(), this.fetchPublicInfo()]);
-        return true;
+        const profileData = await api.get<UserProfile>('/api/profile');
+        const userProfile = typeof profileData === 'string' ? JSON.parse(profileData) : profileData;
+        await this.fetchPublicInfo();
+
+        this.user = userProfile;
+        if (typeof window !== 'undefined' && userProfile) {
+          localStorage.setItem('kasirku_user', JSON.stringify(userProfile));
+        }
+        return !!this.user;
       }
       return false;
     } catch {
+      this.token = null;
+      this.user = null;
       return false;
     }
   }
@@ -160,38 +170,71 @@ class AuthStore {
     if (this.isInitialized) return;
     this.isLoading = true;
 
-    if (this.token) {
+    let authSucceeded = false;
+
+    // 1. Check existing session token if available
+    const existingToken = this.token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null) || getCookie('token');
+    if (existingToken) {
+      this.token = existingToken;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', existingToken);
+      }
       try {
-        await Promise.all([this.fetchProfile(), this.fetchPublicInfo()]);
+        const profileData = await api.get<UserProfile>('/api/profile');
+        const userProfile = typeof profileData === 'string' ? JSON.parse(profileData) : profileData;
+        await this.fetchPublicInfo();
+
+        try {
+          await sse.connect();
+        } catch {}
+
+        this.user = userProfile;
+        if (typeof window !== 'undefined' && userProfile) {
+          localStorage.setItem('kasirku_user', JSON.stringify(userProfile));
+        }
+        if (this.user) {
+          authSucceeded = true;
+        }
       } catch (err) {
-        console.warn('Session verification failed, attempting auto-relogin if remembered:', err);
-        if (this.hasSavedCredentials()) {
-          const relogged = await this.reloginWithSavedCredentials();
-          if (!relogged) {
-            this.token = null;
-            this.user = null;
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('token');
-              localStorage.removeItem('kasirku_user');
-            }
-            if (typeof document !== 'undefined') {
-              document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
-            }
-          }
-        } else {
-          this.token = null;
-          this.user = null;
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('kasirku_user');
-          }
-          if (typeof document !== 'undefined') {
-            document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
-          }
+        console.warn('Session verification with existing token failed:', err);
+        this.token = null;
+        this.user = null;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('kasirku_user');
+        }
+        if (typeof document !== 'undefined') {
+          deleteCookie('token');
         }
       }
-    } else {
-      // Fetch public info for store branding on login screen
+    }
+
+    // 2. If token check was not successful, attempt auto-relogin using saved credentials (Remember My Account)
+    if (!authSucceeded && this.hasSavedCredentials()) {
+      try {
+        const relogged = await this.reloginWithSavedCredentials();
+        if (relogged && this.user) {
+          authSucceeded = true;
+        } else {
+          this.clearSavedPassword();
+        }
+      } catch (err) {
+        console.warn('Auto-relogin with remembered credentials failed:', err);
+        this.clearSavedPassword();
+      }
+    }
+
+    // 3. If authentication did not succeed, ensure clean state and fetch public store info for login page
+    if (!authSucceeded) {
+      this.token = null;
+      this.user = null;
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('kasirku_user');
+      }
+      if (typeof document !== 'undefined') {
+        deleteCookie('token');
+      }
       try {
         await this.fetchPublicInfo();
       } catch {}
@@ -264,8 +307,23 @@ class AuthStore {
         localStorage.setItem('username', username);
       }
 
-      await this.fetchProfile();
+      // Fetch profile & public info first without setting this.user immediately
+      const profileData = await api.get<UserProfile>('/api/profile');
+      const userProfile = typeof profileData === 'string' ? JSON.parse(profileData) : profileData;
       await this.fetchPublicInfo();
+
+      // Connect SSE before activating user state so that the dashboard doesn't flash red
+      try {
+        await sse.connect();
+      } catch (err) {
+        console.warn('SSE connect during login error:', err);
+      }
+
+      this.user = userProfile;
+      if (typeof window !== 'undefined' && userProfile) {
+        localStorage.setItem('kasirku_user', JSON.stringify(userProfile));
+      }
+
       return true;
     } else if (res.status === 403) {
       throw new Error('Username atau kata sandi tidak valid.');
@@ -277,6 +335,7 @@ class AuthStore {
   }
 
   async logout() {
+    sse.disconnect();
     // 1. Immediately invalidate local token, user, and credentials
     this.token = null;
     this.user = null;

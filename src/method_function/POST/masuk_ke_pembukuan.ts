@@ -35,9 +35,10 @@ export default async function(req: Request, token: string) {
         harga_jual: number,
         nama_barang: string
     }];
-    
-    if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
 
+    console.log(items);
+    if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
+    console.log(items);
     const date = global.date;
     const now = global.date.getTime();
     const date_now = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();

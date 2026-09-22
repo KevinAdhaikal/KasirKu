@@ -123,8 +123,7 @@
       </div>
       <div class="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 tabular-nums font-medium">
         <Clock class="w-3 h-3 text-neutral-400 shrink-0" />
-        <span>{formattedTimeShort} WIB</span>
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
+        <span>{formattedTimeShort}</span>
       </div>
     </div>
   </button>
@@ -141,7 +140,6 @@
           <h4 class="text-xs font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
             {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
           </h4>
-          <p class="text-[10px] text-neutral-400">Kalender Toko</p>
         </div>
         <div class="flex items-center gap-1">
           <button
@@ -201,15 +199,6 @@
             </span>
           </div>
         {/each}
-      </div>
-
-      <!-- Real-time Status Footer -->
-      <div class="mt-3 pt-2.5 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between text-[10px] text-neutral-400">
-        <div class="flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span class="text-neutral-600 dark:text-neutral-400 font-medium">Sistem Sinkron</span>
-        </div>
-        <span class="tabular-nums font-mono font-medium text-neutral-600 dark:text-neutral-300">{formattedTimeWithSecs}</span>
       </div>
     </div>
   {/if}

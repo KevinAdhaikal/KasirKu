@@ -15,7 +15,7 @@
 
 import { user_session_interface } from "../../../user_session/user_session";
 import { global } from "../../../global";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
     const db = global.database;
@@ -25,19 +25,30 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
 
-    const [res] = await db
+    const res = await db
         .select({
-            store_struk: settings.value,
+            key: settings.key,
+            value: settings.value
         })
         .from(settings)
         .where(
-            and(
-                eq(settings.section, "store"),
-                eq(settings.key, "struk"),
+            or(
+                and(
+                    eq(settings.section, "receipt"),
+                    eq(settings.key, "content")
+                ),
+                and(
+                    eq(settings.section, "receipt"),
+                    eq(settings.key, "enabled")
+                )
             )
         );
 
-    return new Response(JSON.stringify(res), {
+    const res_struk = Object.fromEntries(
+        res.map((item: { key: string, value: string }) => [item.key, item.value])
+    );
+
+    return new Response(JSON.stringify(res_struk), {
         status: 200,
         headers: { "Content-Type": "application/json" }
     });

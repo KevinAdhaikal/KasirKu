@@ -26,31 +26,44 @@ export default async function(req: Request, token: string) {
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
     if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
-    
-    const user_input = await req.text();
 
-    if (
-        !user_input || user_input.length >= 65535
-    ) return new Response("Bad Request", {status: 400});
-    
-    await db
-        .update(settings)
+    const { enabled, content } = await req.json();
+
+    if (enabled) {
+        if (!content || !content.length) return new Response("Bad Request", { status: 400 });
+        await db
+            .update(settings)
             .set({
-                value: user_input ?? null,
+                value: content ?? "",
                 modified_ms: Date.now(),
             })
             .where(
                 and(
-                    eq(settings.section, "store"),
-                    eq(settings.key, "struk"),
+                    eq(settings.section, "receipt"),
+                    eq(settings.key, "content"),
                 )
+            );
+    }
+
+    await db
+        .update(settings)
+        .set({
+            value: String(enabled),
+            modified_ms: Date.now(),
+        })
+        .where(
+            and(
+                eq(settings.section, "receipt"),
+                eq(settings.key, "enabled"),
             )
-        .execute();
+        );
 
     global.sse_clients.broadcast(JSON.stringify({
         type: 8,
         code: "UPDATE_STRUK_SETTING",
-        data: user_input ?? null
+        data: {
+            enabled, content
+        }
     }));
 
     return new Response("", {status: 200});

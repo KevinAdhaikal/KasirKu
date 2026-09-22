@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { sse } from '../../stores/sse.svelte';
   import { X } from 'lucide-svelte';
 
   interface Props {
@@ -42,6 +43,12 @@
     open = false;
     onclose?.();
   }
+
+  $effect(() => {
+    if (sse.status !== 'online' && open) {
+      handleClose();
+    }
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (closeOnEscape && e.key === 'Escape' && open) {

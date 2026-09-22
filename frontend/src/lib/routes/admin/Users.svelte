@@ -462,23 +462,23 @@
   </div>
 
   <!-- Users Table -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-xs border-collapse">
-        <thead class="bg-neutral-50/70 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 text-neutral-500 uppercase font-mono text-[10px] font-semibold tracking-wider text-center">
+        <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px] text-center">
           <tr>
             <th class="py-2.5 px-3 text-center w-20">
               <button
                 type="button"
                 onclick={() => toggleSort('id')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
                 <span>ID</span>
                 {#if sortField === 'id'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -489,14 +489,14 @@
               <button
                 type="button"
                 onclick={() => toggleSort('full_name')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
                 <span>Pengguna / Kredensial</span>
                 {#if sortField === 'full_name'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -507,14 +507,14 @@
               <button
                 type="button"
                 onclick={() => toggleSort('role_id')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
                 <span>Role</span>
                 {#if sortField === 'role_id'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -525,14 +525,14 @@
               <button
                 type="button"
                 onclick={() => toggleSort('created_ms')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
                 <span>Didaftarkan</span>
                 {#if sortField === 'created_ms'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -544,7 +544,7 @@
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#if loading}
             {#each Array(4) as _}
               <tr>
@@ -580,7 +580,7 @@
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- ID (Centered) -->
                 <td class="py-2.5 px-3 text-center font-medium text-neutral-500 tabular-nums">
-                  #{user.id}
+                  {user.id}
                 </td>
 
                 <!-- User Name & Avatar -->

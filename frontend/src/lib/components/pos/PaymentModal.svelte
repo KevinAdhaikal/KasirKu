@@ -4,6 +4,7 @@
   import Rupiah from '../ui/Rupiah.svelte';
   import { cart, type CartItem } from '../../stores/cart.svelte';
   import { auth } from '../../stores/auth.svelte';
+  import { sse } from '../../stores/sse.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { formatRupiah, formatNumber, formatIDR, parseIDR } from '../../utils/format';
   import { CheckCircle2, AlertCircle } from 'lucide-svelte';
@@ -22,9 +23,15 @@
   interface Props {
     open?: boolean;
     onsuccess?: (receiptData: ReceiptData) => void;
+    onclose?: () => void;
   }
 
-  let { open = $bindable(false), onsuccess }: Props = $props();
+  let { open = $bindable(false), onsuccess, onclose }: Props = $props();
+
+  function handleModalClose() {
+    open = false;
+    onclose?.();
+  }
 
   let tunaiRaw = $state('');
   let isSubmitting = $state(false);
@@ -105,6 +112,11 @@
       return;
     }
 
+    if (sse.status !== 'online') {
+      toast.warning('Server sedang terputus (SSE offline). Pembayaran tidak dapat diproses.');
+      return;
+    }
+
     isSubmitting = true;
     errorMsg = null;
 
@@ -167,6 +179,7 @@
 
   function handleKeydown(e: KeyboardEvent) {
     if (!open) return;
+    if (sse.status !== 'online') return;
 
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -182,8 +195,8 @@
 <Modal
   bind:open
   title="Pembayaran Transaksi Kasir"
-  description={`Total ${formatNumber(totalItems)} item belanja.`}
   size="lg"
+  onclose={handleModalClose}
 >
   <div class="space-y-4">
     <!-- Grand Total Highlight Card -->
@@ -228,6 +241,9 @@
             if (e.key === 'Enter') {
               e.preventDefault();
               handlePay();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              handleModalClose();
             }
           }}
           class="w-full h-12 pl-10 pr-4 rounded-md border text-lg font-bold tracking-normal tabular-nums transition-colors
@@ -314,7 +330,7 @@
   </div>
 
   {#snippet footer()}
-    <Button variant="secondary" size="sm" onclick={() => (open = false)} disabled={isSubmitting}>
+    <Button variant="secondary" size="sm" onclick={handleModalClose} disabled={isSubmitting}>
       Batal (Esc)
     </Button>
     <Button

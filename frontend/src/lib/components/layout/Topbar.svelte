@@ -65,13 +65,13 @@
   }
 </script>
 
-<header class="h-14 border-b border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-surface)]/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
-  <!-- Left: Hamburger (Mobile) / Sidebar Collapse Toggle (Desktop) + Breadcrumb -->
+<header class="h-14 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
+  <!-- Left: Hamburger (Mobile) / Sidebar Collapse Toggle (Desktop) + Online Status -->
   <div class="flex items-center gap-2.5 min-w-0">
     <!-- Mobile Hamburger Button -->
     <button
       type="button"
-      class="p-1.5 -ml-1.5 rounded-md text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-[var(--bg-hover)] lg:hidden"
+      class="p-1.5 -ml-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] lg:hidden"
       onclick={ontogglemobile}
       aria-label="Buka menu navigasi"
     >
@@ -81,13 +81,16 @@
     <!-- Desktop Sidebar Toggle Button (especially visible when sidebar is collapsed) -->
     <button
       type="button"
-      class="hidden lg:flex p-1.5 -ml-1.5 rounded-md text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-[var(--bg-hover)] transition-colors"
+      class="hidden lg:flex p-1.5 -ml-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
       onclick={() => ui.toggleSidebar()}
       aria-label="Toggle sidebar (Ctrl+B)"
       title="Toggle sidebar (Ctrl+B)"
     >
       <PanelLeft class="w-4 h-4" />
     </button>
+
+    <!-- Server Connection Online / Offline Status -->
+    <SseStatus />
   </div>
 
   <!-- Right: Shortcuts, Status & Controls -->
@@ -115,14 +118,13 @@
     <!-- Live Interactive Calendar Widget -->
     <CalendarWidget />
 
-    <SseStatus />
     <ThemeToggle />
 
     <!-- Sign Out button -->
     <button
       type="button"
       onclick={handleLogout}
-      class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-500 shadow-[0_1px_1px_rgba(0,0,0,0.04)] transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400 dark:hover:border-red-900/60 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] transition-colors hover:border-red-300 dark:hover:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400"
       aria-label="Keluar dari akun"
       title="Keluar (Sign Out)"
     >

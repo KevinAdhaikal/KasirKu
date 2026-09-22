@@ -305,6 +305,17 @@
   }
 }
 
+/* Hilangkan spinner panah atas/bawah bawaan browser pada input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 
 @media print {
   /* Thermal receipt print isolation */

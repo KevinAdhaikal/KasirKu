@@ -27,9 +27,7 @@
   function handleNav(path: string) {
     if (isSseDown) {
       toast.warning(
-        sse.status === 'connecting'
-          ? 'Sedang menghubungkan ke server… Mohon tunggu koneksi realtime pulih.'
-          : 'Server terputus (SSE offline). Anda tidak dapat berpindah halaman hingga server online.',
+        'Server terputus (SSE offline). Anda tidak dapat berpindah halaman hingga server online.',
         'Realtime Terputus'
       );
       return;
@@ -173,33 +171,6 @@
       <X class="w-5 h-5" />
     </button>
   </div>
-
-  <!-- Server Down / SSE Offline Notification in Sidebar -->
-  {#if isSseDown}
-    <div class="px-2.5 pt-2.5 pb-1">
-      {#if !ui.sidebarCollapsed}
-        <div class="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400 text-xs">
-          <div class="flex items-center gap-1.5 font-semibold text-[11px] tracking-tight">
-            <span class="relative flex h-2 w-2 shrink-0">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-            </span>
-            <span>Server Terputus</span>
-          </div>
-          <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1 leading-snug">
-            SSE offline. Menu dinonaktifkan agar data tetap sinkron.
-          </p>
-        </div>
-      {:else}
-        <div
-          class="flex justify-center p-2 rounded-md bg-red-500/10 border border-red-500/20 text-red-500"
-          title="Server Terputus (SSE offline) - Navigasi dinonaktifkan"
-        >
-          <WifiOff class="w-4 h-4" />
-        </div>
-      {/if}
-    </div>
-  {/if}
 
   <!-- Navigation Groups -->
   <div class="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
