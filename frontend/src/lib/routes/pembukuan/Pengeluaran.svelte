@@ -451,7 +451,7 @@
                 {/if}
               </button>
             </th>
-            <th class="px-4 py-2.5 text-center">Aksi</th>
+            <th class="px-4 py-2.5 text-center">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -470,7 +470,7 @@
                 <TrendingDown class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
                 <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada data pengeluaran operasional</p>
                 <p class="text-[11px] text-neutral-400 mt-0.5">
-                  {searchQuery ? `Tidak ditemukan pengeluaran dengan kata kunci "${searchQuery}"` : `Tidak ada pengeluaran pada rentang tanggal ${startDate} s/d ${endDate}`}
+                  {searchQuery ? `Tidak ditemukan pengeluaran dengan kata kunci "${searchQuery}"` : 'Tidak ada data pengeluaran'}
                 </p>
               </td>
             </tr>
@@ -539,7 +539,7 @@
 <!-- Modal Catat / Edit Pengeluaran -->
 <Modal
   open={isModalOpen}
-  title={isEditing ? 'Ubah Catatan Pengeluaran' : 'Catat Pengeluaran Baru'}
+  title={isEditing ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'}
   size="lg"
   onclose={() => (isModalOpen = false)}
 >

@@ -441,7 +441,7 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-4 text-center w-28">Aksi</th>
+            <th class="py-2.5 px-4 text-center w-28">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -492,7 +492,7 @@
                     <button
                       type="button"
                       onclick={() => openEditModal(kat)}
-                      title="Ubah Nama Kategori"
+                      title="Edit Nama Kategori"
                       class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-contrast)] hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-center"
                     >
                       <Pencil class="w-3.5 h-3.5" />
@@ -533,7 +533,7 @@
 <!-- Modal Tambah/Edit Kategori -->
 <Modal
   open={isModalOpen}
-  title={isEditing ? 'Ubah Nama Kategori' : 'Tambah Kategori Baru'}
+  title={isEditing ? 'Edit Kategori' : 'Tambah Kategori'}
   size="lg"
   onclose={() => (isModalOpen = false)}
 >

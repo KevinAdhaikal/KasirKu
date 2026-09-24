@@ -396,7 +396,7 @@
         onclick={openAddModal}
       >
         <Plus class="w-4 h-4" />
-        <span>Catat Barang Masuk</span>
+        <span>Tambah Barang Masuk</span>
       </Button>
     </div>
   </div>
@@ -515,7 +515,7 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-4 text-center w-28">Aksi</th>
+            <th class="py-2.5 px-4 text-center w-28">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -534,7 +534,7 @@
               <td colspan="5" class="py-12 text-center text-[var(--text-muted)]">
                 <ArrowDownToLine class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <p class="font-medium text-xs">Belum ada catatan barang masuk pada tanggal ini.</p>
-                <p class="text-[11px] mt-0.5 text-[var(--text-muted)]">Klik tombol "Catat Barang Masuk" di atas untuk menambah pasokan baru.</p>
+                <p class="text-[11px] mt-0.5 text-[var(--text-muted)]">Klik tombol "Tambah Barang Masuk" di atas untuk menambah pasokan baru.</p>
               </td>
             </tr>
           {:else}
@@ -605,7 +605,7 @@
 <!-- Modal Catat Barang Masuk -->
 <Modal
   open={isAddModalOpen}
-  title="Catat Pasokan Barang Masuk"
+  title="Tambah Barang Masuk"
   size="xl"
   onclose={() => (isAddModalOpen = false)}
 >
@@ -785,7 +785,7 @@
 <!-- Modal Edit Barang Masuk -->
 <Modal
   open={isEditModalOpen}
-  title="Ubah Data Barang Masuk"
+  title="Edit Barang Masuk"
   size="lg"
   onclose={() => (isEditModalOpen = false)}
 >

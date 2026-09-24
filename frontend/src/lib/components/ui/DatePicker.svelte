@@ -200,16 +200,18 @@
 
 <div class="relative inline-block" bind:this={containerRef}>
   <!-- Modern Trigger Button -->
-  <div class="inline-flex items-center h-8 rounded-md border transition-all duration-150 input-glow-target
-    border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900
-    {open ? 'ring-1 ring-[var(--brand)] border-[var(--brand)] shadow-2xs' : ''}
-    {className}"
+  <div
+    class="inline-flex items-center h-8 rounded-md border transition-all duration-150 input-glow-target cursor-pointer
+      border-neutral-300 dark:border-neutral-800 bg-[var(--bg-surface)]
+      {className}"
+    data-open={open ? 'true' : undefined}
+    class:is-active={open}
   >
     <button
       type="button"
       {disabled}
       onclick={() => (open = !open)}
-      class="h-full min-w-0 px-2.5 rounded-md text-xs font-medium select-none flex items-center gap-2
+      class="h-full min-w-0 px-2.5 rounded-md text-xs font-medium select-none flex items-center gap-2 cursor-pointer
         text-neutral-900 dark:text-neutral-100 focus:outline-none
         disabled:opacity-50 disabled:cursor-not-allowed"
       aria-haspopup="dialog"

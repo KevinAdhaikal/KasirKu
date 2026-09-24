@@ -79,7 +79,7 @@
     {
       bit: Permissions.KASIR, // 4 (1 << 2)
       id: 'perm_kasir',
-      label: 'Terminal Kasir (POS)',
+      label: 'Kasir (PoS)',
       description: 'Melakukan transaksi penjualan kasir, scan barcode, dan cetak struk belanja.',
       icon: ShoppingCart,
     },
@@ -520,7 +520,7 @@
             </th>
             <th class="py-2.5 px-3 text-center cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('name')}>
               <div class="inline-flex items-center justify-center gap-1">
-                <span>Nama Role</span>
+                <span>Role Name</span>
                 {#if sortField === 'name'}
                   {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
@@ -530,7 +530,7 @@
             </th>
             <th class="py-2.5 px-3 text-center cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('created_ms')}>
               <div class="inline-flex items-center justify-center gap-1">
-                <span>Dibuat</span>
+                <span>Created At</span>
                 {#if sortField === 'created_ms'}
                   {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
@@ -550,7 +550,7 @@
             </th>
             <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('users')}>
               <div class="inline-flex items-center justify-center gap-1">
-                <span>Pengguna</span>
+                <span>Users</span>
                 {#if sortField === 'users'}
                   {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
                 {:else}
@@ -677,7 +677,7 @@
 </div>
 
 <!-- MODAL: Tambah Role (Size Large: max-w-3xl) -->
-<Modal bind:open={isAddModalOpen} title="Tambah Role Hak Akses Baru" size="lg">
+<Modal bind:open={isAddModalOpen} title="Tambah Role" size="lg">
   <form novalidate onsubmit={handleAddRole} class="space-y-4">
     {#if addErrorMessage}
       <div class="p-3 rounded-md border border-red-500/30 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs flex items-start gap-2">
@@ -711,15 +711,9 @@
     <div class="space-y-2 pt-2">
       <div class="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-3">
         <span class="block text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-          Permissions (Modul Hak Akses) <span class="text-red-500 font-bold">*</span>
-        </span>
-        <span class="text-[11px] text-neutral-500">
-          {formSelectedBits.length} modul dipilih
+          Permissions <span class="text-red-500 font-bold">*</span>
         </span>
       </div>
-      <p class="text-[11px] text-neutral-500">
-        Pilih hak akses yang akan diberikan kepada role ini. Centang satu atau lebih permission sesuai kebutuhan.
-      </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         {#each MODULES as mod}
@@ -765,7 +759,7 @@
 <!-- MODAL: View / Edit Role (Size Large: max-w-3xl) -->
 <Modal
   bind:open={isEditModalOpen}
-  title={editingRole?.id === 1 ? 'View & Edit Role: Administrator' : (editingRole ? `View & Edit Role: ${editingRole.name}` : 'View / Edit Role')}
+  title='View & Edit Role'
   size="lg"
 >
   {#if editingRole}
@@ -806,16 +800,6 @@
           <span class="block text-xs font-semibold text-neutral-900 dark:text-neutral-100">
             Permissions
           </span>
-          {#if isAdministrator}
-            <Badge variant="warning" size="sm">
-              <Lock class="w-3 h-3 mr-1" />
-              Akses Penuh
-            </Badge>
-          {:else}
-            <span class="text-[11px] text-neutral-500">
-              {editSelectedBits.length} modul aktif
-            </span>
-          {/if}
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

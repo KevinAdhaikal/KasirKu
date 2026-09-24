@@ -95,11 +95,11 @@
   <!-- Modern Desk-Calendar Pill Trigger -->
   <button
     type="button"
-    class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border text-left transition-all duration-150 select-none
-      border-neutral-200/80 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60
-      hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/80
-      focus:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400
-      {open ? 'ring-1 ring-neutral-900 dark:ring-white border-neutral-900 dark:border-white shadow-xs' : ''}"
+    class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border text-left transition-all duration-150 select-none cursor-pointer input-glow-target
+      border-neutral-300 dark:border-neutral-800 bg-[var(--bg-surface)]
+      focus:outline-none"
+    data-open={open ? 'true' : undefined}
+    class:is-active={open}
     onclick={() => (open = !open)}
     aria-label="Buka kalender operasional toko"
     aria-expanded={open}

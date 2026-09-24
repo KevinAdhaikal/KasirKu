@@ -348,7 +348,7 @@ select,
 input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([disabled]):not([readonly]):not(:focus):not(:active):hover,
 textarea:not([disabled]):not([readonly]):not(:focus):not(:active):hover,
 select:not([disabled]):not(:focus):not(:active):hover,
-.input-glow-target:not([disabled]):not([aria-disabled="true"]):not(:focus):not(:active):hover {
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):not(:focus):not(:focus-within):not(:active):not(:has(:active)):not([data-open="true"]):not(.is-active):hover {
   border-color: var(--input-hover-border) !important;
   box-shadow: var(--input-hover-shadow) !important;
 }
@@ -365,7 +365,11 @@ select:not([disabled]):focus,
 select:not([disabled]):focus-visible,
 .input-glow-target:not([disabled]):not([aria-disabled="true"]):active,
 .input-glow-target:not([disabled]):not([aria-disabled="true"]):focus,
-.input-glow-target:not([disabled]):not([aria-disabled="true"]):focus-visible {
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):focus-visible,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):focus-within,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):has(:active),
+.input-glow-target[data-open="true"],
+.input-glow-target.is-active {
   border-color: var(--input-focus-border) !important;
   box-shadow: var(--input-focus-shadow) !important;
   outline: none !important;

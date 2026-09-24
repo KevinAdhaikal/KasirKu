@@ -398,7 +398,7 @@
         onclick={openAddModal}
       >
         <Plus class="w-4 h-4" />
-        <span>Catat Retur Barang</span>
+        <span>Tambah Retur Barang</span>
       </Button>
     </div>
   </div>
@@ -517,7 +517,7 @@
               {/if}
             </button>
           </th>
-          <th class="py-2.5 px-4 text-center w-28">Aksi</th>
+          <th class="py-2.5 px-4 text-center w-28">Action</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -607,7 +607,7 @@
 <!-- Modal Catat Retur Barang -->
 <Modal
   open={isAddModalOpen}
-  title="Catat Retur Barang / Kerusakan"
+  title="Tambah Retur Barang"
   size="xl"
   onclose={() => (isAddModalOpen = false)}
 >

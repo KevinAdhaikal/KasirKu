@@ -23,7 +23,12 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
 
     if (!res_role) return new Response("Internal Server Error", {status: 500});
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.DASHBOARD))) return new Response("0", {status: 403}); 
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.DASHBOARD
+        )
+    )) return new Response("0", {status: 403}); 
     
     const user_input = url.searchParams;
     const tanggal_key = Number(user_input.get("tanggal_key")); 

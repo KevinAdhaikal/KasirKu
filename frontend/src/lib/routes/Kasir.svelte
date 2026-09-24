@@ -430,11 +430,11 @@
             <table class="w-full text-left text-xs border-collapse">
               <thead class="bg-[var(--bg-subtle)] text-[var(--text-muted)] text-[11px] font-medium border-b border-[var(--border-subtle)]">
                 <tr>
-                  <th class="py-2.5 px-4 font-medium">NAMA PRODUK</th>
-                  <th class="py-2.5 px-4 font-medium text-right">HARGA SATUAN</th>
-                  <th class="py-2.5 px-4 font-medium text-center">JUMLAH (QTY)</th>
-                  <th class="py-2.5 px-4 font-medium text-right">SUBTOTAL</th>
-                  <th class="py-2.5 px-4 text-center w-12">Aksi</th>
+                  <th class="py-2.5 px-4 font-medium">Nama Barang</th>
+                  <th class="py-2.5 px-4 font-medium text-right">Harga Satuan</th>
+                  <th class="py-2.5 px-4 font-medium text-center">Jumlah (Qty)</th>
+                  <th class="py-2.5 px-4 font-medium text-right">Subtotal</th>
+                  <th class="py-2.5 px-4 text-center w-12">Action</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -615,17 +615,6 @@
     <!-- RIGHT PANEL: Checkout & Summary Card (4 cols) -->
     <div class="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
       <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 space-y-5">
-        <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-          <span class="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">
-            Ringkasan Transaksi
-          </span>
-          {#if cart.items.length > 0}
-            <Badge variant="success" size="sm">
-              Siap Checkout
-            </Badge>
-          {/if}
-        </div>
-
         <!-- Breakdown List -->
         <div class="space-y-2.5 text-xs">
           <div class="flex justify-between text-[var(--text-muted)]">
@@ -638,14 +627,7 @@
           <div class="flex justify-between text-[var(--text-muted)]">
             <span>Variasi Produk</span>
             <span class="font-medium text-[var(--text-primary)] tabular-nums">
-              {cart.items.length} SKU
-            </span>
-          </div>
-
-          <div class="flex justify-between text-[var(--text-muted)]">
-            <span>Pajak & Potongan</span>
-            <span class="text-[var(--text-muted)] tabular-nums">
-              <span class="text-[10px] text-[var(--text-muted)] mr-0.5">Rp</span>0,00
+              {cart.items.length} Variasi
             </span>
           </div>
         </div>

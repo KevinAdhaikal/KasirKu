@@ -428,7 +428,7 @@
       </Button>
       <Button variant="primary" size="sm" onclick={openAddModal}>
         <UserPlus class="w-3.5 h-3.5" />
-        <span>Tambah Pengguna</span>
+        <span>Tambah User</span>
       </Button>
     </div>
   </div>
@@ -496,7 +496,7 @@
                 onclick={() => toggleSort('full_name')}
                 class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
-                <span>Pengguna / Kredensial</span>
+                <span>User</span>
                 {#if sortField === 'full_name'}
                   {#if sortAsc}
                     <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
@@ -532,7 +532,7 @@
                 onclick={() => toggleSort('created_ms')}
                 class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
-                <span>Didaftarkan</span>
+                <span>Created At</span>
                 {#if sortField === 'created_ms'}
                   {#if sortAsc}
                     <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
@@ -545,7 +545,7 @@
               </button>
             </th>
             <th class="py-2.5 px-3 text-center w-28">
-              Aksi
+              Action
             </th>
           </tr>
         </thead>
@@ -671,7 +671,7 @@
 </div>
 
 <!-- MODAL: Tambah Pengguna (Size Large: max-w-3xl) -->
-<Modal bind:open={isAddModalOpen} title="Tambah Pengguna Baru" size="lg">
+<Modal bind:open={isAddModalOpen} title="Tambah User" size="lg">
   <form novalidate onsubmit={handleAddUser} class="space-y-4">
     {#if addErrorMessage}
       <div class="p-3 rounded-md border border-red-500/30 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs flex items-start gap-2">
@@ -796,7 +796,7 @@
 </Modal>
 
 <!-- MODAL: Edit Pengguna (Size Large: max-w-3xl) -->
-<Modal bind:open={isEditModalOpen} title="Ubah Data Pengguna" size="lg">
+<Modal bind:open={isEditModalOpen} title="Edit User" size="lg">
   {#if editingUser}
     <form novalidate onsubmit={handleEditUser} class="space-y-4">
       {#if editErrorMessage}

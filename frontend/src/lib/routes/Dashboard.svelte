@@ -462,29 +462,57 @@
             </p>
           </div>
         {:else}
-          <div class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80 -mx-5 -my-2 max-h-[360px] overflow-y-auto">
-            {#each filteredBarangKosong as item}
-              <div class="px-5 py-3 flex items-center justify-between gap-3 text-xs hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 transition-colors">
-                <div class="min-w-0 flex-1">
-                  <p class="font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                    {item.nama_barang}
-                  </p>
-                  <span class="inline-block mt-0.5 text-[10px] text-red-600 dark:text-red-400 font-medium">
-                    Stok: 0
-                  </span>
-                </div>
-                {#if auth.can(Permissions.MANAGE_BARANG)}
-                  <button
-                    type="button"
-                    onclick={() => router.navigate('/barang/barang_masuk')}
-                    class="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-[var(--bg-hover)] transition-colors flex items-center gap-1 shrink-0"
-                  >
-                    <span>Restock</span>
-                    <ArrowUpRight class="w-3 h-3" />
-                  </button>
-                {/if}
-              </div>
-            {/each}
+          <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+            <div class="overflow-x-auto max-h-[360px] overflow-y-auto">
+              <table class="w-full text-xs border-collapse">
+                <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px] sticky top-0 z-10">
+                  <tr>
+                    <th class="py-2.5 px-3 text-center w-10 font-medium">#</th>
+                    <th class="py-2.5 px-3 text-left font-medium">Nama Produk</th>
+                    <th class="py-2.5 px-3 text-center font-medium w-16">Stok</th>
+                    <th class="py-2.5 px-3 text-center font-medium w-24">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+                  {#if filteredBarangKosong.length === 0}
+                    <tr>
+                      <td colspan="4" class="py-8 px-3 text-center text-neutral-400">
+                        <p class="text-xs">Tidak ditemukan produk kosong</p>
+                      </td>
+                    </tr>
+                  {:else}
+                    {#each filteredBarangKosong as item, idx}
+                      <tr class="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/30 transition-colors">
+                        <td class="py-2.5 px-3 text-center tabular-nums text-neutral-400 text-xs">
+                          {idx + 1}
+                        </td>
+                        <td class="py-2.5 px-3 font-medium text-neutral-900 dark:text-neutral-100 text-xs">
+                          <span class="line-clamp-1" title={item.nama_barang}>{item.nama_barang}</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-200 dark:border-red-900">
+                            {item.stok_barang ?? 0}
+                          </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-center">
+                          {#if auth.can(Permissions.MANAGE_BARANG)}
+                            <button
+                              type="button"
+                              onclick={() => router.navigate('/barang/barang_masuk')}
+                              class="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-[var(--bg-hover)] transition-colors inline-flex items-center gap-1 shrink-0 cursor-pointer"
+                              title="Restock barang masuk"
+                            >
+                              <span>Restock</span>
+                              <ArrowUpRight class="w-3 h-3" />
+                            </button>
+                          {/if}
+                        </td>
+                      </tr>
+                    {/each}
+                  {/if}
+                </tbody>
+              </table>
+            </div>
           </div>
         {/if}
 

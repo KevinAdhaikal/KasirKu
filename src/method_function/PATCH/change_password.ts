@@ -26,7 +26,8 @@ export default async function(req: Request, token: string) {
     const old_pass = <string>user_input.get("old_pass");
     const new_pass = <string>user_input.get("new_pass");
     
-    if (!old_pass ||
+    if (
+        !old_pass ||
         !new_pass || new_pass.length < 8
     ) return new Response("Bad Request", {status: 400});
                 

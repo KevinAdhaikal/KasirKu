@@ -25,6 +25,7 @@
   } from '../../utils/format';
   import { renderReceiptHtml, type StoreInfo } from '../../utils/receipt';
   import type { ReceiptData } from '../../components/pos/PaymentModal.svelte';
+  import ReceiptModal from '../../components/pos/ReceiptModal.svelte';
   import {
     Receipt,
     ReceiptText,
@@ -93,6 +94,8 @@
   // Thermal print state
   let isPrinting = $state(false);
   let copiedStruk = $state<string | null>(null);
+  let receiptModalOpen = $state(false);
+  let receiptModalData = $state<ReceiptData | null>(null);
 
   // Presets handler
   function applyPreset(preset: 'today' | 'week' | 'month') {
@@ -156,74 +159,39 @@
     const targetItem = item || selectedPenjualan;
     if (!targetItem) return;
 
+    let itemsToUse = detailItems;
     if (!selectedPenjualan || targetItem.id !== selectedPenjualan.id || detailItems.length === 0) {
-      await loadDetailData(targetItem);
+      try {
+        const res = await api.get<{ items: PenjualanItemDetail[] } | PenjualanItemDetail[]>(`/api/penjualan/${targetItem.id}`);
+        const parsed = Array.isArray(res) ? res : res?.items || [];
+        itemsToUse = parsed;
+      } catch (err) {
+        console.error('Failed to load transaction details for receipt:', err);
+      }
     }
 
     // Ensure public info is fresh
     await auth.fetchPublicInfo();
 
-    // Load custom struk template if available
-    let strukTemplate: string | null = null;
-    try {
-      const res = await api.get<{ store_struk?: string | null; content?: string | null }>('/api/settings/struk');
-      const val = res?.store_struk ?? res?.content;
-      if (val && val.trim()) {
-        strukTemplate = val;
-      }
-    } catch {}
-
-    const storeInfo: StoreInfo = {
-      name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
-      desc: auth.publicInfo?.desc?.trim() || auth.publicInfo?.description?.trim() || auth.publicInfo?.store_desc?.trim() || '',
-      address: auth.publicInfo?.address?.trim() || auth.publicInfo?.store_address?.trim() || '',
-      phone_num: auth.publicInfo?.phone_num?.trim() || auth.publicInfo?.no_phone?.trim() || auth.publicInfo?.store_phone_num?.trim() || '',
-    };
-
-    const receiptData: ReceiptData = {
+    receiptModalData = {
       receiptNo: targetItem.no_struk,
-      timestamp: targetItem.created_ms,
+      timestamp: new Date(targetItem.created_ms).toISOString(),
       cashierName: targetItem.nama_kasir || 'Kasir',
-      totalAmount: targetItem.total_belanja,
+      totalAmount: targetItem.total_harga_jual,
       totalItems: targetItem.total_barang,
-      cashPaid: targetItem.tunai,
-      changeAmount: targetItem.kembalian,
-      items: detailItems.map((d) => ({
+      cashPaid: targetItem.total_harga_jual,
+      changeAmount: 0,
+      items: itemsToUse.map((d: any) => ({
+        id: d.id || 0,
         nama_barang: d.nama_barang,
+        barcode: '',
         harga_jual: d.harga_jual,
-        jumlah_barang: d.jumlah_barang,
+        jumlah_barang: d.jumlah ?? d.jumlah_barang ?? 1,
+        subtotal: d.total_harga_jual || ((d.harga_jual || 0) * (d.jumlah ?? d.jumlah_barang ?? 1)),
       })),
     };
 
-    const receiptHtml = renderReceiptHtml(strukTemplate, receiptData, storeInfo);
-
-    // Print via clean hidden iframe (same as Kasir ReceiptModal)
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(receiptHtml);
-      doc.close();
-      iframe.contentWindow?.focus();
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        setTimeout(() => {
-          if (iframe.parentNode) {
-            iframe.parentNode.removeChild(iframe);
-          }
-        }, 1000);
-      }, 250);
-    } else {
-      window.print();
-    }
+    receiptModalOpen = true;
   }
 
   function copyToClipboard(text: string) {
@@ -525,7 +493,7 @@
                 {/if}
               </button>
             </th>
-            <th class="px-4 py-2.5 text-center">Aksi</th>
+            <th class="px-4 py-2.5 text-center">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -547,7 +515,7 @@
                 <Receipt class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
                 <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada riwayat transaksi penjualan</p>
                 <p class="text-[11px] text-neutral-400 mt-0.5">
-                  {searchQuery ? `Tidak ditemukan transaksi dengan kata kunci "${searchQuery}"` : `Tidak ada penjualan pada rentang tanggal ${startDate} s/d ${endDate}`}
+                  {searchQuery ? `Tidak ditemukan transaksi dengan kata kunci "${searchQuery}"` : 'Tidak ada data penjualan'}
                 </p>
               </td>
             </tr>
@@ -775,56 +743,8 @@
   {/snippet}
 </Modal>
 
-<!-- Thermal Printable Struk Template -->
-{#if selectedPenjualan}
-  <div id="thermal-receipt" class="hidden print:block text-black bg-white p-4 max-w-[320px] mx-auto text-xs">
-    <div class="text-center pb-3 border-b border-dashed border-black">
-      <h2 class="font-bold text-sm uppercase">{auth.publicInfo?.name || auth.publicInfo?.store_name || 'KASIRKU POS'}</h2>
-      {#if auth.publicInfo?.desc || auth.publicInfo?.store_desc}
-        <p class="text-[10px] text-neutral-600">{auth.publicInfo?.desc || auth.publicInfo?.store_desc}</p>
-      {/if}
-      {#if auth.publicInfo?.address || auth.publicInfo?.store_address}
-        <p class="text-[10px] mt-0.5">{auth.publicInfo?.address || auth.publicInfo?.store_address}</p>
-      {/if}
-      {#if auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}
-        <p class="text-[10px]">Telp: {auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}</p>
-      {/if}
-    </div>
-
-    <div class="py-2 border-b border-dashed border-black text-[10px] space-y-0.5">
-      <div class="flex justify-between">
-        <span>No: {selectedPenjualan.no_struk}</span>
-        <span>Kasir: {selectedPenjualan.nama_kasir || 'Kasir'}</span>
-      </div>
-      <div>Waktu: {formatDateTime(selectedPenjualan.created_ms)}</div>
-    </div>
-
-    <div class="py-2 border-b border-dashed border-black space-y-1.5 text-[11px]">
-      {#each detailItems as item}
-        <div>
-          <div class="font-bold">{item.nama_barang}</div>
-          <div class="flex justify-between text-[10px]">
-            <span>{item.jumlah} x {formatRupiah(item.harga_jual)}</span>
-            <span>{formatRupiah(item.total_harga_jual)}</span>
-          </div>
-        </div>
-      {/each}
-    </div>
-
-    <div class="py-2 border-b border-dashed border-black text-xs space-y-1">
-      <div class="flex justify-between font-bold">
-        <span>TOTAL</span>
-        <span>{formatRupiah(selectedPenjualan.total_harga_jual)}</span>
-      </div>
-      <div class="flex justify-between text-[10px]">
-        <span>Total Qty</span>
-        <span>{selectedPenjualan.total_barang} item</span>
-      </div>
-    </div>
-
-    <div class="text-center pt-3 text-[10px] space-y-0.5">
-      <p>Terima kasih atas kunjungan Anda!</p>
-      <p class="text-[9px]">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
-    </div>
-  </div>
-{/if}
+<ReceiptModal
+  bind:open={receiptModalOpen}
+  data={receiptModalData}
+  closeLabel="Tutup (Esc)"
+/>

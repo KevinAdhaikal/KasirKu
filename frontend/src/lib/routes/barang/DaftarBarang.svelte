@@ -840,7 +840,7 @@
                 {/if}
               </button>
             </th>
-            <th class="py-2.5 px-4 text-center w-24">Aksi</th>
+            <th class="py-2.5 px-4 text-center w-24">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[var(--border-subtle)]">
@@ -971,7 +971,7 @@
 <!-- Modal Tambah/Edit Produk -->
 <Modal
   open={isModalOpen}
-  title={isEditing ? 'Ubah Informasi Produk' : 'Tambah Produk ke Inventaris'}
+  title={isEditing ? 'Edit Barang' : 'Tambah Barang'}
   size="xl"
   onclose={() => (isModalOpen = false)}
 >

@@ -509,7 +509,7 @@
         <!-- Rincian Hitungan Laba Rugi yang Sederhana & Jelas -->
         <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
           <div class="px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between">
-            <span class="font-semibold text-xs text-[var(--text-primary)]">Rincian Perhitungan Laba Rugi</span>
+            <span class="font-semibold text-xs text-[var(--text-primary)]">Rincian Perhitungan</span>
             <span class="text-[11px] text-[var(--text-muted)]">Periode {formatTanggalIndo(startDate)} &ndash; {formatTanggalIndo(endDate)}</span>
           </div>
 
