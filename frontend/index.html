@@ -2,7 +2,10 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0b151a" />
     <title>KasirKu</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="description" content="Simple & Efficient Point of Sale (PoS) System" />
@@ -13,16 +16,19 @@
       (function() {
         try {
           const stored = localStorage.getItem('theme');
-          if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          const isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
             document.documentElement.classList.add('dark');
+            document.documentElement.style.backgroundColor = '#0b151a';
           } else {
             document.documentElement.classList.remove('dark');
+            document.documentElement.style.backgroundColor = '#f5f9fb';
           }
         } catch (e) {}
       })();
     </script>
   </head>
-  <body class="bg-[#fafafa] text-[#09090b] dark:bg-[#000000] dark:text-[#ededed] antialiased selection:bg-neutral-900 selection:text-white dark:selection:bg-neutral-100 dark:selection:text-neutral-900 min-h-screen">
+  <body class="bg-[var(--bg-canvas,#f5f9fb)] text-[var(--text-primary)] dark:bg-[var(--bg-canvas,#0b151a)] dark:text-[var(--text-primary)] antialiased selection:bg-neutral-900 selection:text-white dark:selection:bg-neutral-100 dark:selection:text-neutral-900 min-h-screen">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

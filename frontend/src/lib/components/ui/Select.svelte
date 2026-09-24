@@ -248,10 +248,9 @@
         }
       }}
       onkeydown={handleKeydown}
-      class="w-full flex items-center justify-between gap-2 px-3 rounded-lg border text-xs sm:text-sm font-normal text-left transition-all duration-150 cursor-pointer shadow-2xs select-none
+      class="w-full flex items-center justify-between gap-2 px-3 rounded-lg border text-xs sm:text-sm font-normal text-left transition-all duration-150 cursor-pointer shadow-2xs select-none input-glow-target
         bg-[var(--bg-surface)]
         text-neutral-900 dark:text-neutral-100
-        hover:border-neutral-400 dark:hover:border-neutral-600
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]/30 focus-visible:border-[var(--brand)]
         disabled:opacity-50 disabled:bg-[var(--bg-subtle)] disabled:cursor-not-allowed
         {selectClass || 'h-9'}

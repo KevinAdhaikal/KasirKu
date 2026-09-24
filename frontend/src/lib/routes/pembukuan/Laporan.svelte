@@ -28,7 +28,6 @@
     TrendingDown,
     DollarSign,
     RefreshCw,
-    Printer,
     Calendar,
     ArrowUpRight,
     ArrowDownRight,
@@ -40,7 +39,9 @@
     Filter,
     ArrowUpDown,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Package,
+    Wallet
   } from 'lucide-svelte';
 
   interface PenjualanRecord {
@@ -71,13 +72,15 @@
   let loading = $state(true);
   let activeTab = $state<'summary' | 'penjualan' | 'pengeluaran'>('summary');
 
+  function getFirstDayOfMonth(): string {
+    const d = new Date();
+    return formatDate(new Date(d.getFullYear(), d.getMonth(), 1));
+  }
+
   // Date filters
   const todayDateStr = formatDate(new Date());
   let filterPreset = $state<'today' | 'week' | 'month' | 'custom'>('month');
-  let startDate = $state(() => {
-    const d = new Date();
-    return formatDate(new Date(d.getFullYear(), d.getMonth(), 1));
-  });
+  let startDate = $state(getFirstDayOfMonth());
   let endDate = $state(todayDateStr);
 
   function applyPreset(preset: 'today' | 'week' | 'month') {
@@ -115,10 +118,6 @@
     } finally {
       loading = false;
     }
-  }
-
-  function handlePrint() {
-    window.print();
   }
 
   // Financial Computations
@@ -252,6 +251,7 @@
 
   onMount(() => {
     fetchData();
+    auth.fetchPublicInfo();
   });
 </script>
 
@@ -275,15 +275,6 @@
       >
         <RefreshCw class="w-3.5 h-3.5" />
         <span class="hidden sm:inline">Refresh</span>
-      </Button>
-
-      <Button
-        variant="primary"
-        size="sm"
-        onclick={handlePrint}
-      >
-        <Printer class="w-4 h-4" />
-        <span>Cetak Laporan</span>
       </Button>
     </div>
   </div>
@@ -331,21 +322,21 @@
   </div>
 
   <!-- Visual Trend Chart (SVG Minimalist) -->
-  <div class="p-5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs space-y-4">
+  <div class="p-5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] space-y-4">
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Tren Pendapatan vs Pengeluaran Harian</h2>
-        <p class="text-[11px] text-neutral-500">Perbandingan omzet penjualan kasir dan pengeluaran operasional toko per hari.</p>
+        <h2 class="text-sm font-semibold text-[var(--text-primary)]">Tren Pendapatan vs Pengeluaran Harian</h2>
+        <p class="text-[11px] text-[var(--text-muted)]">Perbandingan omzet penjualan kasir dan pengeluaran operasional toko per hari.</p>
       </div>
 
-      <div class="flex items-center gap-4 text-xs font-mono">
+      <div class="flex items-center gap-4 text-xs">
         <div class="flex items-center gap-1.5">
-          <div class="w-3 h-3 rounded-xs bg-neutral-900 dark:bg-neutral-100"></div>
-          <span class="text-neutral-600 dark:text-neutral-400 text-[11px]">Omzet</span>
+          <div class="w-3 h-3 rounded-[3px]" style="background-color: #55abe9d4;"></div>
+          <span class="text-[var(--text-secondary)] text-[11px] font-medium">Omzet</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <div class="w-3 h-3 rounded-xs bg-red-500"></div>
-          <span class="text-neutral-600 dark:text-neutral-400 text-[11px]">Pengeluaran</span>
+          <div class="w-3 h-3 rounded-[3px]" style="background-color: rgba(246, 107, 113, 0.91);"></div>
+          <span class="text-[var(--text-secondary)] text-[11px] font-medium">Pengeluaran</span>
         </div>
       </div>
     </div>
@@ -355,16 +346,16 @@
         <Skeleton class="h-40 w-full" />
       </div>
     {:else if dailyStats.length === 0}
-      <div class="h-36 flex flex-col items-center justify-center text-neutral-400 text-xs">
-        <BarChart3 class="w-6 h-6 mb-1.5 text-neutral-300 dark:text-neutral-700" />
+      <div class="h-36 flex flex-col items-center justify-center text-[var(--text-muted)] text-xs">
+        <BarChart3 class="w-6 h-6 mb-1.5 opacity-40" />
         <span>Tidak ada aktivitas keuangan pada periode tanggal terpilih</span>
       </div>
     {:else}
       <!-- SVG Bar Chart -->
       <div class="pt-2">
-        <div class="h-48 w-full flex items-end gap-2 pb-6 border-b border-neutral-200 dark:border-neutral-800 relative">
+        <div class="h-48 w-full flex items-end gap-2 pb-6 border-b border-[var(--border-subtle)] relative">
           <!-- Horizontal Guideline 50% -->
-          <div class="absolute left-0 right-0 top-1/2 border-b border-dashed border-neutral-200 dark:border-neutral-800 pointer-events-none"></div>
+          <div class="absolute left-0 right-0 top-1/2 border-b border-dashed border-[var(--border-subtle)] pointer-events-none"></div>
 
           {#each dailyStats as day}
             {@const omzetHeight = Math.max(4, Math.round((day.omzet / chartMaxVal) * 160))}
@@ -374,32 +365,32 @@
               <div class="flex items-end gap-0.5 sm:gap-1 w-full max-w-[24px]">
                 <!-- Omzet Bar -->
                 <div
-                  class="flex-1 bg-neutral-900 dark:bg-neutral-100 rounded-t-xs hover:opacity-80 transition-all cursor-pointer"
-                  style="height: {omzetHeight}px;"
+                  class="flex-1 rounded-t-[3px] hover:opacity-85 transition-all cursor-pointer shadow-2xs"
+                  style="height: {omzetHeight}px; background-color: #55abe9d4;"
                   title={`Omzet: ${formatRupiah(day.omzet)}`}
                 ></div>
 
                 <!-- Pengeluaran Bar -->
                 {#if day.pengeluaran > 0}
                   <div
-                    class="flex-1 bg-red-500 rounded-t-xs hover:opacity-80 transition-all cursor-pointer"
-                    style="height: {pengeluaranHeight}px;"
+                    class="flex-1 rounded-t-[3px] hover:opacity-85 transition-all cursor-pointer shadow-2xs"
+                    style="height: {pengeluaranHeight}px; background-color: rgba(246, 107, 113, 0.91);"
                     title={`Pengeluaran: ${formatRupiah(day.pengeluaran)}`}
                   ></div>
                 {/if}
               </div>
 
               <!-- Date Label Below -->
-              <span class="absolute -bottom-5 text-[9px] font-mono text-neutral-400 whitespace-nowrap">
+              <span class="absolute -bottom-5 text-[10px] tabular-nums text-[var(--text-muted)] whitespace-nowrap">
                 {String(day.dateKey).slice(6, 8)}/{String(day.dateKey).slice(4, 6)}
               </span>
 
               <!-- Hover Tooltip -->
-              <div class="absolute bottom-full mb-2 hidden group-hover:flex flex-col p-2 rounded bg-[var(--brand)] text-[var(--accent-fg)] text-[10px] font-mono shadow-xl z-20 pointer-events-none whitespace-nowrap">
-                <span class="font-bold">{formatTanggalKey(day.dateKey)}</span>
-                <span>Omzet: {formatRupiah(day.omzet)}</span>
-                <span>Pengeluaran: {formatRupiah(day.pengeluaran)}</span>
-                <span class="font-bold border-t border-white/20 dark:border-black/20 mt-1 pt-0.5">
+              <div class="absolute bottom-full mb-2 hidden group-hover:flex flex-col p-2.5 rounded-md border border-[var(--border-contrast)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-[10px] shadow-lg z-20 pointer-events-none whitespace-nowrap">
+                <span class="font-bold text-[var(--text-primary)]">{formatTanggalKey(day.dateKey)}</span>
+                <span class="font-medium" style="color: #55abe9;">Omzet: {formatRupiah(day.omzet)}</span>
+                <span class="font-medium" style="color: rgb(246, 107, 113);">Pengeluaran: {formatRupiah(day.pengeluaran)}</span>
+                <span class="font-bold border-t border-[var(--border-subtle)] mt-1 pt-0.5 text-[var(--text-primary)]">
                   Laba: {formatRupiah(day.omzet - day.pengeluaran)}
                 </span>
               </div>
@@ -411,82 +402,176 @@
   </div>
 
   <!-- Detail Tabs & Breakdowns -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <!-- Tabs Header -->
-    <div class="flex border-b border-neutral-200 dark:border-neutral-800 px-4 gap-4 text-xs font-medium">
+    <div class="flex border-b border-[var(--border-subtle)] px-4 gap-4 text-xs font-medium">
       <button
         type="button"
-        class="py-3 border-b-2 transition-colors {activeTab === 'summary' ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white font-semibold' : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
+        class="py-3 border-b-2 transition-colors {activeTab === 'summary' ? 'border-[var(--brand)] text-[var(--brand)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}"
         onclick={() => (activeTab = 'summary')}
       >
         Ringkasan Keuangan
       </button>
       <button
         type="button"
-        class="py-3 border-b-2 transition-colors {activeTab === 'penjualan' ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white font-semibold' : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
+        class="py-3 border-b-2 transition-colors {activeTab === 'penjualan' ? 'border-[var(--brand)] text-[var(--brand)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}"
         onclick={() => (activeTab = 'penjualan')}
       >
         Rincian Penjualan ({formatNumber(data.penjualan.length)})
       </button>
       <button
         type="button"
-        class="py-3 border-b-2 transition-colors {activeTab === 'pengeluaran' ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white font-semibold' : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
+        class="py-3 border-b-2 transition-colors {activeTab === 'pengeluaran' ? 'border-[var(--brand)] text-[var(--brand)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}"
         onclick={() => (activeTab = 'pengeluaran')}
       >
         Rincian Pengeluaran ({formatNumber(data.pengeluaran.length)})
       </button>
     </div>
 
-    <!-- Tab 1: Ringkasan Keuangan (Balance Table) -->
+    <!-- Tab 1: Ringkasan Keuangan -->
     {#if activeTab === 'summary'}
-      <div class="p-6">
-        <div class="max-w-2xl mx-auto space-y-4">
-          <div class="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-800 text-xs">
-            <!-- Arus Pendapatan -->
-            <div class="p-3.5 bg-[var(--bg-subtle)]/60 flex items-center justify-between font-semibold">
-              <span>A. TOTAL PENDAPATAN (OMZET)</span>
-              <span></span>
-            </div>
-            <div class="p-3.5 flex items-center justify-between">
-              <span class="text-neutral-600 dark:text-neutral-400 pl-4">Penjualan Kasir ({formatNumber(totalTransaksi)} transaksi)</span>
-              <span class="font-mono font-medium text-neutral-900 dark:text-neutral-100">{formatRupiah(totalOmzet)}</span>
-            </div>
-
-            <!-- HPP -->
-            <div class="p-3.5 bg-[var(--bg-subtle)]/60 flex items-center justify-between font-semibold">
-              <span>B. MODAL DASAR BARANG (HPP)</span>
-              <span></span>
-            </div>
-            <div class="p-3.5 flex items-center justify-between">
-              <span class="text-neutral-600 dark:text-neutral-400 pl-4">Modal Dasar Barang Terjual</span>
-              <span class="font-mono font-medium text-neutral-900 dark:text-neutral-100">({formatRupiah(totalHpp)})</span>
-            </div>
-
-            <!-- Laba Kotor Highlight -->
-            <div class="p-3.5 bg-emerald-50/40 dark:bg-emerald-950/20 flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-400">
-              <span>KEUNTUNGAN KOTOR (LABA KOTOR)</span>
-              <span class="font-mono text-sm">+{formatRupiah(labaKotor)}</span>
-            </div>
-
-            <!-- Pengeluaran Toko -->
-            <div class="p-3.5 bg-[var(--bg-subtle)]/60 flex items-center justify-between font-semibold">
-              <span>C. PENGELUARAN OPERASIONAL TOKO</span>
-              <span></span>
-            </div>
-            <div class="p-3.5 flex items-center justify-between">
-              <span class="text-neutral-600 dark:text-neutral-400 pl-4">Biaya Listrik, Perlengkapan, Operasional Kas</span>
-              <span class="font-mono font-medium text-red-600 dark:text-red-400">({formatRupiah(totalPengeluaran)})</span>
-            </div>
-
-            <!-- Laba Bersih Final -->
-            <div class="p-4 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between font-bold text-sm">
-              <div class="space-y-0.5">
-                <span>KEUNTUNGAN BERSIH (LABA BERSIH)</span>
-                <span class="block text-[11px] font-normal text-neutral-500">Margin Keuntungan Bersih: {netMarginPct}%</span>
+      <div class="p-5 sm:p-6 space-y-6">
+        <!-- 4 Ringkasan Metrik Utama -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <!-- 1. Penjualan -->
+          <div class="p-4 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-[var(--text-muted)]">Total Penjualan</span>
+              <div class="w-7 h-7 rounded bg-[var(--brand)]/10 text-[var(--brand)] border border-[var(--brand)]/20 flex items-center justify-center shrink-0">
+                <DollarSign class="w-3.5 h-3.5" />
               </div>
-              <span class="font-mono text-lg {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
+            </div>
+            <div>
+              <div class="text-xl font-bold tabular-nums text-[var(--text-primary)]">
+                {formatRupiah(totalOmzet)}
+              </div>
+              <p class="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                {formatNumber(totalTransaksi)} transaksi kasir
+              </p>
+            </div>
+          </div>
+
+          <!-- 2. Modal Barang -->
+          <div class="p-4 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-[var(--text-muted)]">Modal Barang</span>
+              <div class="w-7 h-7 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                <Package class="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div>
+              <div class="text-xl font-bold tabular-nums text-[var(--text-primary)]">
+                {formatRupiah(totalHpp)}
+              </div>
+              <p class="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                {formatNumber(totalQty)} barang terjual
+              </p>
+            </div>
+          </div>
+
+          <!-- 3. Pengeluaran Toko -->
+          <div class="p-4 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-[var(--text-muted)]">Pengeluaran Toko</span>
+              <div class="w-7 h-7 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex items-center justify-center shrink-0">
+                <TrendingDown class="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div>
+              <div class="text-xl font-bold tabular-nums text-red-600 dark:text-red-400">
+                {formatRupiah(totalPengeluaran)}
+              </div>
+              <p class="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                {formatNumber(data.pengeluaran.length)} catatan pengeluaran
+              </p>
+            </div>
+          </div>
+
+          <!-- 4. Keuntungan Bersih -->
+          <div class="p-4 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-[var(--text-muted)]">Keuntungan Bersih</span>
+              <div class="w-7 h-7 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <TrendingUp class="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div>
+              <div class="text-xl font-bold tabular-nums {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
                 {labaBersih >= 0 ? '+' : ''}{formatRupiah(labaBersih)}
-              </span>
+              </div>
+              <p class="text-[11px] font-medium mt-0.5 {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
+                Margin {netMarginPct}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rincian Hitungan Laba Rugi yang Sederhana & Jelas -->
+        <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+          <div class="px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between">
+            <span class="font-semibold text-xs text-[var(--text-primary)]">Rincian Perhitungan</span>
+            <span class="text-[11px] text-[var(--text-muted)]">Periode {formatTanggalIndo(startDate)} &ndash; {formatTanggalIndo(endDate)}</span>
+          </div>
+
+          <div class="divide-y divide-[var(--border-subtle)] text-xs">
+            <!-- 1. Penjualan -->
+            <div class="px-5 py-3.5 flex items-center justify-between hover:bg-[var(--bg-hover)] transition-colors">
+              <div>
+                <div class="font-semibold text-[var(--text-primary)] text-xs">Total Penjualan</div>
+                <div class="text-[11px] text-[var(--text-secondary)] mt-0.5">Uang masuk dari {formatNumber(totalTransaksi)} struk kasir</div>
+              </div>
+              <div class="text-right">
+                <span class="font-semibold text-xs tabular-nums text-[var(--text-primary)]">{formatRupiah(totalOmzet)}</span>
+              </div>
+            </div>
+
+            <!-- 2. Modal Barang -->
+            <div class="px-5 py-3.5 flex items-center justify-between hover:bg-[var(--bg-hover)] transition-colors">
+              <div>
+                <div class="font-semibold text-[var(--text-primary)] text-xs">Modal Barang Terjual</div>
+                <div class="text-[11px] text-[var(--text-secondary)] mt-0.5">Modal beli awal untuk {formatNumber(totalQty)} barang yang terjual</div>
+              </div>
+              <div class="text-right">
+                <span class="font-medium text-xs tabular-nums text-[var(--text-secondary)]">- {formatRupiah(totalHpp)}</span>
+              </div>
+            </div>
+
+            <!-- 3. Keuntungan Kotor -->
+            <div class="px-5 py-3 bg-[var(--bg-subtle)]/50 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-[var(--text-primary)] text-xs">Keuntungan Kotor</div>
+                <div class="text-[11px] text-[var(--text-muted)] mt-0.5">Total penjualan dikurangi modal barang</div>
+              </div>
+              <div class="text-right">
+                <span class="font-bold text-xs tabular-nums text-[var(--text-primary)]">+{formatRupiah(labaKotor)}</span>
+              </div>
+            </div>
+
+            <!-- 4. Pengeluaran Toko -->
+            <div class="px-5 py-3.5 flex items-center justify-between hover:bg-[var(--bg-hover)] transition-colors">
+              <div>
+                <div class="font-semibold text-[var(--text-primary)] text-xs">Pengeluaran Toko</div>
+                <div class="text-[11px] text-[var(--text-secondary)] mt-0.5">Biaya operasional toko ({formatNumber(data.pengeluaran.length)} catatan)</div>
+              </div>
+              <div class="text-right">
+                <span class="font-medium text-xs tabular-nums text-red-600 dark:text-red-400">- {formatRupiah(totalPengeluaran)}</span>
+              </div>
+            </div>
+
+            <!-- 5. Keuntungan Bersih -->
+            <div class="px-5 py-4 bg-[var(--bg-subtle)] flex items-center justify-between border-t-2 border-[var(--border-contrast)]">
+              <div>
+                <div class="font-bold text-sm text-[var(--text-primary)]">Keuntungan Bersih Akhir</div>
+                <div class="text-[11px] text-[var(--text-secondary)] mt-0.5">Keuntungan kotor dikurangi biaya pengeluaran toko</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-base tabular-nums {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
+                  {labaBersih >= 0 ? '+' : ''}{formatRupiah(labaBersih)}
+                </div>
+                <div class="text-[11px] font-medium mt-0.5 {labaBersih >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
+                  Margin Keuntungan: {netMarginPct}%
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -494,289 +579,284 @@
 
     <!-- Tab 2: Rincian Penjualan Table -->
     {:else if activeTab === 'penjualan'}
-      <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-500 uppercase font-mono text-[10px] tracking-wider sticky top-0 z-10">
-              <th class="px-4 py-2.5">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
-                  onclick={() => togglePenjualanSort('no_struk')}
-                >
-                  <span>No. Struk</span>
-                  {#if penjualanSortKey === 'no_struk'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
-                  onclick={() => togglePenjualanSort('created_ms')}
-                >
-                  <span>Waktu</span>
-                  {#if penjualanSortKey === 'created_ms'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5 text-center">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none mx-auto"
-                  onclick={() => togglePenjualanSort('total_barang')}
-                >
-                  <span>Qty</span>
-                  {#if penjualanSortKey === 'total_barang'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
-                  onclick={() => togglePenjualanSort('total_harga_modal')}
-                >
-                  <span>Modal</span>
-                  {#if penjualanSortKey === 'total_harga_modal'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
-                  onclick={() => togglePenjualanSort('total_harga_jual')}
-                >
-                  <span>Total Jual</span>
-                  {#if penjualanSortKey === 'total_harga_jual'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
-                  onclick={() => togglePenjualanSort('laba_kotor')}
-                >
-                  <span>Laba Kotor</span>
-                  {#if penjualanSortKey === 'laba_kotor'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-            {#if paginatedPenjualan.length === 0}
+      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse min-w-[750px]">
+            <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
               <tr>
-                <td colspan="6" class="px-4 py-12 text-center text-neutral-400">
-                  <Receipt class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-                  <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada riwayat transaksi penjualan</p>
-                  <p class="text-[11px] text-neutral-400 mt-0.5">
-                    Tidak ditemukan transaksi penjualan kasir pada rentang tanggal {startDate} s/d {endDate}
-                  </p>
-                </td>
+                <th class="py-2.5 px-4 text-left">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePenjualanSort('no_struk')}
+                  >
+                    <span>No. Struk</span>
+                    {#if penjualanSortKey === 'no_struk'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-left">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePenjualanSort('created_ms')}
+                  >
+                    <span>Waktu</span>
+                    {#if penjualanSortKey === 'created_ms'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-center">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
+                    onclick={() => togglePenjualanSort('total_barang')}
+                  >
+                    <span>Jumlah Barang</span>
+                    {#if penjualanSortKey === 'total_barang'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePenjualanSort('total_harga_modal')}
+                  >
+                    <span>Total Modal</span>
+                    {#if penjualanSortKey === 'total_harga_modal'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePenjualanSort('total_harga_jual')}
+                  >
+                    <span>Total Penjualan</span>
+                    {#if penjualanSortKey === 'total_harga_jual'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePenjualanSort('laba_kotor')}
+                  >
+                    <span>Laba Kotor</span>
+                    {#if penjualanSortKey === 'laba_kotor'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
               </tr>
-            {:else}
-              {#each paginatedPenjualan as p}
-                <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
-                  <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{p.no_struk}</td>
-                  <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(p.created_ms)}</td>
-                  <td class="px-4 py-2.5 text-center text-xs tabular-nums font-medium text-neutral-700 dark:text-neutral-300">{formatNumber(p.total_barang)}</td>
-                  <td class="px-4 py-2.5 text-right text-xs tabular-nums text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
-                  <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
-                  <td class="px-4 py-2.5 text-right text-xs tabular-nums font-medium text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+            </thead>
+            <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+              {#if paginatedPenjualan.length === 0}
+                <tr>
+                  <td colspan="6" class="py-12 text-center text-neutral-500">
+                    <Receipt class="w-8 h-8 mx-auto mb-2 opacity-40 text-neutral-400" />
+                    <p class="font-medium text-xs">Tidak ada riwayat transaksi penjualan.</p>
+                  </td>
                 </tr>
-              {/each}
+              {:else}
+                {#each paginatedPenjualan as p}
+                  <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
+                    <td class="py-3 px-4 font-semibold text-neutral-900 dark:text-neutral-100 text-xs">{p.no_struk}</td>
+                    <td class="py-3 px-4 text-neutral-500 text-xs whitespace-nowrap tabular-nums">{formatDateTime(p.created_ms)}</td>
+                    <td class="py-3 px-4 text-center text-xs tabular-nums font-medium text-neutral-600 dark:text-neutral-400">{formatNumber(p.total_barang)}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+                  </tr>
+                {/each}
+              {/if}
+            </tbody>
+            {#if sortedPenjualan.length > 0}
+              <tfoot class="bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] font-medium text-xs text-[var(--text-primary)]">
+                <tr>
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    <span>Total Item: <strong class="tabular-nums font-bold">{formatNumber(totalQty)} unit</strong></span>
+                  </td>
+                  <td class="py-3 px-4"></td>
+                  <td class="py-3 px-4 text-center tabular-nums font-semibold text-neutral-700 dark:text-neutral-300">
+                    {formatNumber(totalQty)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums text-neutral-600 dark:text-neutral-400 font-medium">
+                    {formatRupiah(totalHpp)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums font-bold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                    {formatRupiah(totalOmzet)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                    +{formatRupiah(labaKotor)}
+                  </td>
+                </tr>
+              </tfoot>
             {/if}
-          </tbody>
-          {#if sortedPenjualan.length > 0}
-            <tfoot class="border-t-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/90 dark:bg-neutral-900/90 font-semibold text-xs text-neutral-900 dark:text-neutral-100 sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
-              <tr>
-                <td class="px-4 py-2.5 font-semibold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
-                  <span>Total Item: <strong class="tabular-nums font-bold">{formatNumber(totalQty)} unit</strong></span>
-                </td>
-                <td class="px-4 py-2.5"></td>
-                <td class="px-4 py-2.5 text-center tabular-nums font-semibold text-neutral-700 dark:text-neutral-300">
-                  {formatNumber(totalQty)}
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums text-neutral-500 font-medium">
-                  {formatRupiah(totalHpp)}
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums font-bold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
-                  {formatRupiah(totalOmzet)}
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                  +{formatRupiah(labaKotor)}
-                </td>
-              </tr>
-            </tfoot>
-          {/if}
-        </table>
-      </div>
+          </table>
+        </div>
 
-      <!-- Pagination & Total Indicator with Limit -->
-      <TablePagination
-        bind:currentPage={penjualanPage}
-        bind:pageSize={penjualanPageSize}
-        totalItems={sortedPenjualan.length}
-        currentItemsCount={paginatedPenjualan.length}
-        itemLabel="transaksi"
-        storageKey="laporan_penjualan_limit"
-      />
+        <!-- Pagination & Total Indicator with Limit -->
+        <TablePagination
+          bind:currentPage={penjualanPage}
+          bind:pageSize={penjualanPageSize}
+          totalItems={sortedPenjualan.length}
+          currentItemsCount={paginatedPenjualan.length}
+          itemLabel="transaksi"
+          storageKey="laporan_penjualan_limit"
+        />
+      </div>
 
     <!-- Tab 3: Rincian Pengeluaran Table -->
     {:else if activeTab === 'pengeluaran'}
-      <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-500 uppercase font-mono text-[10px] tracking-wider sticky top-0 z-10">
-              <th class="px-4 py-2.5">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
-                  onclick={() => togglePengeluaranSort('created_ms')}
-                >
-                  <span>Waktu</span>
-                  {#if pengeluaranSortKey === 'created_ms'}
-                    {#if pengeluaranSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
-                  onclick={() => togglePengeluaranSort('deskripsi')}
-                >
-                  <span>Keperluan / Deskripsi</span>
-                  {#if pengeluaranSortKey === 'deskripsi'}
-                    {#if pengeluaranSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="px-4 py-2.5 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
-                  onclick={() => togglePengeluaranSort('jumlah_uang')}
-                >
-                  <span>Nominal Pengeluaran</span>
-                  {#if pengeluaranSortKey === 'jumlah_uang'}
-                    {#if pengeluaranSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-            {#if paginatedPengeluaran.length === 0}
+      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse min-w-[650px]">
+            <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
               <tr>
-                <td colspan="3" class="px-4 py-12 text-center text-neutral-400">
-                  <TrendingDown class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
-                  <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada data pengeluaran operasional</p>
-                  <p class="text-[11px] text-neutral-400 mt-0.5">
-                    Tidak ditemukan catatan pengeluaran toko pada rentang tanggal {startDate} s/d {endDate}
-                  </p>
-                </td>
+                <th class="py-2.5 px-4 text-left w-48">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePengeluaranSort('created_ms')}
+                  >
+                    <span>Waktu</span>
+                    {#if pengeluaranSortKey === 'created_ms'}
+                      {#if pengeluaranSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-left">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePengeluaranSort('deskripsi')}
+                  >
+                    <span>Deskripsi</span>
+                    {#if pengeluaranSortKey === 'deskripsi'}
+                      {#if pengeluaranSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right w-44">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePengeluaranSort('jumlah_uang')}
+                  >
+                    <span>Nominal Pengeluaran</span>
+                    {#if pengeluaranSortKey === 'jumlah_uang'}
+                      {#if pengeluaranSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
               </tr>
-            {:else}
-              {#each paginatedPengeluaran as exp}
-                <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30">
-                  <td class="px-4 py-2.5 text-neutral-500 text-xs whitespace-nowrap">{formatDateTime(exp.created_ms)}</td>
-                  <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100 text-xs">{exp.deskripsi}</td>
-                  <td class="px-4 py-2.5 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+            </thead>
+            <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+              {#if paginatedPengeluaran.length === 0}
+                <tr>
+                  <td colspan="3" class="py-12 text-center text-neutral-500">
+                    <TrendingDown class="w-8 h-8 mx-auto mb-2 opacity-40 text-neutral-400" />
+                    <p class="font-medium text-xs">Tidak ada data pengeluaran operasional.</p>
+                  </td>
                 </tr>
-              {/each}
+              {:else}
+                {#each paginatedPengeluaran as exp}
+                  <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
+                    <td class="py-3 px-4 text-neutral-500 text-xs whitespace-nowrap tabular-nums">{formatDateTime(exp.created_ms)}</td>
+                    <td class="py-3 px-4 font-semibold text-neutral-900 dark:text-neutral-100 text-xs">{exp.deskripsi}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+                  </tr>
+                {/each}
+              {/if}
+            </tbody>
+            {#if sortedPengeluaran.length > 0}
+              <tfoot class="bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] font-medium text-xs text-[var(--text-primary)]">
+                <tr>
+                  <td colspan="2" class="py-3 px-4 font-semibold text-neutral-900 dark:text-neutral-100">
+                    Total Pengeluaran: {formatNumber(sortedPengeluaran.length)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
+                    -{formatRupiah(totalPengeluaran)}
+                  </td>
+                </tr>
+              </tfoot>
             {/if}
-          </tbody>
-          {#if sortedPengeluaran.length > 0}
-            <tfoot class="border-t-2 border-neutral-300 dark:border-neutral-700 bg-neutral-50/90 dark:bg-neutral-900/90 font-semibold text-xs text-neutral-900 dark:text-neutral-100 sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
-              <tr>
-                <td class="px-4 py-2.5 font-semibold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
-                  <span>Total: <strong class="tabular-nums font-bold">{sortedPengeluaran.length} pengeluaran</strong></span>
-                </td>
-                <td class="px-4 py-2.5 font-medium text-neutral-700 dark:text-neutral-300">
-                  Total Pengeluaran
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
-                  -{formatRupiah(totalPengeluaran)}
-                </td>
-              </tr>
-            </tfoot>
-          {/if}
-        </table>
-      </div>
+          </table>
+        </div>
 
-      <!-- Pagination & Total Indicator with Limit -->
-      <TablePagination
-        bind:currentPage={pengeluaranPage}
-        bind:pageSize={pengeluaranPageSize}
-        totalItems={sortedPengeluaran.length}
-        currentItemsCount={paginatedPengeluaran.length}
-        itemLabel="pengeluaran"
-        storageKey="laporan_pengeluaran_limit"
-      />
+        <!-- Pagination & Total Indicator with Limit -->
+        <TablePagination
+          bind:currentPage={pengeluaranPage}
+          bind:pageSize={pengeluaranPageSize}
+          totalItems={sortedPengeluaran.length}
+          currentItemsCount={paginatedPengeluaran.length}
+          itemLabel="pengeluaran"
+          storageKey="laporan_pengeluaran_limit"
+        />
+      </div>
     {/if}
   </div>
 </div>
@@ -784,11 +864,17 @@
 <!-- Print Report Layout -->
 <div id="financial-print-report" class="hidden print:block font-sans text-black p-8 bg-white max-w-4xl mx-auto text-xs">
   <div class="text-center pb-4 border-b-2 border-black">
-    <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo.store_name || 'KASIRKU POS'}</h1>
+    <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo?.name || auth.publicInfo?.store_name || 'KASIRKU POS'}</h1>
+    {#if auth.publicInfo?.desc || auth.publicInfo?.store_desc}
+      <p class="text-xs text-neutral-600 mt-0.5">{auth.publicInfo?.desc || auth.publicInfo?.store_desc}</p>
+    {/if}
     <p class="text-sm font-semibold mt-0.5">LAPORAN RINGKASAN KEUANGAN</p>
     <p class="text-xs mt-1">Periode: {formatTanggalIndo(startDate)} s/d {formatTanggalIndo(endDate)}</p>
-    {#if auth.publicInfo.store_address}
-      <p class="text-[10px] text-neutral-600">{auth.publicInfo.store_address}</p>
+    {#if auth.publicInfo?.address || auth.publicInfo?.store_address}
+      <p class="text-[10px] text-neutral-600">{auth.publicInfo?.address || auth.publicInfo?.store_address}</p>
+    {/if}
+    {#if auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}
+      <p class="text-[10px] text-neutral-600">Telp: {auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}</p>
     {/if}
   </div>
 
@@ -796,30 +882,30 @@
     <table class="w-full text-xs border-collapse border border-black">
       <thead>
         <tr class="bg-neutral-100 border-b border-black">
-          <th class="p-2 text-left font-bold">KOMPONEN KEUANGAN</th>
-          <th class="p-2 text-right font-bold">NOMINAL (RP)</th>
+          <th class="p-2 text-left font-bold">RINCIAN PERHITUNGAN</th>
+          <th class="p-2 text-right font-bold">JUMLAH (RP)</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-neutral-300">
         <tr>
-          <td class="p-2 font-medium">Total Pendapatan Penjualan (Omzet)</td>
-          <td class="p-2 text-right font-mono font-bold">{formatRupiah(totalOmzet)}</td>
+          <td class="p-2 font-medium">Total Penjualan (Omzet)</td>
+          <td class="p-2 text-right tabular-nums font-bold">{formatRupiah(totalOmzet)}</td>
         </tr>
         <tr>
-          <td class="p-2 font-medium">Modal Dasar Barang Terjual (HPP)</td>
-          <td class="p-2 text-right font-mono">({formatRupiah(totalHpp)})</td>
+          <td class="p-2 font-medium">Modal Barang Terjual</td>
+          <td class="p-2 text-right tabular-nums">({formatRupiah(totalHpp)})</td>
         </tr>
         <tr class="bg-neutral-50 font-bold">
-          <td class="p-2">KEUNTUNGAN KOTOR (LABA KOTOR)</td>
-          <td class="p-2 text-right font-mono">+{formatRupiah(labaKotor)}</td>
+          <td class="p-2">KEUNTUNGAN KOTOR</td>
+          <td class="p-2 text-right tabular-nums">+{formatRupiah(labaKotor)}</td>
         </tr>
         <tr>
-          <td class="p-2 font-medium">Total Pengeluaran Toko</td>
-          <td class="p-2 text-right font-mono text-red-600">({formatRupiah(totalPengeluaran)})</td>
+          <td class="p-2 font-medium">Pengeluaran Toko</td>
+          <td class="p-2 text-right tabular-nums text-red-600">({formatRupiah(totalPengeluaran)})</td>
         </tr>
         <tr class="bg-neutral-100 font-bold text-sm border-t-2 border-black">
-          <td class="p-2.5">KEUNTUNGAN BERSIH (LABA BERSIH)</td>
-          <td class="p-2.5 text-right font-mono">{formatRupiah(labaBersih)}</td>
+          <td class="p-2.5">KEUNTUNGAN BERSIH</td>
+          <td class="p-2.5 text-right tabular-nums">{formatRupiah(labaBersih)}</td>
         </tr>
       </tbody>
     </table>

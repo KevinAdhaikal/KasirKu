@@ -22,7 +22,15 @@
   let usernameError = $state<string | null>(null);
   let passwordError = $state<string | null>(null);
 
-  onMount(() => {
+  onMount(async () => {
+    if (auth.isAuthenticated) {
+      if (sse.status !== 'online') {
+        await sse.connect();
+      }
+      router.navigate('/', true);
+      return;
+    }
+
     const usernameEl = document.getElementById('login-username') as HTMLInputElement | null;
     const passwordEl = document.getElementById('login-password') as HTMLInputElement | null;
     if (username && password) {
@@ -56,7 +64,7 @@
     loading = true;
     try {
       await auth.login(username.trim(), password, rememberPassword);
-      sse.connect();
+      await sse.connect();
       router.navigate('/');
     } catch (err: any) {
       errorMessage = err.message || 'Gagal masuk ke sistem. Silakan periksa kredensial Anda.';

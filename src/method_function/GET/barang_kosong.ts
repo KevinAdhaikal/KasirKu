@@ -23,12 +23,21 @@ export default async function(req: Request, url: URL, user_info: user_session_in
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.DASHBOARD))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.DASHBOARD
+        )
+    )) return new Response("0", {status: 403});
 
     const res = await db
-        .select({ nama_barang: barang.nama_barang })
+        .select({
+            id: barang.id,
+            nama_barang: barang.nama_barang,
+            stok_barang: barang.stok_barang
+        })
         .from(barang)
-    .where(lte(barang.stok_barang, 0));
+        .where(lte(barang.stok_barang, 0));
 
     return new Response(JSON.stringify(res), {status: 200});
 }

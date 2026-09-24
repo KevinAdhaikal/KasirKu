@@ -1,7 +1,14 @@
 <script lang="ts">
   import { dialog } from '../../stores/dialog.svelte';
+  import { sse } from '../../stores/sse.svelte';
   import Button from './Button.svelte';
   import { AlertTriangle, Info, AlertCircle } from 'lucide-svelte';
+
+  $effect(() => {
+    if (sse.status !== 'online' && dialog.isOpen) {
+      dialog.handleCancel();
+    }
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (!dialog.isOpen) return;

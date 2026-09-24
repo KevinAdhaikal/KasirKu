@@ -398,19 +398,35 @@
         onclick={openAddModal}
       >
         <Plus class="w-4 h-4" />
-        <span>Catat Retur Barang</span>
+        <span>Tambah Retur Barang</span>
       </Button>
     </div>
   </div>
 
-  <!-- Date Navigation Toolbar & Summary -->
+  <!-- Toolbar: Search (Left) & Date Navigation (Right) -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Search Filter on Records -->
+    <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+      <Input
+        id="search-table-retur"
+        bind:value={filterTableQuery}
+        placeholder="Cari nama produk atau alasan retur…"
+        clearable
+        class="h-9 text-xs"
+      >
+        {#snippet prefix()}
+          <Search class="w-3.5 h-3.5 text-neutral-400" />
+        {/snippet}
+      </Input>
+    </div>
+
+    <!-- Date Navigation Controls -->
     <div class="flex items-center gap-2 flex-wrap">
-        <DatePicker
-          bind:value={selectedDate}
-          placeholder="Pilih tanggal"
-          align="left"
-        />
+      <DatePicker
+        bind:value={selectedDate}
+        placeholder="Pilih tanggal"
+        align="right"
+      />
 
       <div class="flex items-center gap-1">
         <Button variant="secondary" size="sm" onclick={setToday}>
@@ -420,37 +436,19 @@
           Kemarin
         </Button>
       </div>
-
-      <span class="text-xs text-neutral-500 hidden md:inline ml-2">
-        {formatTanggalIndo(selectedDate)}
-      </span>
     </div>
-
-  <!-- Search Filter on Records -->
-  <div class="max-w-sm">
-    <Input
-      id="search-table-retur"
-      bind:value={filterTableQuery}
-      placeholder="Cari nama produk atau alasan retur…"
-      clearable
-      class="h-9 text-xs"
-    >
-      {#snippet prefix()}
-        <Search class="w-3.5 h-3.5" />
-      {/snippet}
-    </Input>
   </div>
-</div>
 
-  <!-- Return Records Table -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
-    <table class="w-full text-left text-xs border-collapse">
+  <!-- Return Records Table & Mobile Cards -->
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse min-w-[650px]">
       <thead>
-        <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
+        <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
           <th class="py-2.5 px-4 w-20">
             <button
               type="button"
-              class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+              class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
               onclick={() => toggleSort('id')}
             >
               <span>ID</span>
@@ -468,7 +466,7 @@
           <th class="py-2.5 px-4">
             <button
               type="button"
-              class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+              class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
               onclick={() => toggleSort('nama_barang')}
             >
               <span>Nama Produk</span>
@@ -486,7 +484,7 @@
           <th class="py-2.5 px-4 text-right">
             <button
               type="button"
-              class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+              class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none ml-auto text-[11px] font-medium"
               onclick={() => toggleSort('jumlah_barang')}
             >
               <span>Jumlah Retur</span>
@@ -504,7 +502,7 @@
           <th class="py-2.5 px-4">
             <button
               type="button"
-              class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+              class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
               onclick={() => toggleSort('deskripsi')}
             >
               <span>Alasan Retur / Kerusakan</span>
@@ -519,10 +517,10 @@
               {/if}
             </button>
           </th>
-          <th class="py-2.5 px-4 text-center w-28">Aksi</th>
+          <th class="py-2.5 px-4 text-center w-28">Action</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+      <tbody class="divide-y divide-[var(--border-subtle)]">
         {#if loading}
           {#each Array(4) as _}
             <tr>
@@ -535,21 +533,21 @@
           {/each}
         {:else if paginatedList.length === 0}
           <tr>
-            <td colspan="5" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
+            <td colspan="5" class="py-12 text-center text-[var(--text-muted)]">
               <Undo2 class="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p class="font-medium text-xs">Tidak ada catatan retur barang pada tanggal ini.</p>
-              <p class="text-[11px] mt-0.5">Inventaris berjalan normal tanpa produk rusak atau cacat tercatat.</p>
+              <p class="text-[11px] mt-0.5 text-[var(--text-muted)]">Inventaris berjalan normal tanpa produk rusak atau cacat tercatat.</p>
             </td>
           </tr>
         {:else}
           {#each paginatedList as item (item.id)}
-            <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
-              <td class="py-3 px-4 text-neutral-400 text-xs tabular-nums">
-                #{item.id}
+            <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+              <td class="py-3 px-4 text-[var(--text-muted)] text-xs tabular-nums">
+                {item.id}
               </td>
 
               <td class="py-3 px-4">
-                <div class="font-medium text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
+                <div class="font-semibold text-[var(--text-primary)] text-xs sm:text-sm">
                   {item.nama_barang}
                 </div>
               </td>
@@ -561,7 +559,7 @@
                 </span>
               </td>
 
-              <td class="py-3 px-4 text-neutral-600 dark:text-neutral-300 text-xs">
+              <td class="py-3 px-4 text-[var(--text-secondary)] text-xs">
                 {item.deskripsi}
               </td>
 
@@ -571,7 +569,7 @@
                     type="button"
                     onclick={() => openEditModal(item)}
                     title="Ubah Rincian"
-                    class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 shadow-2xs transition-all flex items-center justify-center"
+                    class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-contrast)] hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-center"
                   >
                     <Pencil class="w-3.5 h-3.5" />
                   </button>
@@ -580,7 +578,7 @@
                     type="button"
                     onclick={() => handleDelete(item)}
                     title="Hapus & Kembalikan Stok"
-                    class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/40 shadow-2xs transition-all flex items-center justify-center"
+                    class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>
@@ -591,6 +589,8 @@
         {/if}
       </tbody>
     </table>
+    </div>
+
 
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
@@ -607,7 +607,7 @@
 <!-- Modal Catat Retur Barang -->
 <Modal
   open={isAddModalOpen}
-  title="Catat Retur Barang / Kerusakan"
+  title="Tambah Retur Barang"
   size="xl"
   onclose={() => (isAddModalOpen = false)}
 >
@@ -658,12 +658,12 @@
                 <div class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                   {p.nama_barang}
                 </div>
-                <div class="text-[11px] text-neutral-400 font-mono truncate">
+                <div class="text-[11px] text-neutral-400 truncate">
                   {p.barcode_barang ? `Barcode: ${p.barcode_barang}` : 'Tanpa Barcode'}
                 </div>
               </div>
               <div class="text-right shrink-0">
-                <span class="text-xs font-mono font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
+                <span class="text-xs font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
                   Stok: {formatNumber(p.stok_barang)} unit
                 </span>
               </div>
@@ -684,7 +684,7 @@
             <div class="font-semibold text-neutral-900 dark:text-neutral-100 text-xs">
               {selectedProduct.nama_barang}
             </div>
-            <div class="text-[11px] text-neutral-500 font-mono">
+            <div class="text-[11px] text-neutral-500">
               Stok Gudang: <strong>{formatNumber(selectedProduct.stok_barang)} unit</strong>
             </div>
           </div>
@@ -744,7 +744,7 @@
         {@const parsedRetur = Number(String(formJumlah).replace(/\./g, '')) || 0}
         <div class="flex flex-col justify-center">
           <span class="text-[11px] text-neutral-500">Sisa Stok Akhir:</span>
-          <div class="text-sm font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums">
+          <div class="text-sm font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
             {formatNumber(selectedProduct.stok_barang)} - {formatNumber(parsedRetur)} = 
             <span class="{selectedProduct.stok_barang - parsedRetur < 0 ? 'text-red-500 dark:text-red-400 font-bold' : 'text-amber-600 dark:text-amber-400'}">
               {formatNumber(selectedProduct.stok_barang - parsedRetur)} unit

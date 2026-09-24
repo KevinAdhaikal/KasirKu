@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { X } from 'lucide-svelte';
   import { parseNumber, formatRupiahInput, formatIDR, parseIDR, formatThousandSeparator } from '$lib/utils/format';
 
   interface Props {
@@ -13,6 +14,7 @@
     required?: boolean;
     numericOnly?: boolean;
     thousandSeparator?: boolean;
+    clearable?: boolean;
     error?: string;
     hint?: string;
     class?: string;
@@ -38,6 +40,7 @@
     required = false,
     numericOnly = false,
     thousandSeparator = false,
+    clearable = false,
     error,
     hint,
     class: className = '',
@@ -262,7 +265,7 @@
 
   <div class="relative flex items-center">
     {#if prefix || isCurrency}
-      <div class="absolute left-3 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500 text-sm font-medium">
+      <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500 text-sm font-medium">
         {#if prefix}
           {#if typeof prefix === 'string'}
             {prefix}
@@ -286,6 +289,7 @@
       {disabled}
       {readonly}
       aria-required={required ? 'true' : undefined}
+      aria-invalid={error ? 'true' : undefined}
       {autocomplete}
       {autofocus}
       oninput={handleInput}
@@ -293,23 +297,37 @@
       onpaste={handlePaste}
       onblur={handleBlur}
       {onfocus}
-      class="w-full h-9 rounded-md border text-sm transition-colors
+      class="w-full h-9 rounded-md border text-sm transition-all duration-150
         bg-[var(--bg-surface)]
         text-neutral-900 dark:text-neutral-100
         placeholder:text-neutral-400 dark:placeholder:text-neutral-600
-        focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--brand)]/50
+        focus-visible:outline-none
         disabled:opacity-50 disabled:bg-[var(--bg-subtle)] disabled:cursor-not-allowed
         leading-normal py-1.5
         {isCurrency || numericOnly ? 'tabular-nums font-medium' : ''}
         {prefix || isCurrency ? 'pl-9' : 'pl-3'}
-        {suffix ? 'pr-9' : 'pr-3'}
-        {error ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500' : 'border-neutral-300 dark:border-neutral-800'}
+        {clearable || suffix ? 'pr-9' : 'pr-3'}
+        {error ? 'border-red-500 dark:border-red-500' : 'border-neutral-300 dark:border-neutral-800'}
         {className}"
       {...restProps}
     />
 
-    {#if suffix}
-      <div class="absolute right-3 flex items-center text-neutral-400 dark:text-neutral-500 text-sm font-medium">
+    {#if clearable && value && !disabled && !readonly}
+      <button
+        type="button"
+        onclick={() => {
+          value = '';
+          inputElement?.focus();
+          oninput?.(new Event('input', { bubbles: true }));
+        }}
+        class="absolute inset-y-0 right-2.5 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer"
+        title="Hapus pencarian"
+        aria-label="Hapus pencarian"
+      >
+        <X class="w-3.5 h-3.5" />
+      </button>
+    {:else if suffix}
+      <div class="absolute inset-y-0 right-3 flex items-center text-neutral-400 dark:text-neutral-500 text-sm font-medium">
         {#if typeof suffix === 'string'}
           {suffix}
         {:else}

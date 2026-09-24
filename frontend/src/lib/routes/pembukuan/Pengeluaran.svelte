@@ -392,15 +392,15 @@
   </div>
 
   <!-- Expenses Table Card -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
+      <table class="w-full text-left text-xs border-collapse min-w-[650px]">
         <thead>
-          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
+          <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('created_ms')}
               >
                 <span>Waktu / Tanggal</span>
@@ -418,10 +418,10 @@
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('deskripsi')}
               >
-                <span>Keterangan / Keperluan</span>
+                <span>Keterangan</span>
                 {#if sortField === 'deskripsi'}
                   {#if sortAsc}
                     <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
@@ -436,7 +436,7 @@
             <th class="px-4 py-2.5 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none ml-auto text-[11px] font-medium"
                 onclick={() => toggleSort('jumlah_uang')}
               >
                 <span>Nominal Biaya</span>
@@ -451,10 +451,10 @@
                 {/if}
               </button>
             </th>
-            <th class="px-4 py-2.5 text-center">Aksi</th>
+            <th class="px-4 py-2.5 text-center">Action</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#if loading}
             {#each Array(5) as _}
               <tr class="h-12">
@@ -470,7 +470,7 @@
                 <TrendingDown class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
                 <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada data pengeluaran operasional</p>
                 <p class="text-[11px] text-neutral-400 mt-0.5">
-                  {searchQuery ? `Tidak ditemukan pengeluaran dengan kata kunci "${searchQuery}"` : `Tidak ada pengeluaran pada rentang tanggal ${startDate} s/d ${endDate}`}
+                  {searchQuery ? `Tidak ditemukan pengeluaran dengan kata kunci "${searchQuery}"` : 'Tidak ada data pengeluaran'}
                 </p>
               </td>
             </tr>
@@ -523,6 +523,7 @@
       </table>
     </div>
 
+
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
       bind:currentPage
@@ -538,7 +539,7 @@
 <!-- Modal Catat / Edit Pengeluaran -->
 <Modal
   open={isModalOpen}
-  title={isEditing ? 'Ubah Catatan Pengeluaran' : 'Catat Pengeluaran Baru'}
+  title={isEditing ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'}
   size="lg"
   onclose={() => (isModalOpen = false)}
 >
@@ -554,7 +555,7 @@
     <div>
       <Input
         id="pengeluaran-desc"
-        label="Keterangan / Keperluan Pengeluaran"
+        label="Keterangan Pengeluaran"
         bind:value={formDeskripsi}
         placeholder="Contoh: Beli kantong plastik, bayar token listrik, air galon"
         required
@@ -599,7 +600,7 @@
         {#each presets as p}
           <button
             type="button"
-            class="px-2.5 py-1 text-xs font-mono rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-[var(--bg-hover)] text-neutral-800 dark:text-neutral-200 transition-colors"
+            class="px-2.5 py-1 text-xs rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-[var(--bg-hover)] text-neutral-800 dark:text-neutral-200 transition-colors"
             onclick={() => setPreset(p)}
           >
             {formatRupiah(p)}

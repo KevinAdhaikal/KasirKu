@@ -26,7 +26,7 @@
 
 <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs {className}">
   {#if title || header || actions}
-    <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-neutral-200/70 dark:border-neutral-800/80">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-200/70 dark:border-neutral-800/80">
       {#if header}
         {@render header()}
       {:else}
@@ -41,19 +41,19 @@
       {/if}
 
       {#if actions}
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 flex-wrap shrink-0 w-full sm:w-auto justify-start sm:justify-end">
           {@render actions()}
         </div>
       {/if}
     </div>
   {/if}
 
-  <div class={padding ? 'p-5' : ''}>
+  <div class={padding ? 'p-3.5 sm:p-5' : ''}>
     {@render children?.()}
   </div>
 
   {#if footer}
-    <div class="px-5 py-3 border-t border-neutral-200/70 dark:border-neutral-800/80 bg-[var(--bg-subtle)]/60 rounded-b-lg flex items-center justify-between">
+    <div class="px-4 sm:px-5 py-3 border-t border-neutral-200/70 dark:border-neutral-800/80 bg-[var(--bg-subtle)]/60 rounded-b-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
       {@render footer()}
     </div>
   {/if}

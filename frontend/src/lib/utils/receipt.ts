@@ -58,7 +58,7 @@ export const RECEIPT_PRESETS = [
         body {
             background: #ffffff;
             color: #000000;
-            font-family: 'Courier New', 'Liberation Mono', 'Consolas', monospace;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             padding: 8px;
@@ -396,7 +396,7 @@ export const RECEIPT_PRESETS = [
     <meta charset="UTF-8">
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: monospace; background: #fff; color: #000; font-size: 11px; line-height: 1.3; display: flex; justify-content: center; padding: 4px; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #fff; color: #000; font-size: 11px; line-height: 1.3; display: flex; justify-content: center; padding: 4px; }
       .receipt { width: 100%; max-width: 280px; word-break: break-word; overflow-wrap: anywhere; }
     </style>
 </head>
@@ -507,7 +507,7 @@ export function renderReceiptHtml(
     body {
       background: #ffffff;
       color: #000000;
-      font-family: 'Courier New', 'Liberation Mono', 'Consolas', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       justify-content: center;
       padding: 8px;

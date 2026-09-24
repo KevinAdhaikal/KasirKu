@@ -79,7 +79,7 @@
     {
       bit: Permissions.KASIR, // 4 (1 << 2)
       id: 'perm_kasir',
-      label: 'Terminal Kasir (POS)',
+      label: 'Kasir (PoS)',
       description: 'Melakukan transaksi penjualan kasir, scan barcode, dan cetak struk belanja.',
       icon: ShoppingCart,
     },
@@ -487,47 +487,52 @@
   </div>
 
   <!-- Search Filter -->
-  <div class="relative flex-1 max-w-md">
-    <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-    <input
+  <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+    <Input
+      id="search-roles-input"
       type="text"
       placeholder="Cari nama role atau ID..."
       bind:value={searchQuery}
-      class="w-full pl-9 pr-4 py-2 text-xs rounded-md border border-neutral-200 dark:border-neutral-700 bg-[var(--bg-surface)] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/25 focus:border-[var(--brand)] dark:focus:ring-[var(--brand)]/25 dark:focus:border-[var(--brand)]"
-    />
+      clearable
+      class="h-9 text-xs"
+    >
+      {#snippet prefix()}
+        <Search class="w-3.5 h-3.5 text-neutral-400" />
+      {/snippet}
+    </Input>
   </div>
 
   <!-- Roles Table -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-xs border-collapse">
-        <thead class="bg-neutral-50/70 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 text-neutral-500 uppercase font-mono text-[10px] font-semibold tracking-wider text-center">
+        <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px] text-center">
           <tr>
-            <th class="py-2.5 px-3 text-center w-16 cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('id')}>
+            <th class="py-2.5 px-3 text-center w-16 cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('id')}>
               <div class="inline-flex items-center justify-center gap-1">
                 <span>ID</span>
                 {#if sortField === 'id'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('name')}>
+            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('name')}>
               <div class="inline-flex items-center justify-center gap-1">
                 <span>Role Name</span>
                 {#if sortField === 'name'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
               </div>
             </th>
-            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('created_ms')}>
+            <th class="py-2.5 px-3 text-center cursor-pointer hover:text-[var(--text-primary)]" onclick={() => toggleSort('created_ms')}>
               <div class="inline-flex items-center justify-center gap-1">
                 <span>Created At</span>
                 {#if sortField === 'created_ms'}
-                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
+                  {#if sortAsc}<ArrowUp class="w-3 h-3 text-[var(--brand)]" />{:else}<ArrowDown class="w-3 h-3 text-[var(--brand)]" />{/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
@@ -545,7 +550,7 @@
             </th>
             <th class="py-2.5 px-3 text-center cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100" onclick={() => toggleSort('users')}>
               <div class="inline-flex items-center justify-center gap-1">
-                <span>Pengguna</span>
+                <span>Users</span>
                 {#if sortField === 'users'}
                   {#if sortAsc}<ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{:else}<ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />{/if}
                 {:else}
@@ -595,7 +600,7 @@
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- ID -->
                 <td class="py-3 px-3 text-center font-medium text-neutral-500 tabular-nums">
-                  #{role.id}
+                  {role.id}
                 </td>
 
                 <!-- Role Name -->
@@ -672,7 +677,7 @@
 </div>
 
 <!-- MODAL: Tambah Role (Size Large: max-w-3xl) -->
-<Modal bind:open={isAddModalOpen} title="Tambah Role Hak Akses Baru" size="lg">
+<Modal bind:open={isAddModalOpen} title="Tambah Role" size="lg">
   <form novalidate onsubmit={handleAddRole} class="space-y-4">
     {#if addErrorMessage}
       <div class="p-3 rounded-md border border-red-500/30 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs flex items-start gap-2">
@@ -706,15 +711,9 @@
     <div class="space-y-2 pt-2">
       <div class="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-3">
         <span class="block text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-          Permissions (Modul Hak Akses) <span class="text-red-500 font-bold">*</span>
-        </span>
-        <span class="text-[11px] font-mono text-neutral-500">
-          {formSelectedBits.length} modul dipilih
+          Permissions <span class="text-red-500 font-bold">*</span>
         </span>
       </div>
-      <p class="text-[11px] text-neutral-500">
-        Pilih hak akses yang akan diberikan kepada role ini. Centang satu atau lebih permission sesuai kebutuhan.
-      </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         {#each MODULES as mod}
@@ -760,7 +759,7 @@
 <!-- MODAL: View / Edit Role (Size Large: max-w-3xl) -->
 <Modal
   bind:open={isEditModalOpen}
-  title={editingRole?.id === 1 ? 'View & Edit Role: Administrator' : (editingRole ? `View & Edit Role: ${editingRole.name}` : 'View / Edit Role')}
+  title='View & Edit Role'
   size="lg"
 >
   {#if editingRole}
@@ -801,16 +800,6 @@
           <span class="block text-xs font-semibold text-neutral-900 dark:text-neutral-100">
             Permissions
           </span>
-          {#if isAdministrator}
-            <Badge variant="warning" size="sm">
-              <Lock class="w-3 h-3 mr-1" />
-              Akses Penuh
-            </Badge>
-          {:else}
-            <span class="text-[11px] font-mono text-neutral-500">
-              {editSelectedBits.length} modul aktif
-            </span>
-          {/if}
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -886,7 +875,7 @@
           {:else}
             <div class="max-h-48 overflow-y-auto divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
               <table class="w-full text-xs border-collapse">
-                <thead class="bg-neutral-100/70 dark:bg-neutral-800/60 text-neutral-500 uppercase font-mono text-[10px] font-semibold sticky top-0">
+                <thead class="bg-neutral-100/70 dark:bg-neutral-800/60 text-neutral-500 uppercase text-[10px] font-semibold sticky top-0">
                   <tr>
                     <th class="py-2 px-3 text-left">Full Name (Username)</th>
                   </tr>
@@ -908,7 +897,7 @@
                             </div>
                             <div class="flex items-center gap-1.5 flex-wrap">
                               <span class="font-medium text-neutral-900 dark:text-neutral-100">{u.full_name}</span>
-                              <span class="text-neutral-400 font-mono text-[11px]">(@{u.username})</span>
+                              <span class="text-neutral-400 text-[11px]">(@{u.username})</span>
                             </div>
                           </div>
                         </td>

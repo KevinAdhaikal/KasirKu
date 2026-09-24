@@ -428,21 +428,26 @@
       </Button>
       <Button variant="primary" size="sm" onclick={openAddModal}>
         <UserPlus class="w-3.5 h-3.5" />
-        <span>Tambah Pengguna</span>
+        <span>Tambah User</span>
       </Button>
     </div>
   </div>
 
   <!-- Search & Role Filter Bar -->
-  <div class="flex flex-col sm:flex-row justify-between gap-3">
-    <div class="relative flex-1 max-w-md">
-      <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-      <input
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+      <Input
+        id="search-users-input"
         type="text"
-        placeholder="Cari berdasarkan nama, username, atau ID..."
+        placeholder="Cari nama, username, atau ID..."
         bind:value={searchQuery}
-        class="w-full pl-9 pr-4 py-2 text-xs rounded-md border border-neutral-200 dark:border-neutral-700 bg-[var(--bg-surface)] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/50 focus:border-[var(--brand)] transition-colors shadow-2xs"
-      />
+        clearable
+        class="h-9 text-xs"
+      >
+        {#snippet prefix()}
+          <Search class="w-3.5 h-3.5 text-neutral-400" />
+        {/snippet}
+      </Input>
     </div>
     <div class="flex items-center gap-2">
       <span class="text-xs text-neutral-500 shrink-0 font-medium">Filter Role:</span>
@@ -462,23 +467,23 @@
   </div>
 
   <!-- Users Table -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] overflow-hidden shadow-2xs">
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-xs border-collapse">
-        <thead class="bg-neutral-50/70 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 text-neutral-500 uppercase font-mono text-[10px] font-semibold tracking-wider text-center">
+        <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px] text-center">
           <tr>
             <th class="py-2.5 px-3 text-center w-20">
               <button
                 type="button"
                 onclick={() => toggleSort('id')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
                 <span>ID</span>
                 {#if sortField === 'id'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -489,14 +494,14 @@
               <button
                 type="button"
                 onclick={() => toggleSort('full_name')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
-                <span>Pengguna / Kredensial</span>
+                <span>User</span>
                 {#if sortField === 'full_name'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -507,14 +512,14 @@
               <button
                 type="button"
                 onclick={() => toggleSort('role_id')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
                 <span>Role</span>
                 {#if sortField === 'role_id'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -525,14 +530,14 @@
               <button
                 type="button"
                 onclick={() => toggleSort('created_ms')}
-                class="inline-flex items-center justify-center gap-1 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors uppercase font-mono text-[10px] tracking-wider mx-auto"
+                class="inline-flex items-center justify-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
               >
-                <span>Didaftarkan</span>
+                <span>Created At</span>
                 {#if sortField === 'created_ms'}
                   {#if sortAsc}
-                    <ArrowUp class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
                   {:else}
-                    <ArrowDown class="w-3 h-3 text-neutral-900 dark:text-neutral-100" />
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
                   {/if}
                 {:else}
                   <ArrowUpDown class="w-3 h-3 opacity-40" />
@@ -540,11 +545,11 @@
               </button>
             </th>
             <th class="py-2.5 px-3 text-center w-28">
-              Aksi
+              Action
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#if loading}
             {#each Array(4) as _}
               <tr>
@@ -580,7 +585,7 @@
               <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
                 <!-- ID (Centered) -->
                 <td class="py-2.5 px-3 text-center font-medium text-neutral-500 tabular-nums">
-                  #{user.id}
+                  {user.id}
                 </td>
 
                 <!-- User Name & Avatar -->
@@ -666,7 +671,7 @@
 </div>
 
 <!-- MODAL: Tambah Pengguna (Size Large: max-w-3xl) -->
-<Modal bind:open={isAddModalOpen} title="Tambah Pengguna Baru" size="lg">
+<Modal bind:open={isAddModalOpen} title="Tambah User" size="lg">
   <form novalidate onsubmit={handleAddUser} class="space-y-4">
     {#if addErrorMessage}
       <div class="p-3 rounded-md border border-red-500/30 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs flex items-start gap-2">
@@ -693,7 +698,7 @@
         }}
       >
         {#snippet prefix()}
-          <span class="text-neutral-400 font-mono text-xs">@</span>
+          <span class="text-neutral-400 text-xs">@</span>
         {/snippet}
       </Input>
 
@@ -791,7 +796,7 @@
 </Modal>
 
 <!-- MODAL: Edit Pengguna (Size Large: max-w-3xl) -->
-<Modal bind:open={isEditModalOpen} title="Ubah Data Pengguna" size="lg">
+<Modal bind:open={isEditModalOpen} title="Edit User" size="lg">
   {#if editingUser}
     <form novalidate onsubmit={handleEditUser} class="space-y-4">
       {#if editErrorMessage}
@@ -819,7 +824,7 @@
           }}
         >
           {#snippet prefix()}
-            <span class="text-neutral-400 font-mono text-xs">@</span>
+            <span class="text-neutral-400 text-xs">@</span>
           {/snippet}
         </Input>
 

@@ -220,9 +220,9 @@
           </div>
         {/if}
 
-        <div class="flex items-center justify-between gap-4 p-3 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-subtle)]/60">
+        <div class="flex items-center justify-between gap-4 p-3 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-subtle)]">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-12 h-12 rounded-full overflow-hidden bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center font-bold text-sm text-neutral-700 dark:text-neutral-300 shrink-0 border border-neutral-200 dark:border-neutral-700">
+            <div class="w-12 h-12 rounded-full overflow-hidden bg-[var(--bg-subtle)] flex items-center justify-center font-bold text-sm text-[var(--text-secondary)] shrink-0 border border-[var(--border-subtle)]">
               {#if profileImagePreview}
                 <img src={profileImagePreview} alt="Foto profil" class="w-full h-full object-cover" />
               {:else}
@@ -230,15 +230,15 @@
               {/if}
             </div>
             <div class="min-w-0">
-              <p class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">{auth.user?.full_name}</p>
+              <p class="text-xs font-semibold text-[var(--text-primary)] truncate">{auth.user?.full_name}</p>
               <div class="flex items-center gap-2 mt-0.5">
-                <span class="text-[11px] text-neutral-500 font-mono truncate">@{auth.user?.username}</span>
+                <span class="text-[11px] text-[var(--text-muted)] truncate">@{auth.user?.username}</span>
                 <Badge variant="neutral">{auth.user?.role_name || 'Staff'}</Badge>
               </div>
             </div>
           </div>
 
-          <label class="inline-flex items-center gap-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-700 dark:text-neutral-200 hover:bg-[var(--bg-hover)] cursor-pointer transition-colors shrink-0">
+          <label class="inline-flex items-center gap-2 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] cursor-pointer transition-colors shrink-0">
             <Upload class="w-3.5 h-3.5" />
             <span class="hidden sm:inline">Upload Foto</span>
             <span class="sm:hidden">Upload</span>
@@ -285,7 +285,7 @@
           }}
         >
           {#snippet prefix()}
-            <span class="font-mono text-xs">@</span>
+            <span class="text-xs">@</span>
           {/snippet}
         </Input>
 

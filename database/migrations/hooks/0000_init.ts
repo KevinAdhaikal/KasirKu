@@ -54,10 +54,18 @@ export default async function(db: MigrationDb, dbType: DatabaseType) {
             modified_ms: now
         },
         {
-            section: "store",
-            key: "struk",
+            section: "receipt",
+            key: "content",
             value: "",
             type: "string",
+            created_ms: now,
+            modified_ms: now
+        },
+        {
+            section: "receipt",
+            key: "enabled",
+            value: "false",
+            type: "boolean",
             created_ms: now,
             modified_ms: now
         }

@@ -25,7 +25,12 @@ export default async function(req: Request, token: string) {
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_PEMBUKUAN
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 

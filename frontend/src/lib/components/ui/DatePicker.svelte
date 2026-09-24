@@ -28,6 +28,26 @@
 
   let open = $state(false);
   let containerRef = $state<HTMLDivElement | null>(null);
+  let popoverRef = $state<HTMLDivElement | null>(null);
+  let shiftX = $state(0);
+
+  $effect(() => {
+    if (open) {
+      shiftX = 0;
+      tick().then(() => {
+        if (!popoverRef) return;
+        const rect = popoverRef.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth || window.innerWidth;
+        if (rect.right > vw - 8) {
+          shiftX = (vw - 8) - rect.right;
+        } else if (rect.left < 8) {
+          shiftX = 8 - rect.left;
+        }
+      });
+    } else {
+      shiftX = 0;
+    }
+  });
 
   // Parse YYYY-MM-DD to Date object safely without timezone skew
   function parseDateStr(str: string): Date {
@@ -180,17 +200,18 @@
 
 <div class="relative inline-block" bind:this={containerRef}>
   <!-- Modern Trigger Button -->
-  <div class="inline-flex items-center h-8 rounded-md border transition-all duration-150
-    border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900
-    hover:border-neutral-400 dark:hover:border-neutral-600
-    {open ? 'ring-1 ring-neutral-900 dark:ring-white border-neutral-900 dark:border-white shadow-2xs' : ''}
-    {className}"
+  <div
+    class="inline-flex items-center h-8 rounded-md border transition-all duration-150 input-glow-target cursor-pointer
+      border-neutral-300 dark:border-neutral-800 bg-[var(--bg-surface)]
+      {className}"
+    data-open={open ? 'true' : undefined}
+    class:is-active={open}
   >
     <button
       type="button"
       {disabled}
       onclick={() => (open = !open)}
-      class="h-full min-w-0 px-2.5 rounded-md text-xs font-medium select-none flex items-center gap-2
+      class="h-full min-w-0 px-2.5 rounded-md text-xs font-medium select-none flex items-center gap-2 cursor-pointer
         text-neutral-900 dark:text-neutral-100 focus:outline-none
         disabled:opacity-50 disabled:cursor-not-allowed"
       aria-haspopup="dialog"
@@ -217,7 +238,9 @@
   <!-- Interactive Calendar Popover -->
   {#if open}
     <div
-      class="absolute top-full mt-1.5 z-50 w-72 p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800
+      bind:this={popoverRef}
+      style={shiftX !== 0 ? `transform: translateX(${shiftX}px);` : undefined}
+      class="absolute top-full mt-1.5 z-50 w-72 max-w-[calc(100vw-1.5rem)] p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800
         bg-[var(--bg-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-150
         {align === 'right' ? 'right-0' : 'left-0'}"
     >

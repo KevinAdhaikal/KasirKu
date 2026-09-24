@@ -39,6 +39,16 @@
   --danger: #dc4856;
   --info: #338ea7;
 
+  --input-hover-border: #8b99a0;
+  --input-hover-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --input-focus-border: var(--brand);
+  --input-focus-shadow: 0 0 0 2px rgba(63, 145, 173, 0.22), 0 0 6px rgba(63, 145, 173, 0.15);
+
+  --input-glow-color: rgba(63, 145, 173, 0.2);
+  --input-glow-border: var(--input-hover-border);
+  --input-glow-shadow: var(--input-hover-shadow);
+  --input-glow-focus-shadow: var(--input-focus-shadow);
+
   /* Tailwind palette aliases: keeps existing utility classes theme-aware. */
   --palette-white: #ffffff;
   --palette-black: #0f1a20;
@@ -109,6 +119,16 @@
   --accent-fg-muted: #b6d7df;
   --focus-ring: rgba(53, 127, 151, 0.34);
   --shadow-color: rgba(0, 0, 0, 0.28);
+
+  --input-hover-border: #4a626c;
+  --input-hover-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --input-focus-border: var(--brand);
+  --input-focus-shadow: 0 0 0 2px rgba(53, 127, 151, 0.35), 0 0 8px rgba(53, 127, 151, 0.2);
+
+  --input-glow-color: rgba(53, 127, 151, 0.3);
+  --input-glow-border: var(--input-hover-border);
+  --input-glow-shadow: var(--input-hover-shadow);
+  --input-glow-focus-shadow: var(--input-focus-shadow);
 
   --palette-white: #f3f8fa;
   --palette-black: #050c10;
@@ -257,7 +277,7 @@
   }
 
   .font-mono, code, pre, kbd {
-    font-family: "JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: inherit !important;
     font-variant-numeric: tabular-nums;
   }
 
@@ -303,6 +323,81 @@
     border: 2px solid transparent;
     background-clip: padding-box;
   }
+}
+
+/* Hilangkan spinner panah atas/bawah bawaan browser pada input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ── Interactive Input Hover & Focus Glow ───────────────── */
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="hidden"]),
+textarea,
+select,
+.input-glow-target {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+/* Hover: darker toned-down border, no bright halo ("agak gelapin lagi") */
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([disabled]):not([readonly]):not(:focus):not(:active):hover,
+textarea:not([disabled]):not([readonly]):not(:focus):not(:active):hover,
+select:not([disabled]):not(:focus):not(:active):hover,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):not(:focus):not(:focus-within):not(:active):not(:has(:active)):not([data-open="true"]):not(.is-active):hover {
+  border-color: var(--input-hover-border) !important;
+  box-shadow: var(--input-hover-shadow) !important;
+}
+
+/* Active & Focus: soft brand illumination ("pas di tekan, baru terang dikit") */
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([disabled]):active,
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([disabled]):focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="hidden"]):not([disabled]):focus-visible,
+textarea:not([disabled]):active,
+textarea:not([disabled]):focus,
+textarea:not([disabled]):focus-visible,
+select:not([disabled]):active,
+select:not([disabled]):focus,
+select:not([disabled]):focus-visible,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):active,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):focus,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):focus-visible,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):focus-within,
+.input-glow-target:not([disabled]):not([aria-disabled="true"]):has(:active),
+.input-glow-target[data-open="true"],
+.input-glow-target.is-active {
+  border-color: var(--input-focus-border) !important;
+  box-shadow: var(--input-focus-shadow) !important;
+  outline: none !important;
+}
+
+/* Error state glow */
+input[aria-invalid="true"]:not([disabled]):not(:focus):not(:active):hover,
+textarea[aria-invalid="true"]:not([disabled]):not(:focus):not(:active):hover {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 1px var(--danger), 0 0 4px rgba(220, 72, 86, 0.25) !important;
+}
+
+input[aria-invalid="true"]:not([disabled]):active,
+input[aria-invalid="true"]:not([disabled]):focus,
+input[aria-invalid="true"]:not([disabled]):focus-visible,
+textarea[aria-invalid="true"]:not([disabled]):active,
+textarea[aria-invalid="true"]:not([disabled]):focus,
+textarea[aria-invalid="true"]:not([disabled]):focus-visible {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 2px rgba(220, 72, 86, 0.4), 0 0 8px rgba(220, 72, 86, 0.3) !important;
+}
+
+/* Checkbox & Radio hover glow */
+input[type="checkbox"]:not([disabled]):hover,
+input[type="radio"]:not([disabled]):hover {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 6px var(--input-glow-color) !important;
+  cursor: pointer;
 }
 
 

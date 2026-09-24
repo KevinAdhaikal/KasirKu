@@ -95,11 +95,11 @@
   <!-- Modern Desk-Calendar Pill Trigger -->
   <button
     type="button"
-    class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border text-left transition-all duration-150 select-none
-      border-neutral-200/80 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60
-      hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/80
-      focus:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400
-      {open ? 'ring-1 ring-neutral-900 dark:ring-white border-neutral-900 dark:border-white shadow-xs' : ''}"
+    class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border text-left transition-all duration-150 select-none cursor-pointer input-glow-target
+      border-neutral-300 dark:border-neutral-800 bg-[var(--bg-surface)]
+      focus:outline-none"
+    data-open={open ? 'true' : undefined}
+    class:is-active={open}
     onclick={() => (open = !open)}
     aria-label="Buka kalender operasional toko"
     aria-expanded={open}
@@ -114,8 +114,8 @@
       </div>
     </div>
 
-    <!-- Date & Clock Text -->
-    <div class="flex flex-col text-left">
+    <!-- Date & Clock Text (shown on sm and up) -->
+    <div class="hidden sm:flex flex-col text-left">
       <div class="flex items-center gap-1.5">
         <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight">
           {formattedFullDate}
@@ -123,8 +123,7 @@
       </div>
       <div class="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 tabular-nums font-medium">
         <Clock class="w-3 h-3 text-neutral-400 shrink-0" />
-        <span>{formattedTimeShort} WIB</span>
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
+        <span>{formattedTimeShort}</span>
       </div>
     </div>
   </button>
@@ -132,7 +131,7 @@
   <!-- Calendar Interactive Popover Dropdown -->
   {#if open}
     <div
-      class="absolute right-0 top-full mt-2 z-50 w-72 p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800
+      class="absolute right-0 top-full mt-2 z-50 w-72 max-w-[calc(100vw-2rem)] p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800
         bg-[var(--bg-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-150"
     >
       <!-- Popover Header: Month & Year Navigator -->
@@ -141,7 +140,6 @@
           <h4 class="text-xs font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
             {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
           </h4>
-          <p class="text-[10px] text-neutral-400">Kalender Toko</p>
         </div>
         <div class="flex items-center gap-1">
           <button
@@ -201,15 +199,6 @@
             </span>
           </div>
         {/each}
-      </div>
-
-      <!-- Real-time Status Footer -->
-      <div class="mt-3 pt-2.5 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between text-[10px] text-neutral-400">
-        <div class="flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span class="text-neutral-600 dark:text-neutral-400 font-medium">Sistem Sinkron</span>
-        </div>
-        <span class="tabular-nums font-mono font-medium text-neutral-600 dark:text-neutral-300">{formattedTimeWithSecs}</span>
       </div>
     </div>
   {/if}

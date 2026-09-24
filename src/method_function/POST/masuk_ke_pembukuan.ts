@@ -25,7 +25,12 @@ export default async function(req: Request, token: string) {
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.KASIR))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.KASIR
+        )
+    )) return new Response("0", {status: 403});
     
     const user_data = await req.json();
     const items = user_data.items as [{
@@ -35,9 +40,8 @@ export default async function(req: Request, token: string) {
         harga_jual: number,
         nama_barang: string
     }];
-    
-    if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
 
+    if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
     const date = global.date;
     const now = global.date.getTime();
     const date_now = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();

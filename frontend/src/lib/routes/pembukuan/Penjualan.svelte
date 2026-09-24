@@ -23,6 +23,9 @@
     formatTanggalKey,
     getTanggalKey
   } from '../../utils/format';
+  import { renderReceiptHtml, type StoreInfo } from '../../utils/receipt';
+  import type { ReceiptData } from '../../components/pos/PaymentModal.svelte';
+  import ReceiptModal from '../../components/pos/ReceiptModal.svelte';
   import {
     Receipt,
     ReceiptText,
@@ -91,6 +94,8 @@
   // Thermal print state
   let isPrinting = $state(false);
   let copiedStruk = $state<string | null>(null);
+  let receiptModalOpen = $state(false);
+  let receiptModalData = $state<ReceiptData | null>(null);
 
   // Presets handler
   function applyPreset(preset: 'today' | 'week' | 'month') {
@@ -130,9 +135,8 @@
     }
   }
 
-  async function openDetail(item: PenjualanItem) {
+  async function loadDetailData(item: PenjualanItem) {
     selectedPenjualan = item;
-    isDetailModalOpen = true;
     loadingDetail = true;
     detailItems = [];
     try {
@@ -146,16 +150,48 @@
     }
   }
 
-  function handlePrint(item?: PenjualanItem) {
-    if (item && item.id !== selectedPenjualan?.id) {
-      openDetail(item).then(() => {
-        setTimeout(() => {
-          window.print();
-        }, 300);
-      });
-    } else {
-      window.print();
+  async function openDetail(item: PenjualanItem) {
+    isDetailModalOpen = true;
+    await loadDetailData(item);
+  }
+
+  async function handlePrint(item?: PenjualanItem) {
+    const targetItem = item || selectedPenjualan;
+    if (!targetItem) return;
+
+    let itemsToUse = detailItems;
+    if (!selectedPenjualan || targetItem.id !== selectedPenjualan.id || detailItems.length === 0) {
+      try {
+        const res = await api.get<{ items: PenjualanItemDetail[] } | PenjualanItemDetail[]>(`/api/penjualan/${targetItem.id}`);
+        const parsed = Array.isArray(res) ? res : res?.items || [];
+        itemsToUse = parsed;
+      } catch (err) {
+        console.error('Failed to load transaction details for receipt:', err);
+      }
     }
+
+    // Ensure public info is fresh
+    await auth.fetchPublicInfo();
+
+    receiptModalData = {
+      receiptNo: targetItem.no_struk,
+      timestamp: new Date(targetItem.created_ms).toISOString(),
+      cashierName: targetItem.nama_kasir || 'Kasir',
+      totalAmount: targetItem.total_harga_jual,
+      totalItems: targetItem.total_barang,
+      cashPaid: targetItem.total_harga_jual,
+      changeAmount: 0,
+      items: itemsToUse.map((d: any) => ({
+        id: d.id || 0,
+        nama_barang: d.nama_barang,
+        barcode: '',
+        harga_jual: d.harga_jual,
+        jumlah_barang: d.jumlah ?? d.jumlah_barang ?? 1,
+        subtotal: d.total_harga_jual || ((d.harga_jual || 0) * (d.jumlah ?? d.jumlah_barang ?? 1)),
+      })),
+    };
+
+    receiptModalOpen = true;
   }
 
   function copyToClipboard(text: string) {
@@ -243,6 +279,7 @@
 
   onMount(() => {
     fetchData();
+    auth.fetchPublicInfo();
 
     unsubscribeSSE = sse.subscribe((event) => {
       // type 2 is TRANSACTION / CHECKOUT event
@@ -312,14 +349,16 @@
 
       <!-- Custom Date Inputs -->
       <div class="flex items-center gap-2 text-xs">
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 flex-wrap">
           <DatePicker
             bind:value={startDate}
+            align="left"
             onchange={() => { filterPreset = 'custom'; fetchData(); }}
           />
           <span class="text-neutral-400 text-xs">s/d</span>
           <DatePicker
             bind:value={endDate}
+            align="right"
             onchange={() => { filterPreset = 'custom'; fetchData(); }}
           />
         </div>
@@ -340,16 +379,16 @@
     </div>
   </div>
 
-  <!-- Transactions Table Card -->
-  <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] shadow-xs overflow-hidden">
+  <!-- Table Card -->
+  <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
+      <table class="w-full text-left text-xs border-collapse min-w-[750px]">
         <thead>
-          <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 text-neutral-500 uppercase font-mono text-[10px] tracking-wider">
+          <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('no_struk')}
               >
                 <span>No. Struk</span>
@@ -367,7 +406,7 @@
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('created_ms')}
               >
                 <span>Waktu Transaksi</span>
@@ -385,7 +424,7 @@
             <th class="px-4 py-2.5">
               <button
                 type="button"
-                class="flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none"
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('nama_kasir')}
               >
                 <span>Kasir</span>
@@ -403,7 +442,7 @@
             <th class="px-4 py-2.5 text-center">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none mx-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none mx-auto text-[11px] font-medium"
                 onclick={() => toggleSort('total_barang')}
               >
                 <span>Item</span>
@@ -421,7 +460,7 @@
             <th class="px-4 py-2.5 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none ml-auto text-[11px] font-medium"
                 onclick={() => toggleSort('total_harga_jual')}
               >
                 <span>Total Belanja</span>
@@ -439,7 +478,7 @@
             <th class="px-4 py-2.5 text-right">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 font-mono uppercase tracking-wider hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer select-none ml-auto"
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none ml-auto text-[11px] font-medium"
                 onclick={() => toggleSort('laba_kotor')}
               >
                 <span>Laba Kotor</span>
@@ -454,10 +493,10 @@
                 {/if}
               </button>
             </th>
-            <th class="px-4 py-2.5 text-center">Aksi</th>
+            <th class="px-4 py-2.5 text-center">Action</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+        <tbody class="divide-y divide-[var(--border-subtle)]">
           {#if loading}
             {#each Array(5) as _}
               <tr class="h-12">
@@ -476,7 +515,7 @@
                 <Receipt class="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-2" />
                 <p class="font-medium text-neutral-600 dark:text-neutral-400">Tidak ada riwayat transaksi penjualan</p>
                 <p class="text-[11px] text-neutral-400 mt-0.5">
-                  {searchQuery ? `Tidak ditemukan transaksi dengan kata kunci "${searchQuery}"` : `Tidak ada penjualan pada rentang tanggal ${startDate} s/d ${endDate}`}
+                  {searchQuery ? `Tidak ditemukan transaksi dengan kata kunci "${searchQuery}"` : 'Tidak ada data penjualan'}
                 </p>
               </td>
             </tr>
@@ -566,6 +605,7 @@
       </table>
     </div>
 
+
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
       bind:currentPage
@@ -582,7 +622,6 @@
 <Modal
   open={isDetailModalOpen}
   title="Rincian Transaksi Penjualan"
-  description={`Struk ${selectedPenjualan?.no_struk || ''} pada ${selectedPenjualan ? formatDateTime(selectedPenjualan.created_ms) : ''}`}
   size="xl"
   onclose={() => (isDetailModalOpen = false)}
 >
@@ -593,13 +632,13 @@
       <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
         <div>
           <span class="text-neutral-500 block">Nomor Struk:</span>
-          <span class="font-mono font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
+          <span class="font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
             {selectedPenjualan.no_struk}
           </span>
         </div>
         <div>
           <span class="text-neutral-500 block">Waktu Transaksi:</span>
-          <span class="font-mono text-neutral-800 dark:text-neutral-200 mt-0.5 block">
+          <span class="text-neutral-800 dark:text-neutral-200 mt-0.5 block">
             {formatDateTime(selectedPenjualan.created_ms)}
           </span>
         </div>
@@ -611,7 +650,7 @@
         </div>
         <div>
           <span class="text-neutral-500 block">Total Kuantitas:</span>
-          <span class="font-mono font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
+          <span class="font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
             {formatNumber(selectedPenjualan.total_barang)} unit
           </span>
         </div>
@@ -621,7 +660,7 @@
       <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 text-neutral-500 font-mono text-[11px]">
+            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 text-neutral-500 text-[11px]">
               <th class="px-4 py-2.5 font-medium">PRODUK / ITEM</th>
               <th class="px-4 py-2.5 font-medium text-center">QTY</th>
               <th class="px-4 py-2.5 font-medium text-right">HARGA SATUAN</th>
@@ -650,13 +689,13 @@
                   <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100">
                     {item.nama_barang}
                   </td>
-                  <td class="px-4 py-2.5 text-center font-mono font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
+                  <td class="px-4 py-2.5 text-center font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
                     {formatNumber(item.jumlah)}
                   </td>
-                  <td class="px-4 py-2.5 text-right font-mono text-neutral-600 dark:text-neutral-400 tabular-nums">
+                  <td class="px-4 py-2.5 text-right text-neutral-600 dark:text-neutral-400 tabular-nums">
                     {formatRupiah(item.harga_jual)}
                   </td>
-                  <td class="px-4 py-2.5 text-right font-mono font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
+                  <td class="px-4 py-2.5 text-right font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
                     {formatRupiah(item.total_harga_jual)}
                   </td>
                 </tr>
@@ -670,14 +709,14 @@
       <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div class="space-y-1">
           <div class="text-neutral-500">Estimasi Laba Kotor:</div>
-          <div class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             +{formatRupiah(itemLaba)}
           </div>
         </div>
 
         <div class="text-right space-y-0.5">
           <div class="text-neutral-500">Grand Total Belanja:</div>
-          <div class="text-2xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums">
+          <div class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
             {formatRupiah(selectedPenjualan.total_harga_jual)}
           </div>
         </div>
@@ -704,53 +743,8 @@
   {/snippet}
 </Modal>
 
-<!-- Thermal Printable Struk Template -->
-{#if selectedPenjualan}
-  <div id="thermal-receipt" class="hidden print:block font-mono text-black bg-white p-4 max-w-[320px] mx-auto text-xs">
-    <div class="text-center pb-3 border-b border-dashed border-black">
-      <h2 class="font-bold text-sm uppercase">{auth.publicInfo.store_name || 'KASIRKU POS'}</h2>
-      {#if auth.publicInfo.store_address}
-        <p class="text-[10px] mt-0.5">{auth.publicInfo.store_address}</p>
-      {/if}
-      {#if auth.publicInfo.store_phone_num}
-        <p class="text-[10px]">Telp: {auth.publicInfo.store_phone_num}</p>
-      {/if}
-    </div>
-
-    <div class="py-2 border-b border-dashed border-black text-[10px] space-y-0.5">
-      <div class="flex justify-between">
-        <span>No: {selectedPenjualan.no_struk}</span>
-        <span>Kasir: {selectedPenjualan.nama_kasir || 'Kasir'}</span>
-      </div>
-      <div>Waktu: {formatDateTime(selectedPenjualan.created_ms)}</div>
-    </div>
-
-    <div class="py-2 border-b border-dashed border-black space-y-1.5 text-[11px]">
-      {#each detailItems as item}
-        <div>
-          <div class="font-bold">{item.nama_barang}</div>
-          <div class="flex justify-between text-[10px]">
-            <span>{item.jumlah} x {formatRupiah(item.harga_jual)}</span>
-            <span>{formatRupiah(item.total_harga_jual)}</span>
-          </div>
-        </div>
-      {/each}
-    </div>
-
-    <div class="py-2 border-b border-dashed border-black text-xs space-y-1">
-      <div class="flex justify-between font-bold">
-        <span>TOTAL</span>
-        <span>{formatRupiah(selectedPenjualan.total_harga_jual)}</span>
-      </div>
-      <div class="flex justify-between text-[10px]">
-        <span>Total Qty</span>
-        <span>{selectedPenjualan.total_barang} item</span>
-      </div>
-    </div>
-
-    <div class="text-center pt-3 text-[10px] space-y-0.5">
-      <p>Terima kasih atas kunjungan Anda!</p>
-      <p class="text-[9px]">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
-    </div>
-  </div>
-{/if}
+<ReceiptModal
+  bind:open={receiptModalOpen}
+  data={receiptModalData}
+  closeLabel="Tutup (Esc)"
+/>

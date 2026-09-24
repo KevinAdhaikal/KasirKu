@@ -11,12 +11,12 @@
   interface Props {
     open?: boolean;
     data?: ReceiptData | null;
+    closeLabel?: string;
     onclose?: () => void;
   }
 
-  let { open = $bindable(false), data = null, onclose }: Props = $props();
+  let { open = $bindable(false), data = null, closeLabel = 'Transaksi Baru (Esc)', onclose }: Props = $props();
 
-  let receiptWidth = $state<'58mm' | '80mm'>('58mm');
   let strukTemplate = $state<string | null>(null);
 
   function handlePrint() {
@@ -36,14 +36,20 @@
       doc.close();
       iframe.contentWindow?.focus();
       setTimeout(() => {
-        iframe.contentWindow?.print();
+        handleClose();
+        try {
+          iframe.contentWindow?.print();
+        } catch (err) {
+          console.error('Print error:', err);
+        }
         setTimeout(() => {
           if (iframe.parentNode) {
             iframe.parentNode.removeChild(iframe);
           }
         }, 1000);
-      }, 250);
+      }, 100);
     } else {
+      handleClose();
       window.print();
     }
   }
@@ -66,10 +72,10 @@
   }
 
   const storeInfo = $derived<StoreInfo>({
-    name: auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
-    desc: auth.publicInfo?.store_desc?.trim() || '',
-    address: auth.publicInfo?.store_address?.trim() || '',
-    phone_num: auth.publicInfo?.store_phone_num?.trim() || '',
+    name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
+    desc: auth.publicInfo?.desc?.trim() || auth.publicInfo?.description?.trim() || auth.publicInfo?.store_desc?.trim() || '',
+    address: auth.publicInfo?.address?.trim() || auth.publicInfo?.store_address?.trim() || '',
+    phone_num: auth.publicInfo?.phone_num?.trim() || auth.publicInfo?.no_phone?.trim() || auth.publicInfo?.store_phone_num?.trim() || '',
   });
 
   const receiptHtml = $derived(
@@ -90,11 +96,13 @@
 
   onMount(() => {
     loadStrukTemplate();
+    auth.fetchPublicInfo();
   });
 
   $effect(() => {
     if (open) {
       loadStrukTemplate();
+      auth.fetchPublicInfo();
     }
   });
 </script>
@@ -107,49 +115,9 @@
   size="md"
 >
   <div class="space-y-4">
-    <!-- Format Selector & Action Header -->
-    <div class="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-      <div class="flex items-center gap-1.5">
-        <span class="text-xs text-neutral-500 font-medium">Format Kertas:</span>
-        <div class="inline-flex rounded-md border border-neutral-200 dark:border-neutral-800 p-0.5 bg-neutral-100 dark:bg-neutral-900">
-          <button
-            type="button"
-            class={`px-2 py-0.5 text-xs rounded font-mono transition-colors ${
-              receiptWidth === '58mm'
-                ? 'bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 shadow-2xs font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-            onclick={() => (receiptWidth = '58mm')}
-          >
-            58mm
-          </button>
-          <button
-            type="button"
-            class={`px-2 py-0.5 text-xs rounded font-mono transition-colors ${
-              receiptWidth === '80mm'
-                ? 'bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 shadow-2xs font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-            onclick={() => (receiptWidth = '80mm')}
-          >
-            80mm
-          </button>
-        </div>
-      </div>
-
-      <Button variant="primary" size="sm" onclick={handlePrint}>
-        <Printer class="w-3.5 h-3.5" />
-        <span>Cetak Struk (Enter)</span>
-      </Button>
-    </div>
-
     <!-- Receipt Thermal Paper Container via Isolated Iframe -->
     <div class="bg-[var(--bg-subtle)] p-3 sm:p-5 rounded-lg border border-neutral-200 dark:border-neutral-800 flex justify-center overflow-x-auto min-h-[440px]">
-      <div
-        class="bg-white rounded shadow-sm border border-neutral-300 dark:border-neutral-700 overflow-hidden transition-all duration-150 {
-          receiptWidth === '58mm' ? 'w-[300px]' : 'w-[380px]'
-        }"
-      >
+      <div class="bg-white rounded shadow-sm border border-neutral-300 dark:border-neutral-700 overflow-hidden w-[330px] max-w-full">
         <!-- Render Dynamic HTML Receipt Content in Isolated Iframe -->
         <iframe
           title="Struk Penjualan"
@@ -163,8 +131,12 @@
 
   {#snippet footer()}
     <Button variant="secondary" size="sm" onclick={handleClose}>
-      <RefreshCw class="w-3.5 h-3.5" />
-      <span>Transaksi Baru (Esc)</span>
+      {#if closeLabel.includes('Transaksi')}
+        <RefreshCw class="w-3.5 h-3.5" />
+      {:else}
+        <ArrowLeft class="w-3.5 h-3.5" />
+      {/if}
+      <span>{closeLabel}</span>
     </Button>
     <Button variant="primary" size="sm" onclick={handlePrint}>
       <Printer class="w-3.5 h-3.5" />
