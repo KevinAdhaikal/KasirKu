@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "84afbca1-1f3b-4258-8417-e2f02ea536f5",
+  "id": "c581f2fe-aff8-47ff-86dd-42a0e891ff29",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "barang": {
@@ -669,11 +669,18 @@
           "notNull": true,
           "autoincrement": true
         },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "key": {
           "name": "key",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "value": {
@@ -687,7 +694,7 @@
           "name": "type",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_ms": {

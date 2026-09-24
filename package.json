@@ -1,20 +1,26 @@
 {
   "name": "kasirku",
-  "version": "1.0",
+  "version": "2.5",
   "description": "Simple & Efficient Point of Sale (PoS) System",
   "author": "KevinAdhaikal",
   "homepage": "https://github.com/kevinadhaikal/kasirku",
   "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts",
+    "build": "cd frontend && bun install && bun run build",
+    "build:all": "cd frontend && bun install && bun run build && cd setup && bun install && bun run build",
+    "frontend:dev": "cd frontend && bun run dev",
+    "frontend:build": "cd frontend && bun run build",
+    "setup:dev": "cd frontend/setup && bun run dev",
+    "setup:build": "cd frontend/setup && bun run build",
     "drizzle:generate": "bun run scripts/drizzle/generate.ts"
   },
   "dependencies": {
     "clean-css": "^5.3.3",
     "drizzle-orm": "^0.45.2",
-    "html-minifier-terser": "^7.2.0",
     "mysql2": "^3.24.2",
     "node-forge": "^1.4.0",
-    "pg": "^8.23.0",
-    "terser": "^5.50.0"
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/clean-css": "^4.2.11",

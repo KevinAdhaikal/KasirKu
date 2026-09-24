@@ -113,9 +113,10 @@ export const retur_barang = sqliteTable("retur_barang", {
 
 export const settings = sqliteTable("settings", {
     id: integer("id").primaryKey(),
-    key: text("key"),
+    section: text("section").notNull(),
+    key: text("key").notNull(),
     value: text("value"),
-    type: text("type"),
+    type: text("type").notNull(),
     created_ms: integer("created_ms"),
     modified_ms: integer("modified_ms"),
 });

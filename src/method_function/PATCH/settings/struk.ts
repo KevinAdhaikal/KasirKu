@@ -13,40 +13,60 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { global } from "../../../global";
-import { getSchema, getDb } from "../../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
-    const db = getDb();
-    const { roles, struk_settings } = getSchema();
+    const db = global.database;
+    const { roles, settings } = global.schema;
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
-    
-    const user_input = await req.text();
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR
+        )
+    )) return new Response("0", {status: 403});
 
-    if (!user_input || user_input.length >= 65535) return new Response("Bad Request", {
-        status: 400
-    });
-    
+    const { enabled, content } = await req.json();
+
+    if (enabled) {
+        await db
+            .update(settings)
+            .set({
+                value: content ?? "",
+                modified_ms: Date.now(),
+            })
+            .where(
+                and(
+                    eq(settings.section, "receipt"),
+                    eq(settings.key, "content"),
+                )
+            );
+    }
+
     await db
-        .update(struk_settings)
+        .update(settings)
         .set({
-            content: user_input ?? null,
-            modified_ms: Date.now()
+            value: String(enabled),
+            modified_ms: Date.now(),
         })
-        .where(eq(struk_settings.id, 1))
-    .execute();
+        .where(
+            and(
+                eq(settings.section, "receipt"),
+                eq(settings.key, "enabled"),
+            )
+        );
 
     global.sse_clients.broadcast(JSON.stringify({
         type: 8,
         code: "UPDATE_STRUK_SETTING",
-        data: user_input ?? null
+        data: {
+            enabled, content
+        }
     }));
 
     return new Response("", {status: 200});

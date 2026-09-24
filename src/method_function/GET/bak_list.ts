@@ -15,29 +15,35 @@
 
 import { user_session_interface } from "../../user_session/user_session";
 import { global } from "../../global";
-import { getDb, getSchema } from "../../database/schema";
 import { eq } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = getDb();
-    const { roles, barang } = getSchema();
+    const db = global.database;
+    const { roles, barang } = global.schema;
     const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_BARANG
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = url.searchParams;
 
     const id = Number(user_input.get("id"));
-    if (isNaN(id) || !id) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id
+    ) return new Response("Bad Request", {status: 400});
 
     const res = await db
-    .select({
-        nama_barang: barang.nama_barang,
-        stok_barang: barang.stok_barang,
-        harga_jual: barang.harga_jual
-    })
-    .from(barang)
+        .select({
+            nama_barang: barang.nama_barang,
+            stok_barang: barang.stok_barang,
+            harga_jual: barang.harga_jual
+        })
+        .from(barang)
     .where(eq(barang.kategori_barang_id, id));
 
     return new Response(JSON.stringify(res), {status: 200});

@@ -1,5 +1,5 @@
 {
-  "id": "422bc1cd-dc5a-465c-8827-78ee25a4f5c7",
+  "id": "3e82e82e-fe83-4e6a-b154-2b23bd674e8d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -678,11 +678,17 @@
             "cycle": false
           }
         },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "key": {
           "name": "key",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "value": {
           "name": "value",
@@ -694,7 +700,7 @@
           "name": "type",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_ms": {
           "name": "created_ms",

@@ -15,18 +15,22 @@
 
 import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_PEMBUKUAN
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 
@@ -35,9 +39,9 @@ export default async function(req: Request, token: string) {
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
 
     if (
-        isNaN(barang_id) || !barang_id
-        || !deskripsi
-        || isNaN(jumlah_barang) || !jumlah_barang
+        Number.isNaN(barang_id) || !barang_id ||
+        !deskripsi ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
     let res_data;
@@ -49,9 +53,9 @@ export default async function(req: Request, token: string) {
     try {
         res_data = await db.transaction(async (trx: any) => {
             await trx.update(schema.barang)
-            .set({
-                stok_barang: sql`stok_barang - ${jumlah_barang}`
-            })
+                .set({
+                    stok_barang: sql`stok_barang - ${jumlah_barang}`
+                })
             .where(eq(schema.barang.id, barang_id));
             
             const [returResult] = await trx.insert(schema.retur_barang).values({

@@ -13,33 +13,40 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
+    
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_PEMBUKUAN
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 
     const id = Number(user_input.get("id"));
     const tanggal_key = Number(user_input.get("tanggal_key"));
 
-    if (isNaN(id) || !id || isNaN(tanggal_key) || !tanggal_key) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key
+    ) return new Response("Bad Request", {status: 400});
 
     const [res] = await db
-    .select({jumlah_barang: schema.barang_masuk.jumlah_barang, barang_id: schema.barang_masuk.barang_id})
-    .from(schema.barang_masuk)
-    .where(eq(schema.barang_masuk.id, id))
-    .where(eq(schema.barang_masuk.tanggal_key, tanggal_key))
+        .select({jumlah_barang: schema.barang_masuk.jumlah_barang, barang_id: schema.barang_masuk.barang_id})
+        .from(schema.barang_masuk)
+        .where(and(eq(schema.barang_masuk.id, id), eq(schema.barang_masuk.tanggal_key, tanggal_key)))
     .limit(1);
 
     if (!res) return new Response("Not Found", {status: 404});
@@ -48,13 +55,22 @@ export default async function(req: Request, token: string) {
     try {
         stok_barang = await db.transaction(async (trx: any) => {
             await trx.update(schema.barang)
-            .set({
-                stok_barang: sql`stok_barang - ${res.jumlah_barang}`
-            })
-            .where(eq(schema.barang.id, res.barang_id))
+                .set({
+                    stok_barang: sql`stok_barang - ${res.jumlah_barang}`
+                })
+                .where(eq(schema.barang.id, res.barang_id))
             .execute();
             
-            await trx.delete(schema.barang_masuk).where(eq(schema.barang_masuk.id, id)).where(eq(schema.barang_masuk.tanggal_key, tanggal_key)).execute();
+            await trx
+                .delete(schema.barang_masuk)
+                .where(
+                    and(
+                        eq(schema.barang_masuk.id, id),
+                        eq(schema.barang_masuk.tanggal_key, tanggal_key)
+                    )
+                )
+            .execute();
+            
             const [row] = await trx.select({stok_barang: schema.barang.stok_barang}).from(schema.barang).where(eq(schema.barang.id, res.barang_id)).limit(1);
             return row?.stok_barang;
         });

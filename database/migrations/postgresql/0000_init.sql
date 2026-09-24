@@ -88,9 +88,10 @@ CREATE TABLE "roles" (
 --> statement-breakpoint
 CREATE TABLE "settings" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "settings_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"key" text,
+	"section" text NOT NULL,
+	"key" text NOT NULL,
 	"value" text,
-	"type" text,
+	"type" text NOT NULL,
 	"created_ms" bigint,
 	"modified_ms" bigint
 );

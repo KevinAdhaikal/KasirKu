@@ -14,29 +14,15 @@
 */
 
 import { global } from "./global";
-import { getDb, getSchema } from "./database/schema";
 import * as Bun from "bun";
 import { user_session, user_session_interface } from "./user_session/user_session";
 import { parse_cookie, mime_types } from "./utils/utils";
-import { eq } from "drizzle-orm";
 import { sse_server } from "./sse_server/sse_server";
 import { rate_limit } from "./rate_limit/rate_limit";
 
 let is_server_closed = false;
 let bun_serve: any;
 let bun_serve2: any;
-
-const protected_routes: Record<string, number> = {
-    "/rp.html": global.permissions.ADMINISTRATOR,
-    "/users.html": global.permissions.ADMINISTRATOR,
-    "/index.html": global.permissions.ADMINISTRATOR | global.permissions.DASHBOARD,
-    "/barang/daftar_barang.html": global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG,
-    "/barang/kategori_barang.html": global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG,
-    "/kasir/kasir.html": global.permissions.ADMINISTRATOR | global.permissions.KASIR,
-    "/pembukuan/penjualan.html": global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN,
-    "/pembukuan/pengeluaran.html": global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN,
-    "/pembukuan/laporan.html": global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN,
-};
 
 async function stop_server() {
     if (!is_server_closed) {
@@ -47,9 +33,7 @@ async function stop_server() {
         bun_serve.stop();
         if (bun_serve2) bun_serve2.stop();
 
-        if (global.database) {
-            try { (global.database as any).destroy?.(); } catch(e) {}
-        }
+        Bun.env.DB_TYPE?.lastIndexOf("sql") === 0 ? (global.database as any).$client.close() : await (global.database as any).$client.end();
 
         global.sse_clients.destroy();
         global.rate_limit.destroy();
@@ -65,191 +49,208 @@ function init_global() {
     global.rate_limit = new rate_limit(10, 100, 5); // rate limit (max req 100/10 seconds. jail for 25 seconds)
 }
 
+function with_cors(res: Response, req: Request): Response {
+    const origin = req.headers.get("origin");
+    if (origin) {
+        res.headers.set("Access-Control-Allow-Origin", origin);
+        res.headers.set("Access-Control-Allow-Credentials", "true");
+    }
+    return res;
+}
+
 export function main() {
     init_global();
     const protocol = Bun.env.APP_USE_TLS ? "HTTPS" : "HTTP";
     console.log(`[LOG] ${protocol} Server running in port ${Bun.env.APP_LISTEN_PORT}`);
 
     const fetch_handler = async (req: Request, server: any) => {
+        const origin = req.headers.get("origin") || "*";
+
+        // Handle CORS preflight
+        if (req.method === "OPTIONS") {
+            return new Response(null, {
+                status: 204,
+                headers: {
+                    "Access-Control-Allow-Origin": origin,
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type, token, Authorization, X-Requested-With",
+                    "Access-Control-Max-Age": "86400",
+                },
+            });
+        }
+
         const url = new URL(req.url);
         url.pathname = decodeURIComponent(url.pathname);
         const remote_ip = server.requestIP(req)?.address;
-        if (!remote_ip) return new Response(null, {status: 400});
+        if (!remote_ip) return new Response(null, { status: 400 });
 
-        if (req.method === "GET") {
+        const cookies = parse_cookie(req.headers.get("cookie") as string);
+        const token = (req.headers.get("token") as string) || (cookies.get("token") as string) || url.searchParams.get("token");
+
+        if (req.method === "GET" || req.method === "HEAD") {
             let pathname = url.pathname.replace(/\/+/g, "/");
 
-            if (pathname.startsWith("/api/")) { 
-                if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
+            // API routes
+            if (pathname.startsWith("/api/")) {
+                if (!global.rate_limit.check(remote_ip)) {
+                    return with_cors(new Response("Too Many Requests", { status: 429 }), req);
+                }
 
                 const api_path = pathname.slice(4);
 
+                // SSE endpoint
                 if (api_path === "/sse") {
-                    const cookies = parse_cookie(req.headers.get("cookie") as string);
-                    const token = <string>cookies.get("token");
-                    const user_info = global.user_sessions.get(token);
+                    const user_info = token ? global.user_sessions.get(token) : null;
 
                     if (!token || !user_info) {
-                        return new Response(new ReadableStream({
+                        return with_cors(new Response(new ReadableStream({
                             start(controller) {
                                 controller.enqueue(
                                     new TextEncoder().encode("data: " + JSON.stringify({
                                         type: 1,
                                         code: "UNAUTHORIZED"
                                     }) + "\n\n")
-                                )
+                                );
                                 controller.close();
                             }
                         }), {
                             headers: {
                                 "Content-Type": "text/event-stream",
                                 "Cache-Control": "no-cache",
-                                "Connection": "keep-alive"
+                                "Connection": "keep-alive",
+                                "Access-Control-Allow-Credentials": "true",
                             }
-                        });
+                        }), req);
                     }
 
-                    return new Response(global.sse_clients.add(token, req, user_info), {
+                    return with_cors(new Response(global.sse_clients.add(token, req, user_info), {
                         headers: {
                             "Content-Type": "text/event-stream",
                             "Cache-Control": "no-cache",
                             "Connection": "keep-alive",
-                            "Access-Control-Allow-Credentials": true
+                            "Access-Control-Allow-Credentials": "true"
                         } as any,
-                    });
+                    }), req);
                 }
 
-                const token = req.headers.get("token") as string;
-                const user_info = global.user_sessions.get(token);
-                if (!token || !user_info) {
-                    return new Response("Unauthorized", {status: 401});
+                // Normal GET API endpoint
+                const user_info = token ? global.user_sessions.get(token) : null;
+                if (api_path !== "/public_info" && (!token || !user_info)) {
+                    return with_cors(new Response("Unauthorized", { status: 401 }), req);
                 }
 
                 const endpoint_function = global.method_cache[`${req.method}:${api_path}`];
-                if (!endpoint_function) return new Response("Not Found", {status: 404})
+                if (!endpoint_function) {
+                    return with_cors(new Response("Not Found", { status: 404 }), req);
+                }
 
                 try {
-                    return await endpoint_function(req, url, user_info);
+                    const res = await endpoint_function(req, url, user_info);
+                    return with_cors(res, req);
                 } catch (err: any) {
-                    console.log(err);
+                    console.error("API error:", err);
+                    return with_cors(new Response("Internal Server Error", { status: 500 }), req);
                 }
             }
 
-            if (pathname.endsWith("/")) pathname += "index.html";
-            if (pathname.endsWith(".")) pathname = pathname.slice(0, -1) + ".html";
-            if (!pathname.includes(".")) pathname += ".html";
-
-            const cookies = parse_cookie(req.headers.get("cookie") as string);
-            const user_info = global.user_sessions.get(cookies.get("token") as string) as user_session_interface;
-
+            // Profile images
             if (pathname.startsWith("/profile_img/")) {
                 const file = Bun.file(pathname.slice(1));
-                if (!(await file.exists())) return new Response("Not Found", {status: 404});
-                return new Response(file.stream(), {status: 200, headers: {
-                    "Content-Type": mime_types[pathname.split(".").pop() || ""] || "application/octet-stream",
-                }});
-            }
-
-            if (pathname.endsWith(".html")) {
-                if (!user_info) {
-                    if (pathname !== "/login.html") return new Response("", {
-                        status: 302,
-                        headers: {
-                            "Location": "/login",
-                            "set-cookie": "token=; Path=/; Max-Age=0"
-                        }
-                    })
+                if (!(await file.exists())) {
+                    return with_cors(new Response("Not Found", { status: 404 }), req);
                 }
-                else if (user_info) {
-                    if (pathname === "/login.html") return new Response("", {
-                        status: 302,
-                        headers: {
-                            "Location": "/",
-                        }
-                    })
-                }
-            
-                const required_perm = protected_routes[pathname];
-            
-                const db = getDb();
-                const { roles } = getSchema();
-                if (!db) return new Response("Internal Server Error", {status: 500});
-                const [res_role] = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1) as {permission_level: number}[];
-
-                if (required_perm && !(res_role.permission_level & required_perm)) {
-                    for (const [key, value] of Object.entries(protected_routes)) {
-                        if (res_role.permission_level & value) return Response.redirect(key);
+                const ext = pathname.split(".").pop() || "";
+                return with_cors(new Response(file.stream(), {
+                    status: 200,
+                    headers: {
+                        "Content-Type": mime_types[ext] || "application/octet-stream",
+                        "Cache-Control": "public, max-age=86400",
                     }
+                }), req);
+            }
+
+            // Static Frontend & SPA Fallback
+            let targetPath = `./dist${pathname}`;
+            let file = Bun.file(targetPath);
+            let exists = await file.exists();
+
+            if (pathname === "/" || pathname === "/index.html") {
+                targetPath = "./dist/index.html";
+                file = Bun.file(targetPath);
+                exists = await file.exists();
+            }
+
+            // If the specific file wasn't found, check if it's an SPA route
+            if (!exists) {
+                const hasExt = pathname.includes(".") && !pathname.endsWith(".html");
+                if (!hasExt) {
+                    // Fall back to index.html for SPA client-side routing
+                    targetPath = "./dist/index.html";
+                    file = Bun.file(targetPath);
+                    exists = await file.exists();
                 }
             }
-        
-            let cached = global.static_cache.get(pathname);
 
-            if (!cached) {
-                const path = Bun.env.APP_COMPILE_HTML ? `./html_build${pathname}` : `./html${pathname}`
-                let file = Bun.file(path);
-
-                if (!(await file.exists())) {
-                    pathname = "./html/404/index.html";
-                    file = Bun.file(pathname);
-                }
-            
-                if (!(await file.exists())) {
-                    return new Response("Not Found", {
-                        status: 404,
-                        headers: {
-                            "Content-Type": "text/html",
-                            "Strict-Transport-Security":
-                                "max-age=300; includeSubDomains; preload",
-                            "X-Frame-Options": "DENY",
-                            "X-Content-Type-Options": "nosniff",
-                        },
-                    });
-                }
-            
-                const buffer = new Uint8Array(await file.arrayBuffer());
-                const last_modified = file.lastModified;
-            
-                cached = { buffer, last_modified };
-            
-                global.static_cache.set(pathname, cached);
+            if (!exists) {
+                return with_cors(new Response("Frontend not found. Please build the frontend with 'bun run build' inside frontend/", {
+                    status: 404,
+                    headers: { "Content-Type": "text/plain; charset=utf-8" }
+                }), req);
             }
-        
-            const { buffer, last_modified } = cached;
+
+            const ext = targetPath.split(".").pop() || "";
+            const is_asset = pathname.startsWith("/assets/") || pathname === "/favicon.ico";
+
+            const buffer = new Uint8Array(await file.arrayBuffer());
+            const last_modified = file.lastModified;
             const etag = last_modified.toString();
 
-            if (req.headers.get("if-none-match") === etag) return new Response(null, { status: 304 });
-            const is_asset = pathname.startsWith("/plugins/") || pathname.startsWith("/dist/") || pathname === "/favicon.ico";
-        
-            return new Response(<BodyInit>buffer, {
+            if (req.headers.get("if-none-match") === etag) {
+                return with_cors(new Response(null, { status: 304 }), req);
+            }
+
+            const body = req.method === "HEAD" ? null : (buffer as BodyInit);
+            return with_cors(new Response(body, {
                 status: 200,
                 headers: {
-                    "Content-Type": mime_types[pathname.split(".").pop() || ""] || "application/octet-stream",
+                    "Content-Type": (mime_types[ext] || "application/octet-stream") + (ext === "html" ? "; charset=utf-8" : ""),
                     "Strict-Transport-Security": "max-age=300; includeSubDomains; preload",
                     "X-Frame-Options": "DENY",
                     "X-Content-Type-Options": "nosniff",
                     ETag: etag,
-                    "Cache-Control": is_asset
-                    ? "public, max-age=31536000"
-                    : "no-cache",
-                    "Content-Encoding": Bun.env.APP_COMPILE_HTML ? "br" : "none"
+                    "Cache-Control": is_asset ? "public, max-age=31536000, immutable" : "no-cache",
                 },
-            });
+            }), req);
         }
 
-        else if (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE") {
-            if (!global.rate_limit.check(remote_ip)) return new Response("Too Many Requests", {status: 429});
+        // POST, PATCH, DELETE
+        else if (
+            req.method === "POST" ||
+            req.method === "PATCH" ||
+            req.method === "DELETE"
+        ) {
+            if (!global.rate_limit.check(remote_ip)) {
+                return with_cors(new Response("Too Many Requests", { status: 429 }), req);
+            }
 
-            const endpoint_function = global.method_cache[`${req.method}:${url.pathname}`];
-            if (!endpoint_function) return new Response("Not Found", {status: 404})
+            const api_path = url.pathname.startsWith("/api/") ? url.pathname.slice(4) : url.pathname;
+            const endpoint_function = global.method_cache[`${req.method}:${api_path}`] || global.method_cache[`${req.method}:${url.pathname}`];
+
+            if (!endpoint_function) {
+                return with_cors(new Response("Not Found", { status: 404 }), req);
+            }
 
             try {
-                return await endpoint_function(req, req.headers.get("token"));
+                const res = await endpoint_function(req, token || "");
+                return with_cors(res, req);
             } catch (err: any) {
-                console.log(err);
+                console.error("API error:", err);
+                return with_cors(new Response("Internal Server Error", { status: 500 }), req);
             }
         }
-        else return new Response("Bad Request", {status: 400});
+
+        return with_cors(new Response("Bad Request", { status: 400 }), req);
     };
 
     if (Bun.env.APP_USE_TLS && Bun.env.TLS_KEY_PATH !== undefined && Bun.env.TLS_CERT_PATH !== undefined) {

@@ -96,9 +96,10 @@ CREATE TABLE `roles` (
 --> statement-breakpoint
 CREATE TABLE `settings` (
 	`id` int AUTO_INCREMENT NOT NULL,
-	`key` text,
+	`section` text NOT NULL,
+	`key` text NOT NULL,
 	`value` text,
-	`type` text,
+	`type` text NOT NULL,
 	`created_ms` bigint,
 	`modified_ms` bigint,
 	CONSTRAINT `settings_id` PRIMARY KEY(`id`)

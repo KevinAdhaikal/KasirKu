@@ -15,7 +15,6 @@
 
 import { eq } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_input = new URLSearchParams(await req.text());
@@ -23,15 +22,18 @@ export default async function(req: Request, token: string) {
     const username = user_input.get("username");
     const password = user_input.get("password");
     
-    if (!username || !password) return new Response("Bad Request", {status: 400});
+    if (
+        !username ||
+        !password
+    ) return new Response("Bad Request", {status: 400});
     
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     
     const [row] = await db
-    .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})
-    .from(schema.users)
-    .where(eq(schema.users.username, username))
+        .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})
+        .from(schema.users)
+        .where(eq(schema.users.username, username))
     .limit(1);
     
     if (!row) return new Response("Forbidden", { status: 403 });
@@ -43,7 +45,7 @@ export default async function(req: Request, token: string) {
     return new Response(session_id, {
         status: 200,
         headers: {
-            "set-cookie": `token=${session_id}; Path=/; HttpOnly; SameSite=Strict; Secure`
+            "set-cookie": `token=${session_id}; Path=/; HttpOnly; SameSite=Lax${Bun.env.APP_USE_TLS ? "; Secure" : ""}`
         }
     });
 }

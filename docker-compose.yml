@@ -10,7 +10,6 @@ services:
     environment:
       APP_LISTEN_PORT: ${APP_LISTEN_PORT}
       APP_USE_TLS: ${APP_USE_TLS}
-      APP_COMPILE_HTML: ${APP_COMPILE_HTML}
       DB_TYPE: ${DB_TYPE}
       DB_NAME: ${DB_NAME}
       POSTGRES_HOST: ${POSTGRES_HOST}

@@ -12,7 +12,9 @@ export async function POST_Check_Cert(req: Request) {
     const cert = typeof req_json.cert === "string" ? req_json.cert.trim() : "";
     const key = typeof req_json.key === "string" ? req_json.key.trim() : "";
 
-    if (!cert || !key) return new Response("Bad Reuqest", {status: 400});
+    if (
+        !cert || !key
+    ) return new Response("Bad Reuqest", {status: 400});
 
     const res = check_certificate(cert, key);
     return new Response("", {status: res ? 200 : 403});

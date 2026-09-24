@@ -13,20 +13,24 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const { roles, retur_barang, barang } = getSchema();
+    const db = global.database;
+    const { roles, retur_barang, barang } = global.schema;
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_PEMBUKUAN
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 
@@ -36,19 +40,18 @@ export default async function(req: Request, token: string) {
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
 
     if (
-        isNaN(id) || !id
-        || isNaN(tanggal_key) || !tanggal_key
-        || !deskripsi
-        || isNaN(jumlah_barang) || !jumlah_barang
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key ||
+        !deskripsi ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
     const now = Date.now();
 
     const res = await db.select({ jumlah_barang: retur_barang.jumlah_barang, barang_id: retur_barang.barang_id })
-    .from(retur_barang)
-    .where(eq(retur_barang.id, id))
-    .where(eq(retur_barang.tanggal_key, tanggal_key))
-    .limit(1)
+        .from(retur_barang)
+        .where(and(eq(retur_barang.id, id), eq(retur_barang.tanggal_key, tanggal_key)))
+        .limit(1)
     .then((r: any) => r[0]);
 
 
@@ -58,22 +61,21 @@ export default async function(req: Request, token: string) {
     try {
         stok_barang = await db.transaction(async (trx: any) => {
             await trx
-            .update(retur_barang)
-            .set({
-                deskripsi,
-                jumlah_barang,
-                modified_ms: now
-            })
-            .where(eq(retur_barang.id, id))
-            .where(eq(retur_barang.tanggal_key, tanggal_key))
+                .update(retur_barang)
+                .set({
+                    deskripsi,
+                    jumlah_barang,
+                    modified_ms: now
+                })
+                .where(and(eq(retur_barang.id, id), eq(retur_barang.tanggal_key, tanggal_key)))
             .execute();
 
             await trx
-            .update(barang)
-            .set({
-                stok_barang: sql`${barang.stok_barang} + ${res.jumlah_barang - jumlah_barang}`
-            })
-            .where(eq(barang.id, res.barang_id))
+                .update(barang)
+                .set({
+                    stok_barang: sql`${barang.stok_barang} + ${res.jumlah_barang - jumlah_barang}`
+                })
+                .where(eq(barang.id, res.barang_id))
             .execute();
 
             return (await trx.select({ stok_barang: barang.stok_barang }).from(barang).where(eq(barang.id, res.barang_id)).limit(1).then((r: any) => r[0]))?.stok_barang;

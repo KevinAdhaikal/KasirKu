@@ -16,18 +16,22 @@
 import { eq } from "drizzle-orm";
 import { global } from "../../global";
 import { check_sql_is_duplicate_error } from "../../utils/utils";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_BARANG))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_BARANG
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 
@@ -37,8 +41,15 @@ export default async function(req: Request, token: string) {
     const harga_modal = Number(user_input.get("harga_modal"));
     const harga_jual = Number(user_input.get("harga_jual"));
     let barcode_barang = <string | null>user_input.get("barcode_barang");
-            
-    if (!nama_barang || isNaN(kategori_barang_id) || !stok_barang || isNaN(stok_barang) || !kategori_barang_id || !harga_modal || !harga_jual) return new Response("Bad Request", {status: 400});
+
+    if (
+        !nama_barang ||
+        Number.isNaN(kategori_barang_id) || !kategori_barang_id ||
+        Number.isNaN(stok_barang) ||
+        Number.isNaN(harga_modal) || !harga_modal ||
+        Number.isNaN(harga_jual) || !harga_jual
+    ) return new Response("Bad Request", {status: 400});
+
     if (!barcode_barang || !barcode_barang.length) barcode_barang = null;
 
     const now = Date.now();

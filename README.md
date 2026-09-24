@@ -1,27 +1,13 @@
-<p align="center">
-<img src="html/dist/img/kasirku.png" width="128" height="128" alt="KasirKu Logo">
-</p>
-
-<h1 align="center">KasirKu</h1>
-
-<p align="center">
-<strong>Simple & Efficient Point of Sale (PoS) System</strong>
-</p>
-
+<img width="1250" height="417" alt="KasirKu-1" src="https://github.com/user-attachments/assets/a53d2bf5-8f01-4bf5-97a4-9212273f0889" />
 <p align="center">
 <img src="https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Bun">
 <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
 </p>
-<hr>
 
-**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dibuat untuk membantu pemilik usaha mengelola transaksi kasir dengan lebih mudah.
+**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien.
 
-Jika ingin mencoba aplikasinya, kamu bisa mengakses demo berikut: https://kasirku.duckdns.org
-
-Gunakan akun berikut untuk login:<br>
-Username: `admin`  
-Password: `admin`
+KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai frontend. Aplikasi ini juga mendukung **realtime data updates**, sehingga perubahan data dapat ditampilkan secara langsung tanpa perlu melakukan refresh halaman.
 
 ## Table of contents
 - [Fitur](#fitur)
@@ -137,7 +123,6 @@ cp .env.example .env
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `listen_port` | `Number` | `443` | Port server HTTPS. (Alt: `8443`) |
-| `compile_html` | `Boolean` | `false` | Compile HTML saat startup jika `true`. |
 | `db_type` | `String` | `sqlite` | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
 | `db_name` | `String` | `kasirku` | Nama database (disarankan lowercase). |
 

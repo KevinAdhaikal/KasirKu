@@ -13,20 +13,23 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { global } from "../../../global";
-import { getSchema, getDb } from "../../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
-    const db = getDb();
-    const { roles, store_settings } = getSchema();
+    const db = global.database;
+    const { roles, settings } = global.schema;
     const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR
+        )
+    )) return new Response("0", {status: 403});
     
     const user_input = new URLSearchParams(await req.text());
 
@@ -34,33 +37,42 @@ export default async function(req: Request, token: string) {
     const deskripsi_toko = user_input.get("deskripsi_toko");
     const alamat_toko = user_input.get("alamat_toko");
     const telepon_toko = user_input.get("telepon_toko");
-    const email_toko = user_input.get("email_toko");
 
     const phoneRegex = /^[0-9+\-\s()]+$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (telepon_toko && !phoneRegex.test(telepon_toko.trim())) {
         return new Response("Bad Request", {
             status: 400
         });
     }
-    if (email_toko && !emailRegex.test(email_toko.trim())) {
-        return new Response("Bad Request", {
-            status: 400
-        });
-    }
+
+    const now = Date.now();
 
     await db
-        .update(store_settings)
+        .update(settings)
         .set({
-            name: nama_toko,
-            description: deskripsi_toko,
-            address: alamat_toko,
-            no_phone: telepon_toko,
-            email: email_toko,
-            modified_ms: Date.now()
+            value: sql`
+                CASE ${settings.key}
+                    WHEN 'name' THEN ${nama_toko}
+                    WHEN 'desc' THEN ${deskripsi_toko}
+                    WHEN 'address' THEN ${alamat_toko}
+                    WHEN 'phone_num' THEN ${telepon_toko}
+                    ELSE ${settings.value}
+                END
+            `,
+            modified_ms: now,
         })
-        .where(eq(store_settings.id, 1))
+        .where(
+            and(
+                eq(settings.section, "store"),
+                inArray(settings.key, [
+                    "name",
+                    "desc",
+                    "address",
+                    "phone_num",
+                ])
+            )
+        )
     .execute();
 
     global.sse_clients.broadcast(JSON.stringify({
@@ -71,8 +83,7 @@ export default async function(req: Request, token: string) {
                 name: nama_toko,
                 description: deskripsi_toko,
                 address: alamat_toko,
-                no_phone: telepon_toko,
-                email: email_toko
+                no_phone: telepon_toko
             }
         }
     }));

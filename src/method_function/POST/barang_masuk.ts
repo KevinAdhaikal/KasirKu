@@ -15,31 +15,38 @@
 
 import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
-    if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR
+        )
+    )) return new Response("0", {status: 403});
     
     const user_input = new URLSearchParams(await req.text());
     
     const barang_id = Number(user_input.get("barang_id"));
     const deskripsi = <string>user_input.get("deskripsi");
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
-                
-    if (isNaN(barang_id) || !barang_id || !deskripsi || isNaN(jumlah_barang) || !jumlah_barang) return new Response("Bad Request", {status: 400});
+
+    if (
+        Number.isNaN(barang_id) || !barang_id ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang ||
+        !deskripsi
+    ) return new Response("Bad Request", {status: 400});
     
     const [res] = await db
-    .select({id: schema.barang.id, nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang})
-    .from(schema.barang)
-    .where(eq(schema.barang.id, barang_id))
+        .select({id: schema.barang.id, nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang})
+        .from(schema.barang)
+        .where(eq(schema.barang.id, barang_id))
     .limit(1);
     
     if (!res) return new Response("1", {status: 404});
@@ -59,13 +66,14 @@ export default async function(req: Request, token: string) {
                 created_ms: now,
                 modified_ms: now
             }).returning();
+
             const insertId = Number(insertResult.id);
             
             await trx
-            .update(schema.barang)
-            .set({
-                stok_barang: sql`stok_barang + ${jumlah_barang}`
-            })
+                .update(schema.barang)
+                .set({
+                    stok_barang: sql`stok_barang + ${jumlah_barang}`
+                })
             .where(eq(schema.barang.id, barang_id));
             
             return insertId;

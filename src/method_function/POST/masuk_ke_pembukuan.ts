@@ -15,18 +15,22 @@
 
 import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
-import { getSchema, getDb } from "../../database/schema";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
-    const db = getDb();
-    const schema = getSchema();
+    const db = global.database;
+    const schema = global.schema;
     const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.KASIR))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.KASIR
+        )
+    )) return new Response("0", {status: 403});
     
     const user_data = await req.json();
     const items = user_data.items as [{
@@ -36,9 +40,8 @@ export default async function(req: Request, token: string) {
         harga_jual: number,
         nama_barang: string
     }];
-    
-    if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
 
+    if (!Array.isArray(items)) return new Response("Bad Request", {status: 400});
     const date = global.date;
     const now = global.date.getTime();
     const date_now = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
@@ -51,9 +54,9 @@ export default async function(req: Request, token: string) {
         total_barang += data.jumlah_barang;
         
         const [barang] = await db
-        .select({nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang, harga_modal: schema.barang.harga_modal, harga_jual: schema.barang.harga_jual})
-        .from(schema.barang)
-        .where(eq(schema.barang.id, data.id))
+            .select({nama_barang: schema.barang.nama_barang, stok_barang: schema.barang.stok_barang, harga_modal: schema.barang.harga_modal, harga_jual: schema.barang.harga_jual})
+            .from(schema.barang)
+            .where(eq(schema.barang.id, data.id))
         .limit(1);
         
         if (!barang) return new Response("Not Found", { status: 404 });

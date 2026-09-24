@@ -17,107 +17,53 @@ export async function POST_Setup_Store(req: Request) {
 
     const now = Date.now();
 
-    const settings = [
-        {
-            key: "store_name",
-            value: store_name,
-            type: "string",
-        },
-        {
-            key: "store_desc",
-            value: store_desc,
-            type: "string",
-        },
-        {
-            key: "store_address",
-            value: store_address,
-            type: "string",
-        },
-        {
-            key: "store_phone_num",
-            value: store_phone_num,
-            type: "string",
-        },
-    ];
-
     if (current_config.db_type === "mysql") {
         const conn = current_config.temp.ms_conn;
 
-        await conn.query(
-            `INSERT INTO settings
-            (\`key\`, \`value\`, \`type\`, \`created_ms\`, \`modified_ms\`)
-            VALUES
-            (?, ?, ?, ?, ?),
-            (?, ?, ?, ?, ?),
-            (?, ?, ?, ?, ?),
-            (?, ?, ?, ?, ?)`,
-            [
-                settings[0].key,
-                settings[0].value,
-                settings[0].type,
-                now,
-                now,
-
-                settings[1].key,
-                settings[1].value,
-                settings[1].type,
-                now,
-                now,
-
-                settings[2].key,
-                settings[2].value,
-                settings[2].type,
-                now,
-                now,
-
-                settings[3].key,
-                settings[3].value,
-                settings[3].type,
-                now,
-                now,
-            ]
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'name'`,
+            [store_name, now, now]
+        );
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'desc'`,
+            [store_desc, now, now]
+        );
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'address'`,
+            [store_address, now, now]
+        );
+        await conn.query(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND \`key\` = 'phone_num'`,
+            [store_phone_num, now, now]
         );
     }
     else if (current_config.db_type === "postgresql") {
         const conn = current_config.temp.pg_conn;
 
-        await conn.query(
-            `INSERT INTO settings ("key", "value", "type", "created_ms", "modified_ms")
-            VALUES
-                ($1, $2, $3, $4, $4),
-                ($5, $6, $7, $8, $8),
-                ($9, $10, $11, $12, $12),
-                ($13, $14, $15, $16, $16)`,
-            [
-                settings[0].key,
-                settings[0].value,
-                settings[0].type,
-                now,
-
-                settings[1].key,
-                settings[1].value,
-                settings[1].type,
-                now,
-
-                settings[2].key,
-                settings[2].value,
-                settings[2].type,
-                now,
-
-                settings[3].key,
-                settings[3].value,
-                settings[3].type,
-                now,
-            ]
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'name'`,
+            [store_name, now, now]
+        );
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'desc'`,
+            [store_desc, now, now]
+        );
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'address'`,
+            [store_address, now, now]
+        );
+        await conn.query(`UPDATE settings SET value = $1, created_ms = $2, modified_ms = $3 WHERE section = 'store' AND "key" = 'phone_num'`,
+            [store_phone_num, now, now]
         );
     }
     else if (current_config.db_type === "sqlite") {
         const conn = current_config.temp.sqlite_conn;
-        const stmt = conn.prepare(`INSERT INTO settings (key, value, type, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?)`);
-        const transaction = conn.transaction(() => {
-            for (const setting of settings) stmt.run(setting.key, setting.value, setting.type, now, now);
-        });
-        transaction();
+
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'name'`,
+            [store_name, now, now]
+        );
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'desc'`,
+            [store_desc, now, now]
+        );
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'address'`,
+            [store_address, now, now]
+        );
+        conn.run(`UPDATE settings SET value = ?, created_ms = ?, modified_ms = ? WHERE section = 'store' AND "key" = 'phone_num'`,
+            [store_phone_num, now, now]
+        );
     }
     else {
         current_config.temp.setup_done = [0, 0, 0, 0];

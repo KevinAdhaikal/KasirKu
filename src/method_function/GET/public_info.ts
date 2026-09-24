@@ -14,12 +14,12 @@
 */
 
 import { user_session_interface } from "../../user_session/user_session";
-import { getDb, getSchema } from "../../database/schema";
-import { eq, inArray } from "drizzle-orm";
+import { global } from "../../global";
+import { and, eq, inArray } from "drizzle-orm";
 
 export default async function(req: Request, url: URL, user_info: user_session_interface) {
-    const db = getDb();
-    const { settings } = getSchema();
+    const db = global.database;
+    const { settings } = global.schema;
 
     const toko_settings = await db
         .select({
@@ -28,13 +28,26 @@ export default async function(req: Request, url: URL, user_info: user_session_in
         })
         .from(settings)
         .where(
-            inArray(settings.key, [
-                "store_name",
-                "store_desc",
-                "store_address",
-                "store_phone_num",
-            ])
-        );
+            and(
+                eq(settings.section, "store"),
+                inArray(settings.key, [
+                    "name",
+                    "desc",
+                    "address",
+                    "phone_num",
+                ]
+            )
+        )
+    );
 
-    return new Response(JSON.stringify({store: toko_settings}), {status: 200});
+    const store = Object.fromEntries(
+        toko_settings.map(( item: { key: string, value: string }) => [item.key, item.value])
+    );
+
+    return new Response(JSON.stringify({ store }), {
+        status: 200,
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
 }

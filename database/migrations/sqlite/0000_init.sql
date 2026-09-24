@@ -93,9 +93,10 @@ CREATE TABLE `roles` (
 CREATE UNIQUE INDEX `roles_name_unique` ON `roles` (`name`);--> statement-breakpoint
 CREATE TABLE `settings` (
 	`id` integer PRIMARY KEY NOT NULL,
-	`key` text,
+	`section` text NOT NULL,
+	`key` text NOT NULL,
 	`value` text,
-	`type` text,
+	`type` text NOT NULL,
 	`created_ms` integer,
 	`modified_ms` integer
 );

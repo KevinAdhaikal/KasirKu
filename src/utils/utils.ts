@@ -23,6 +23,7 @@ import forge from "node-forge";
 export const mime_types: Record<string, string> = {
     html: "text/html",
     js: "application/javascript",
+    mjs: "application/javascript",
     css: "text/css",
     json: "application/json",
     png: "image/png",
@@ -31,6 +32,12 @@ export const mime_types: Record<string, string> = {
     gif: "image/gif",
     svg: "image/svg+xml",
     ico: "image/x-icon",
+    woff: "font/woff",
+    woff2: "font/woff2",
+    ttf: "font/ttf",
+    webp: "image/webp",
+    map: "application/json",
+    webmanifest: "application/manifest+json",
 };
 
 // generate hex string of given length

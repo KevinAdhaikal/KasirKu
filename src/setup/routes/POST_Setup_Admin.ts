@@ -17,7 +17,11 @@ export async function POST_Setup_Admin(req: Request) {
     const password = typeof req_json.password === "string" ? req_json.password : "";
     const confirm_password = typeof req_json.confirm_password === "string" ? req_json.confirm_password : "";
 
-    if (!username || !full_name || !password || password !== confirm_password) {
+    if (
+        !username ||
+        !full_name ||
+        !password || password !== confirm_password
+    ) {
         current_config.temp.setup_done = [0, 0, 0, 0];
         return new Response("Bad Request", { status: 400 });
     }
@@ -36,45 +40,34 @@ export async function POST_Setup_Admin(req: Request) {
         if (current_config.db_type === "mysql") {
             const conn = current_config.temp.ms_conn;
             if (!conn) throw new Error("MySQL connection is not available");
-            await conn.query(`INSERT INTO roles (\`name\`, \`permission_level\`, \`created_ms\`, \`modified_ms\`) VALUES (?, ?, ?, ?)`,
-                ["Administrator", 1, now, now]
-            )
-            await conn.query(`INSERT INTO users (\`username\`, \`full_name\`, \`password_hash\`, \`profile_img\`, \`role_id\`, \`created_ms\`, \`modified_ms\`) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [username, full_name, password_hash, null, 1, now, now]
+
+            await conn.query(`UPDATE users SET username = ?, full_name = ?, password_hash = ?, created_ms = ?, modified_ms = ? WHERE username = "admin"`,
+                [username, full_name, password_hash, now, now]
             );
         }
-
         else if (current_config.db_type === "postgresql") {
             const conn = current_config.temp.pg_conn;
             if (!conn) throw new Error("PostgreSQL connection is not available");
 
-            await conn.query(
-                `INSERT INTO roles ("name", "permission_level", "created_ms", "modified_ms") VALUES ($1, $2, $3, $4)`,
-                ["Administrator", 1, now, now]
-            );
-            await conn.query(
-                `INSERT INTO users ("username", "full_name", "password_hash", "profile_img", "role_id", "created_ms", "modified_ms") VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [username, full_name, password_hash, null, 1, now, now]
+            await conn.query(`UPDATE users SET username = $1, full_name = $2, password_hash = $3, created_ms = $4, modified_ms = $5 WHERE username = "admin"`,
+                [username, full_name, password_hash, now, now]
             );
         }
         else if (current_config.db_type === "sqlite") {
             const conn = current_config.temp.sqlite_conn;
             if (!conn) throw new Error("SQLite connection is not available");
 
-            let stmt = conn.prepare(`INSERT INTO roles ("name", "permission_level", "created_ms", "modified_ms") VALUES (?, ?, ?, ?)`);
-            stmt.run("Administrator", 1, now, now);
-            stmt.finalize();
-            
-            stmt = conn.prepare(`INSERT INTO users (username, full_name, password_hash, profile_img, role_id, created_ms, modified_ms) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-            stmt.run(username, full_name, password_hash, null, 1, now, now);
+            conn.run(`UPDATE users SET username = ?, full_name = ?, password_hash = ?, created_ms = ?, modified_ms = ? WHERE username = "admin"`,
+                [username, full_name, password_hash, now, now]
+            )
         }
         else {
             current_config.temp.setup_done = [0, 0, 0, 0];
             return new Response("Bad Request", {status: 400});
         }
-    } catch (err) {
+    } catch (err: any) {
         current_config.temp.setup_done = [0, 0, 0, 0];
-        return new Response(err instanceof Error ? err.message : "Failed to create admin user", { status: 403 });
+        return new Response(err.message, {status: 403});
     }
 
     current_config.temp.setup_done[3] = 1;

@@ -1,7 +1,0 @@
-html.dark-mode .navbar {
-  background-color: #343a40;
-  border-color: #4b545c;
-}
-html.dark-mode .navbar-nav .nav-link {
-  color:rgba(255,255,255,.75);
-}
