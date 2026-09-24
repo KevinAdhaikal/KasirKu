@@ -21,18 +21,21 @@
 
   <!-- Main Content Wrapper with dynamic responsive padding -->
   <div class="flex-1 flex flex-col min-w-0 transition-all duration-200 ease-out {ui.sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}">
-    <Topbar ontogglemobile={() => ui.toggleMobileSidebar()} />
+    <!-- Sticky Header Wrapper: Keeps Topbar and Offline Banner fixed when scrolling -->
+    <div class="sticky top-0 z-30">
+      <Topbar ontogglemobile={() => ui.toggleMobileSidebar()} />
 
-    {#if isSseDown}
-      <div class="bg-red-500/10 dark:bg-red-950/40 border-b border-red-500/20 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-red-700 dark:text-red-400 text-xs transition-all select-none">
-        <div class="flex items-center gap-2 min-w-0">
-          <WifiOff class="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
-          <p class="truncate sm:whitespace-normal font-medium">
-            Koneksi ke server terputus. Seluruh input, tombol aksi, dan konten dinonaktifkan sementara hingga tersambung kembali.
-          </p>
+      {#if isSseDown}
+        <div class="bg-red-50/95 dark:bg-red-950/95 border-b border-red-200 dark:border-red-900/60 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-red-700 dark:text-red-400 text-xs transition-all select-none backdrop-blur-md shadow-xs">
+          <div class="flex items-center gap-2 min-w-0">
+            <WifiOff class="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
+            <p class="truncate sm:whitespace-normal font-medium">
+              Koneksi ke server terputus. Seluruh input, tombol aksi, dan konten dinonaktifkan sementara hingga tersambung kembali.
+            </p>
+          </div>
         </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
 
     <main
       inert={isSseDown ? true : undefined}
@@ -64,7 +67,7 @@
           rel="noopener noreferrer"
           class="group inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
         >
-          <span>KasirKu v2.5</span>
+          <span>KasirKu v2.0.0</span>
           <svg class="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>

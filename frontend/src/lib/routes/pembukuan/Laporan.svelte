@@ -782,7 +782,7 @@
                     class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
                     onclick={() => togglePengeluaranSort('deskripsi')}
                   >
-                    <span>Keperluan / Deskripsi</span>
+                    <span>Deskripsi</span>
                     {#if pengeluaranSortKey === 'deskripsi'}
                       {#if pengeluaranSortAsc}
                         <ArrowUp class="w-3 h-3 text-[var(--brand)]" />

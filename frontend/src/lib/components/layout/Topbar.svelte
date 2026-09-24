@@ -65,7 +65,7 @@
   }
 </script>
 
-<header class="h-14 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6">
+<header class="h-14 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]/90 backdrop-blur-md flex items-center justify-between px-4 sm:px-6">
   <!-- Left: Hamburger (Mobile) / Sidebar Collapse Toggle (Desktop) + Online Status -->
   <div class="flex items-center gap-2.5 min-w-0">
     <!-- Mobile Hamburger Button -->

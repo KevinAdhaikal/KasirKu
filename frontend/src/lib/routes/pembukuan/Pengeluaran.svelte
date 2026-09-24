@@ -421,7 +421,7 @@
                 class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer select-none text-[11px] font-medium"
                 onclick={() => toggleSort('deskripsi')}
               >
-                <span>Keterangan / Keperluan</span>
+                <span>Keterangan</span>
                 {#if sortField === 'deskripsi'}
                   {#if sortAsc}
                     <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
@@ -555,7 +555,7 @@
     <div>
       <Input
         id="pengeluaran-desc"
-        label="Keterangan / Keperluan Pengeluaran"
+        label="Keterangan Pengeluaran"
         bind:value={formDeskripsi}
         placeholder="Contoh: Beli kantong plastik, bayar token listrik, air galon"
         required
