@@ -9,9 +9,24 @@
 
 KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai frontend. Aplikasi ini juga mendukung **realtime data updates**, sehingga perubahan data dapat ditampilkan secara langsung tanpa perlu melakukan refresh halaman.
 
+## Preview
+
+- Frontend Installer
+
+  | Step 1 - Selamat Datang | Step 2 - Jaringan & Port |
+  | :---: | :---: |
+  | ![Step 1 - Selamat Datang](screenshots/installer_frontend/step1.png) | ![Step 2 - Jaringan & Port](screenshots/installer_frontend/step2.png) |
+  | **Step 3 - Mesin Database** | **Step 4 - Koneksi Database (SQLite)** |
+  | ![Step 3 - Mesin Database](screenshots/installer_frontend/step3.png) | ![Step 4 - Koneksi Database (SQLite)](screenshots/installer_frontend/step4_sqlite.png) |
+  | **Step 4 - Koneksi Database (MySQL / PostgreSQL)** | **Step 5 - Akun Administrator** |
+  | ![Step 4 - Koneksi Database (MySQL / PostgreSQL)](screenshots/installer_frontend/step4_mysql_postgresql.png) | ![Step 5 - Akun Administrator](screenshots/installer_frontend/step5.png) |
+  | **Step 6 - Profil Toko** | **Instalasi Selesai** |
+  | ![Step 6 - Profil Toko](screenshots/installer_frontend/step6.png) | ![Instalasi Selesai](screenshots/installer_frontend/installation_done.png) |
+
 ## Table of contents
+- [Preview](#preview)
 - [Fitur](#fitur)
-- [Requrements](#requirements)
+- [Requirements](#requirements)
 - [Cara Menjalankan](#cara-menjalankan)
   - [Menggunakan Bun](#pakai-bun)
   - [Pakai Docker](#pakai-docker)
