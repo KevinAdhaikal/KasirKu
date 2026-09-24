@@ -394,7 +394,7 @@
   <!-- Expenses Table Card -->
   <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
+      <table class="w-full text-left text-xs border-collapse min-w-[650px]">
         <thead>
           <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
             <th class="px-4 py-2.5">
@@ -523,6 +523,7 @@
       </table>
     </div>
 
+
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
       bind:currentPage
@@ -599,7 +600,7 @@
         {#each presets as p}
           <button
             type="button"
-            class="px-2.5 py-1 text-xs font-mono rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-[var(--bg-hover)] text-neutral-800 dark:text-neutral-200 transition-colors"
+            class="px-2.5 py-1 text-xs rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-[var(--bg-hover)] text-neutral-800 dark:text-neutral-200 transition-colors"
             onclick={() => setPreset(p)}
           >
             {formatRupiah(p)}

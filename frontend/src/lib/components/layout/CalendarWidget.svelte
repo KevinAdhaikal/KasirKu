@@ -114,8 +114,8 @@
       </div>
     </div>
 
-    <!-- Date & Clock Text -->
-    <div class="flex flex-col text-left">
+    <!-- Date & Clock Text (shown on sm and up) -->
+    <div class="hidden sm:flex flex-col text-left">
       <div class="flex items-center gap-1.5">
         <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight">
           {formattedFullDate}
@@ -131,7 +131,7 @@
   <!-- Calendar Interactive Popover Dropdown -->
   {#if open}
     <div
-      class="absolute right-0 top-full mt-2 z-50 w-72 p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800
+      class="absolute right-0 top-full mt-2 z-50 w-72 max-w-[calc(100vw-2rem)] p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800
         bg-[var(--bg-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-150"
     >
       <!-- Popover Header: Month & Year Navigator -->

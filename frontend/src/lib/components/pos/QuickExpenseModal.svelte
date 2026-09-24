@@ -131,7 +131,7 @@
             onclick={() => {
               nominalRaw = formatIDR(preset);
             }}
-            class="px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800 text-[11px] font-mono text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-[var(--bg-hover)] transition-colors"
+            class="px-2 py-1 rounded border border-neutral-200 dark:border-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-[var(--bg-hover)] transition-colors"
           >
             {formatRupiah(preset)}
           </button>

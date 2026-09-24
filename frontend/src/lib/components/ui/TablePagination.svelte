@@ -91,7 +91,7 @@
           <button
             type="button"
             onclick={() => handleSetPageSize(opt)}
-            class="px-2.5 py-0.5 rounded text-[11px] font-mono font-medium transition-colors {pageSize === opt
+            class="px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors {pageSize === opt
               ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-2xs font-bold'
               : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100'}"
             aria-pressed={pageSize === opt}
@@ -104,7 +104,7 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-2 self-end sm:self-auto">
+  <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-neutral-100 dark:border-neutral-800/60">
     <Button
       variant="secondary"
       size="sm"
@@ -114,7 +114,7 @@
     >
       Sebelumnya
     </Button>
-    <span class="font-mono text-xs text-neutral-700 dark:text-neutral-300 tabular-nums px-1">
+    <span class="text-xs text-neutral-700 dark:text-neutral-300 tabular-nums px-1">
       {currentPage} / {totalPages}
     </span>
     <Button

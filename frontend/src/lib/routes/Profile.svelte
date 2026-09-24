@@ -285,7 +285,7 @@
           }}
         >
           {#snippet prefix()}
-            <span class="font-mono text-xs">@</span>
+            <span class="text-xs">@</span>
           {/snippet}
         </Input>
 

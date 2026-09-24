@@ -305,11 +305,11 @@
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
       <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Total Kategori</span>
+        <span class="text-[11px] font-medium text-neutral-500 uppercase">Total Kategori</span>
         <Tag class="w-4 h-4 text-neutral-400" />
       </div>
       <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
+        <span class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
           {formatNumber(kategoriList.length)}
         </span>
         <span class="text-xs text-neutral-500">kelompok</span>
@@ -318,11 +318,11 @@
 
     <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
       <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Total Produk Terdaftar</span>
+        <span class="text-[11px] font-medium text-neutral-500 uppercase">Total Produk Terdaftar</span>
         <Package class="w-4 h-4 text-neutral-400" />
       </div>
       <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
+        <span class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
           {formatNumber(barangList.length)}
         </span>
         <span class="text-xs text-neutral-500">item</span>
@@ -331,11 +331,11 @@
 
     <div class="p-3.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)]">
       <div class="flex items-center justify-between">
-        <span class="text-[11px] font-medium text-neutral-500 uppercase font-mono">Rata-Rata per Kategori</span>
+        <span class="text-[11px] font-medium text-neutral-500 uppercase">Rata-Rata per Kategori</span>
         <FolderKanban class="w-4 h-4 text-neutral-400" />
       </div>
       <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
+        <span class="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 tabular-nums">
           {kategoriList.length > 0 ? (barangList.length / kategoriList.length).toFixed(1) : '0'}
         </span>
         <span class="text-xs text-neutral-500">produk</span>
@@ -345,8 +345,8 @@
   -->
 
   <!-- Search & Sort Bar -->
-  <div class="flex sm:flex-row justify-between">
-    <div class="flex-1 max-w-md">
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+    <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
       <Input
         id="search-kategori"
         bind:value={searchQuery}
@@ -355,7 +355,7 @@
         class="h-9 text-xs"
       >
         {#snippet prefix()}
-          <Search class="w-3.5 h-3.5" />
+          <Search class="w-3.5 h-3.5 text-neutral-400" />
         {/snippet}
       </Input>
     </div>
@@ -370,7 +370,7 @@
           else if (val === 'count_desc') { sortCol = 'count'; sortDir = 'desc'; }
           else if (val === 'recent_desc') { sortCol = 'recent'; sortDir = 'desc'; }
         }}
-        class="w-auto min-w-[140px]"
+        class="w-full sm:w-auto sm:min-w-[140px]"
         selectClass="h-9 text-xs"
       >
         <option value="nama_asc">Nama (A-Z)</option>
@@ -381,140 +381,142 @@
     </div>
   </div>
 
-  <!-- Categories Table -->
+  <!-- Categories Table & Mobile List -->
   <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
-    <table class="w-full text-left text-xs border-collapse">
-      <thead>
-        <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
-          <th class="py-2.5 px-4 w-20">
-            <button
-              type="button"
-              onclick={() => toggleColSort('id')}
-              class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
-            >
-              <span>ID</span>
-              {#if sortCol === 'id'}
-                {#if sortDir === 'asc'}
-                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse min-w-[480px]">
+        <thead>
+          <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
+            <th class="py-2.5 px-4 w-20">
+              <button
+                type="button"
+                onclick={() => toggleColSort('id')}
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+              >
+                <span>ID</span>
+                {#if sortCol === 'id'}
+                  {#if sortDir === 'asc'}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
                 {:else}
-                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
-              {:else}
-                <ArrowUpDown class="w-3 h-3 opacity-40" />
-              {/if}
-            </button>
-          </th>
-          <th class="py-2.5 px-4">
-            <button
-              type="button"
-              onclick={() => toggleColSort('nama')}
-              class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
-            >
-              <span>Nama Kategori</span>
-              {#if sortCol === 'nama'}
-                {#if sortDir === 'asc'}
-                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+              </button>
+            </th>
+            <th class="py-2.5 px-4">
+              <button
+                type="button"
+                onclick={() => toggleColSort('nama')}
+                class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+              >
+                <span>Nama Kategori</span>
+                {#if sortCol === 'nama'}
+                  {#if sortDir === 'asc'}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
                 {:else}
-                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
-              {:else}
-                <ArrowUpDown class="w-3 h-3 opacity-40" />
-              {/if}
-            </button>
-          </th>
-          <th class="py-2.5 px-4 text-center">
-            <button
-              type="button"
-              onclick={() => toggleColSort('count')}
-              class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
-            >
-              <span>Jumlah Produk</span>
-              {#if sortCol === 'count'}
-                {#if sortDir === 'asc'}
-                  <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+              </button>
+            </th>
+            <th class="py-2.5 px-4 text-center">
+              <button
+                type="button"
+                onclick={() => toggleColSort('count')}
+                class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
+              >
+                <span>Jumlah Produk</span>
+                {#if sortCol === 'count'}
+                  {#if sortDir === 'asc'}
+                    <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                  {:else}
+                    <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  {/if}
                 {:else}
-                  <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                  <ArrowUpDown class="w-3 h-3 opacity-40" />
                 {/if}
-              {:else}
-                <ArrowUpDown class="w-3 h-3 opacity-40" />
-              {/if}
-            </button>
-          </th>
-          <th class="py-2.5 px-4 text-center w-28">Aksi</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-[var(--border-subtle)]">
-        {#if loading}
-          {#each Array(4) as _}
-            <tr>
-              <td class="p-4"><Skeleton class="h-4 w-8" /></td>
-              <td class="p-4"><Skeleton class="h-4 w-40" /></td>
-              <td class="p-4 text-center"><Skeleton class="h-4 w-16 mx-auto" /></td>
-              <td class="p-4 text-right"><Skeleton class="h-4 w-20 ml-auto" /></td>
-              <td class="p-4 text-center"><Skeleton class="h-6 w-14 mx-auto" /></td>
-            </tr>
-          {/each}
-        {:else if paginatedKategori.length === 0}
-          <tr>
-            <td colspan="4" class="py-12 text-center text-[var(--text-muted)]">
-              <Tag class="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p class="font-medium text-xs">Tidak ada kategori yang sesuai.</p>
-            </td>
+              </button>
+            </th>
+            <th class="py-2.5 px-4 text-center w-28">Aksi</th>
           </tr>
-        {:else}
-          {#each paginatedKategori as kat (kat.id)}
-            {@const count = productCountMap.get(kat.id) || 0}
-            <tr class="hover:bg-[var(--bg-hover)] transition-colors">
-              <td class="py-3 px-4 tabular-nums text-[var(--text-muted)] text-xs font-medium">
-                {kat.id}
+        </thead>
+        <tbody class="divide-y divide-[var(--border-subtle)]">
+          {#if loading}
+            {#each Array(4) as _}
+              <tr>
+                <td class="p-4"><Skeleton class="h-4 w-8" /></td>
+                <td class="p-4"><Skeleton class="h-4 w-40" /></td>
+                <td class="p-4 text-center"><Skeleton class="h-4 w-16 mx-auto" /></td>
+                <td class="p-4 text-center"><Skeleton class="h-6 w-14 mx-auto" /></td>
+              </tr>
+            {/each}
+          {:else if paginatedKategori.length === 0}
+            <tr>
+              <td colspan="4" class="py-12 text-center text-[var(--text-muted)]">
+                <Tag class="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p class="font-medium text-xs">Tidak ada kategori yang sesuai.</p>
               </td>
+            </tr>
+          {:else}
+            {#each paginatedKategori as kat (kat.id)}
+              {@const count = productCountMap.get(kat.id) || 0}
+              <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                <td class="py-3 px-4 tabular-nums text-[var(--text-muted)] text-xs font-medium">
+                  {kat.id}
+                </td>
 
-              <td class="py-3 px-4">
-                <div class="font-semibold text-[var(--text-primary)] text-sm">
-                  {kat.nama_kategori}
-                </div>
-              </td>
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-[var(--text-primary)] text-sm">
+                    {kat.nama_kategori}
+                  </div>
+                </td>
 
-              <td class="py-3 px-4 text-center">
-                <button
-                  type="button"
-                  onclick={() => router.navigate(`/barang/daftar_barang?kategori=${kat.id}`)}
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium tabular-nums border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
-                  title="Lihat barang dalam kategori ini"
-                >
-                  <Package class="w-3 h-3 text-[var(--brand)]" />
-                  <span>{formatNumber(count)} produk</span>
-                </button>
-              </td>
-
-              <td class="py-3 px-4 text-center">
-                <div class="flex items-center justify-center gap-1.5">
+                <td class="py-3 px-4 text-center">
                   <button
                     type="button"
-                    onclick={() => openEditModal(kat)}
-                    title="Ubah Nama Kategori"
-                    class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-contrast)] hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-center"
+                    onclick={() => router.navigate(`/barang/daftar_barang?kategori=${kat.id}`)}
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium tabular-nums border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                    title="Lihat barang dalam kategori ini"
                   >
-                    <Pencil class="w-3.5 h-3.5" />
+                    <Package class="w-3 h-3 text-[var(--brand)]" />
+                    <span>{formatNumber(count)} produk</span>
                   </button>
+                </td>
 
-                  {#if kat.id !== 1}
+                <td class="py-3 px-4 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
                     <button
                       type="button"
-                      onclick={() => handleDeleteKategori(kat)}
-                      title="Hapus Kategori"
-                      class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center"
+                      onclick={() => openEditModal(kat)}
+                      title="Ubah Nama Kategori"
+                      class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-contrast)] hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-center"
                     >
-                      <Trash2 class="w-3.5 h-3.5" />
+                      <Pencil class="w-3.5 h-3.5" />
                     </button>
-                  {/if}
-                </div>
-              </td>
-            </tr>
-          {/each}
-        {/if}
-      </tbody>
-    </table>
+
+                    {#if kat.id !== 1}
+                      <button
+                        type="button"
+                        onclick={() => handleDeleteKategori(kat)}
+                        title="Hapus Kategori"
+                        class="p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors flex items-center justify-center"
+                      >
+                        <Trash2 class="w-3.5 h-3.5" />
+                      </button>
+                    {/if}
+                  </div>
+                </td>
+              </tr>
+            {/each}
+          {/if}
+        </tbody>
+      </table>
+    </div>
+
     
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination

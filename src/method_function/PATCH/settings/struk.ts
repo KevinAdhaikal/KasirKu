@@ -30,7 +30,6 @@ export default async function(req: Request, token: string) {
     const { enabled, content } = await req.json();
 
     if (enabled) {
-        if (!content || !content.length) return new Response("Bad Request", { status: 400 });
         await db
             .update(settings)
             .set({

@@ -487,14 +487,19 @@
   </div>
 
   <!-- Search Filter -->
-  <div class="relative flex-1 max-w-md">
-    <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-    <input
+  <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+    <Input
+      id="search-roles-input"
       type="text"
       placeholder="Cari nama role atau ID..."
       bind:value={searchQuery}
-      class="w-full pl-9 pr-4 py-2 text-xs rounded-md border border-neutral-200 dark:border-neutral-700 bg-[var(--bg-surface)] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/25 focus:border-[var(--brand)] dark:focus:ring-[var(--brand)]/25 dark:focus:border-[var(--brand)]"
-    />
+      clearable
+      class="h-9 text-xs"
+    >
+      {#snippet prefix()}
+        <Search class="w-3.5 h-3.5 text-neutral-400" />
+      {/snippet}
+    </Input>
   </div>
 
   <!-- Roles Table -->
@@ -708,7 +713,7 @@
         <span class="block text-xs font-semibold text-neutral-900 dark:text-neutral-100">
           Permissions (Modul Hak Akses) <span class="text-red-500 font-bold">*</span>
         </span>
-        <span class="text-[11px] font-mono text-neutral-500">
+        <span class="text-[11px] text-neutral-500">
           {formSelectedBits.length} modul dipilih
         </span>
       </div>
@@ -807,7 +812,7 @@
               Akses Penuh
             </Badge>
           {:else}
-            <span class="text-[11px] font-mono text-neutral-500">
+            <span class="text-[11px] text-neutral-500">
               {editSelectedBits.length} modul aktif
             </span>
           {/if}
@@ -886,7 +891,7 @@
           {:else}
             <div class="max-h-48 overflow-y-auto divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
               <table class="w-full text-xs border-collapse">
-                <thead class="bg-neutral-100/70 dark:bg-neutral-800/60 text-neutral-500 uppercase font-mono text-[10px] font-semibold sticky top-0">
+                <thead class="bg-neutral-100/70 dark:bg-neutral-800/60 text-neutral-500 uppercase text-[10px] font-semibold sticky top-0">
                   <tr>
                     <th class="py-2 px-3 text-left">Full Name (Username)</th>
                   </tr>
@@ -908,7 +913,7 @@
                             </div>
                             <div class="flex items-center gap-1.5 flex-wrap">
                               <span class="font-medium text-neutral-900 dark:text-neutral-100">{u.full_name}</span>
-                              <span class="text-neutral-400 font-mono text-[11px]">(@{u.username})</span>
+                              <span class="text-neutral-400 text-[11px]">(@{u.username})</span>
                             </div>
                           </div>
                         </td>

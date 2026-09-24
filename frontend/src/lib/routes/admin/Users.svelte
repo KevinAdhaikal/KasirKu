@@ -434,15 +434,20 @@
   </div>
 
   <!-- Search & Role Filter Bar -->
-  <div class="flex flex-col sm:flex-row justify-between gap-3">
-    <div class="relative flex-1 max-w-md">
-      <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-      <input
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+      <Input
+        id="search-users-input"
         type="text"
-        placeholder="Cari berdasarkan nama, username, atau ID..."
+        placeholder="Cari nama, username, atau ID..."
         bind:value={searchQuery}
-        class="w-full pl-9 pr-4 py-2 text-xs rounded-md border border-neutral-200 dark:border-neutral-700 bg-[var(--bg-surface)] text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/50 focus:border-[var(--brand)] transition-colors shadow-2xs"
-      />
+        clearable
+        class="h-9 text-xs"
+      >
+        {#snippet prefix()}
+          <Search class="w-3.5 h-3.5 text-neutral-400" />
+        {/snippet}
+      </Input>
     </div>
     <div class="flex items-center gap-2">
       <span class="text-xs text-neutral-500 shrink-0 font-medium">Filter Role:</span>
@@ -693,7 +698,7 @@
         }}
       >
         {#snippet prefix()}
-          <span class="text-neutral-400 font-mono text-xs">@</span>
+          <span class="text-neutral-400 text-xs">@</span>
         {/snippet}
       </Input>
 
@@ -819,7 +824,7 @@
           }}
         >
           {#snippet prefix()}
-            <span class="text-neutral-400 font-mono text-xs">@</span>
+            <span class="text-neutral-400 text-xs">@</span>
           {/snippet}
         </Input>
 

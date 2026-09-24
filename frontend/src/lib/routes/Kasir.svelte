@@ -147,6 +147,7 @@
   onMount(() => {
     focusSearchInput();
     checkReceiptSetting();
+    auth.fetchPublicInfo();
     const savedLimit = localStorage.getItem('kasir_table_limit');
     if (savedLimit && LIMIT_OPTIONS.includes(Number(savedLimit))) {
       pageSize = Number(savedLimit);
@@ -318,7 +319,6 @@
     if (isReceiptEnabled) {
       receiptModalOpen = true;
     } else {
-      toast.info('Transaksi berhasil disimpan (Pencetakan struk kasir dinonaktifkan).');
       focusSearchInput();
     }
   }
@@ -344,7 +344,7 @@
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
-<div class="space-y-6">
+<div class="space-y-6 {cart.items.length > 0 ? 'pb-24 lg:pb-0' : ''}">
   <!-- Top POS Banner / Status Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
     <div>
@@ -379,10 +379,41 @@
 
     <!-- Left Column (Span 8): Cart Items List & Search -->
     <div class="lg:col-span-8 space-y-4">
+      <!-- Fast Barcode & Search Bar (Top Position, Sticky on Mobile) -->
+      <div class="sticky top-14 lg:static z-20 -mx-4 sm:mx-0 px-4 sm:px-0 py-2 sm:py-0 bg-[var(--bg-canvas)]/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b sm:border-b-0 border-[var(--border-subtle)]">
+        <div class="relative flex items-center">
+          <div class="absolute left-3.5 flex items-center pointer-events-none text-[var(--text-muted)]">
+            <ScanBarcode class="w-5 h-5" />
+          </div>
+          <input
+            bind:this={searchInputElement}
+            type="text"
+            bind:value={searchQuery}
+            onkeydown={handleSearchKeydown}
+            placeholder="Scan barcode scanner atau ketik nama produk… (Tekan Enter)"
+            aria-label="Scan barcode scanner atau ketik nama produk"
+            class="w-full h-11 sm:h-12 pl-11 pr-20 sm:pr-24 rounded-lg sm:rounded-md border text-xs sm:text-sm font-medium transition-all duration-150
+              border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs"
+            autocomplete="off"
+          />
+          <div class="absolute right-1.5 sm:right-2 flex items-center gap-1">
+            <Button
+              variant="primary"
+              size="sm"
+              loading={isSearching}
+              onclick={handleSearch}
+            >
+              <Search class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">Cari</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <!-- Items Card -->
-      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+      <div class="rounded-lg sm:rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden shadow-xs">
         {#if cart.items.length === 0}
-          <div class="p-12 text-center flex flex-col items-center justify-center">
+          <div class="p-8 sm:p-12 text-center flex flex-col items-center justify-center">
             <div class="w-12 h-12 rounded-full bg-[var(--bg-subtle)] flex items-center justify-center text-[var(--text-muted)] mb-3">
               <PackageOpen class="w-6 h-6" />
             </div>
@@ -390,11 +421,12 @@
               Keranjang Kasir Masih Kosong
             </h3>
             <p class="text-xs text-[var(--text-muted)] mt-1 max-w-sm">
-              Arahkan barcode scanner ke produk atau ketik nama barang di kolom bawah, lalu tekan <kbd class="px-1.5 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[10px] font-semibold text-[var(--text-primary)]">Enter</kbd> untuk menambahkan.
+              Arahkan barcode scanner ke produk atau ketik nama barang di kolom atas, lalu tekan <kbd class="px-1.5 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[10px] font-semibold text-[var(--text-primary)]">Enter</kbd> untuk menambahkan.
             </p>
           </div>
         {:else}
-          <div class="overflow-x-auto">
+          <!-- Desktop Table View (md and up) -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
               <thead class="bg-[var(--bg-subtle)] text-[var(--text-muted)] text-[11px] font-medium border-b border-[var(--border-subtle)]">
                 <tr>
@@ -489,6 +521,84 @@
             </table>
           </div>
 
+          <!-- Mobile Card List View (< md) -->
+          <div class="md:hidden divide-y divide-[var(--border-subtle)]">
+            {#each paginatedCartItems as item (item.id)}
+              {@const subtotal = item.harga_jual * item.jumlah_barang}
+              <div class="p-3.5 space-y-2.5 bg-[var(--bg-surface)]">
+                <!-- Top Row: Name, Barcode & Delete -->
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="font-semibold text-sm text-[var(--text-primary)] leading-tight">
+                      {item.nama_barang}
+                    </h4>
+                    {#if item.barcode_barang}
+                      <span class="inline-flex items-center gap-1 text-[11px] text-[var(--text-muted)] mt-0.5">
+                        <ScanBarcode class="w-3 h-3 opacity-60" />
+                        {item.barcode_barang}
+                      </span>
+                    {/if}
+                  </div>
+                  <button
+                    type="button"
+                    class="p-2 rounded-lg border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
+                    onclick={() => cart.removeItem(item.id)}
+                    aria-label="Hapus item"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+
+                <!-- Bottom Row: Price Info & Touch Stepper -->
+                <div class="flex items-center justify-between gap-2 pt-1 border-t border-[var(--border-subtle)]/60">
+                  <div class="min-w-0">
+                    <span class="text-[11px] text-[var(--text-muted)] block">
+                      <Rupiah value={item.harga_jual} /> / item
+                    </span>
+                    <span class="text-sm font-bold text-[var(--brand)] tabular-nums block">
+                      <Rupiah value={subtotal} />
+                    </span>
+                  </div>
+
+                  <!-- Touch-Friendly Mobile Stepper -->
+                  <div class="flex flex-col items-end gap-1 shrink-0">
+                    <div class="inline-flex items-center border border-[var(--border-subtle)] rounded-lg bg-[var(--bg-subtle)] overflow-hidden shadow-2xs">
+                      <button
+                        type="button"
+                        class="w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] active:scale-95 transition-colors"
+                        onclick={() => cart.decrement(item.id)}
+                        aria-label="Kurangi kuantitas"
+                      >
+                        <Minus class="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.stok_barang}
+                        value={item.jumlah_barang}
+                        onchange={(e) => handleQtyChange(item.id, e)}
+                        aria-label={`Jumlah kuantitas ${item.nama_barang}`}
+                        class="w-12 h-9 text-center font-bold text-sm bg-[var(--bg-surface)] text-[var(--text-primary)] border-x border-[var(--border-subtle)] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <button
+                        type="button"
+                        class="w-9 h-9 flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] active:scale-95 transition-colors disabled:opacity-40"
+                        disabled={item.jumlah_barang >= item.stok_barang}
+                        onclick={() => cart.increment(item.id)}
+                        aria-label="Tambah kuantitas"
+                      >
+                        <Plus class="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span class="text-[10px] text-[var(--text-muted)] tabular-nums">
+                      Sisa: {formatNumber(item.stok_barang)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            {/each}
+          </div>
+
           <!-- Table Footer with Pagination and Page Size Limit -->
           <TablePagination
             bind:currentPage
@@ -499,36 +609,6 @@
             storageKey="kasir_table_limit"
           />
         {/if}
-      </div>
-
-      <!-- Fast Barcode & Search Bar (Bottom Position) -->
-      <div class="relative flex items-center">
-        <div class="absolute left-3.5 flex items-center pointer-events-none text-[var(--text-muted)]">
-          <ScanBarcode class="w-5 h-5" />
-        </div>
-        <input
-          bind:this={searchInputElement}
-          type="text"
-          bind:value={searchQuery}
-          onkeydown={handleSearchKeydown}
-          placeholder="Scan barcode scanner atau ketik nama produk… (Tekan Enter)"
-          aria-label="Scan barcode scanner atau ketik nama produk"
-          class="w-full h-12 pl-11 pr-24 rounded-md border text-sm font-medium transition-colors
-            border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)]
-            focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
-          autocomplete="off"
-        />
-        <div class="absolute right-2 flex items-center gap-1">
-          <Button
-            variant="primary"
-            size="sm"
-            loading={isSearching}
-            onclick={handleSearch}
-          >
-            <Search class="w-3.5 h-3.5" />
-            <span class="hidden sm:inline">Cari</span>
-          </Button>
-        </div>
       </div>
     </div>
 
@@ -600,6 +680,31 @@
     </div>
 
   </div>
+
+  <!-- Sticky Bottom Checkout Bar on Mobile Devices (lg:hidden) -->
+  {#if cart.items.length > 0}
+    <div
+      class="fixed bottom-0 left-0 right-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--border-subtle)] p-3.5 shadow-2xl flex items-center justify-between gap-3 lg:hidden ring-1 ring-black/5"
+    >
+      <div class="min-w-0 flex-1">
+        <span class="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider block">
+          Total ({formatNumber(cart.totalItems)} item)
+        </span>
+        <span class="text-base sm:text-lg font-bold text-[var(--text-primary)] tabular-nums tracking-tight truncate block">
+          <Rupiah value={cart.totalAmount} />
+        </span>
+      </div>
+
+      <button
+        type="button"
+        onclick={() => (paymentModalOpen = true)}
+        class="h-11 px-5 rounded-lg font-bold text-sm bg-[var(--brand)] text-[var(--accent-fg)] hover:bg-[var(--brand-hover)] shadow-md flex items-center gap-2 active:scale-95 transition-all shrink-0 cursor-pointer"
+      >
+        <CreditCard class="w-4 h-4" />
+        <span>Bayar</span>
+      </button>
+    </div>
+  {/if}
 </div>
 
 <!-- Modals -->

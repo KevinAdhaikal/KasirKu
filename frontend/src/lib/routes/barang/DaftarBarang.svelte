@@ -664,10 +664,10 @@
     </div>
 
     <!-- Category & Status Filters -->
-    <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+    <div class="grid grid-cols-1 sm:grid-cols-3 md:flex items-center gap-2 w-full sm:w-auto">
       <Select
         bind:value={selectedKategori}
-        class="w-auto min-w-[150px]"
+        class="w-full sm:w-auto sm:min-w-[140px]"
         selectClass="h-9 text-xs"
       >
         <option value="all">Semua Kategori ({kategoriList.length})</option>
@@ -679,7 +679,7 @@
       <!-- Stock Status Filter -->
       <Select
         bind:value={selectedStokStatus}
-        class="w-auto min-w-[130px]"
+        class="w-full sm:w-auto sm:min-w-[130px]"
         selectClass="h-9 text-xs"
       >
         <option value="all">Semua Stok</option>
@@ -691,7 +691,7 @@
       <!-- Sort Filter -->
       <Select
         bind:value={sortBy}
-        class="w-auto min-w-[140px]"
+        class="w-full sm:w-auto sm:min-w-[140px]"
         selectClass="h-9 text-xs"
       >
         <option value="id_asc">ID (1-9)</option>
@@ -706,10 +706,10 @@
     </div>
   </div>
 
-  <!-- Products Table -->
+  <!-- Products Table / Mobile Card List -->
   <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
+      <table class="w-full text-left text-xs border-collapse min-w-[850px]">
         <thead>
           <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
             <th class="py-2.5 px-4 w-16">
@@ -955,6 +955,7 @@
       </table>
     </div>
 
+
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
       bind:currentPage
@@ -1143,7 +1144,7 @@
           placeholder="20,00"
         >
           {#snippet suffix()}
-            <span class="text-xs font-mono font-medium">%</span>
+            <span class="text-xs font-medium">%</span>
           {/snippet}
         </Input>
       </div>
@@ -1173,14 +1174,14 @@
     <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 flex items-center justify-between text-xs">
       <div>
         <span class="text-neutral-500">Estimasi Keuntungan Bersih:</span>
-        <div class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+        <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
           +{formatRupiah(previewLaba)} <span class="text-xs font-normal text-neutral-500">per unit</span>
         </div>
       </div>
 
       <div class="text-right">
         <span class="text-neutral-500">Markup Margin:</span>
-        <div class="text-sm font-bold font-mono text-neutral-900 dark:text-neutral-100">
+        <div class="text-sm font-bold text-neutral-900 dark:text-neutral-100">
           +{previewPct}%
         </div>
       </div>

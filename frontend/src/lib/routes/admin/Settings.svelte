@@ -228,6 +228,7 @@
       });
 
       await api.patch('/api/settings/toko', params);
+      await auth.fetchPublicInfo();
       initialNamaToko = name;
       initialDeskripsiToko = deskripsiToko.trim();
       initialAlamatToko = alamatToko.trim();
@@ -570,7 +571,7 @@
                   <span>Desain Template Struk HTML</span>
                 </h2>
                 <p class="text-xs text-neutral-500 mt-0.5">
-                  Desain Struk dengan menggunakan HTML & CSS sesuai selera printer kasir Anda.
+                  Desain Struk dengan menggunakan HTML & CSS.
                 </p>
               </div>
 
@@ -655,7 +656,7 @@
                 <button
                   type="button"
                   disabled={!isStrukEnabled}
-                  class="px-2 py-0.5 text-[11px] rounded font-mono transition-colors disabled:cursor-not-allowed {previewWidth === '58mm' ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-semibold' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
+                  class="px-2 py-0.5 text-[11px] rounded transition-colors disabled:cursor-not-allowed {previewWidth === '58mm' ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-semibold' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
                   onclick={() => (previewWidth = '58mm')}
                 >
                   58mm
@@ -663,7 +664,7 @@
                 <button
                   type="button"
                   disabled={!isStrukEnabled}
-                  class="px-2 py-0.5 text-[11px] rounded font-mono transition-colors disabled:cursor-not-allowed {previewWidth === '80mm' ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-semibold' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
+                  class="px-2 py-0.5 text-[11px] rounded transition-colors disabled:cursor-not-allowed {previewWidth === '80mm' ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-semibold' : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'}"
                   onclick={() => (previewWidth = '80mm')}
                 >
                   80mm
@@ -818,21 +819,22 @@
 {#if hasUnsavedChanges}
   <div
     transition:fly={{ y: 50, duration: 250 }}
-    class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-2xl z-50 rounded-xl bg-neutral-900/95 dark:bg-neutral-950/95 text-white border border-neutral-700/70 dark:border-neutral-800 shadow-2xl p-3.5 sm:px-5 flex items-center justify-between gap-4 backdrop-blur-md ring-1 ring-white/10"
+    class="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-2xl z-50 rounded-xl bg-neutral-900/95 dark:bg-neutral-950/95 text-white border border-neutral-700/70 dark:border-neutral-800 shadow-2xl p-2.5 sm:p-3.5 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 backdrop-blur-md ring-1 ring-white/10"
   >
-    <div class="flex items-center gap-2.5 min-w-0">
+    <div class="flex items-center gap-2 min-w-0">
       <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 animate-pulse"></span>
       <span class="text-xs sm:text-sm font-medium text-neutral-100 truncate">
-        Klik 'Simpan Perubahan' untuk menerapkan perubahan
+        <span class="hidden sm:inline">Klik 'Simpan Perubahan' untuk menerapkan</span>
+        <span class="sm:hidden">Klik 'Simpan Perubahan' untuk menerapkan</span>
       </span>
     </div>
 
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <button
         type="button"
         disabled={isSavingStore || isSavingStruk}
         onclick={handleResetAll}
-        class="px-3 py-1.5 text-xs font-medium text-neutral-300 hover:text-white hover:underline transition-colors disabled:opacity-40 cursor-pointer"
+        class="px-2.5 sm:px-3 py-1.5 text-xs font-medium text-neutral-300 hover:text-white hover:underline transition-colors disabled:opacity-40 cursor-pointer"
       >
         Reset
       </button>
@@ -841,14 +843,15 @@
         type="button"
         disabled={isSavingStore || isSavingStruk}
         onclick={handleSaveAll}
-        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+        class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
       >
         {#if isSavingStore || isSavingStruk}
           <Loader2 class="w-3.5 h-3.5 animate-spin" />
           <span>Menyimpan…</span>
         {:else}
           <Save class="w-3.5 h-3.5" />
-          <span>Simpan Perubahan</span>
+          <span class="hidden sm:inline">Simpan Perubahan</span>
+          <span class="sm:hidden">Simpan</span>
         {/if}
       </button>
     </div>

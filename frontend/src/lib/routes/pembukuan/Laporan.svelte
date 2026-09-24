@@ -28,7 +28,6 @@
     TrendingDown,
     DollarSign,
     RefreshCw,
-    Printer,
     Calendar,
     ArrowUpRight,
     ArrowDownRight,
@@ -252,6 +251,7 @@
 
   onMount(() => {
     fetchData();
+    auth.fetchPublicInfo();
   });
 </script>
 
@@ -275,16 +275,6 @@
       >
         <RefreshCw class="w-3.5 h-3.5" />
         <span class="hidden sm:inline">Refresh</span>
-      </Button>
-
-      <Button
-        variant="primary"
-        size="sm"
-        onclick={() => window.print()}
-        title="Cetak Laporan Keuangan"
-      >
-        <Printer class="w-4 h-4" />
-        <span>Cetak Laporan</span>
       </Button>
     </div>
   </div>
@@ -589,280 +579,284 @@
 
     <!-- Tab 2: Rincian Penjualan Table -->
     {:else if activeTab === 'penjualan'}
-      <div class="overflow-x-auto max-h-[440px] overflow-y-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead class="sticky top-0 z-20 bg-[var(--bg-subtle)]">
-            <tr class="text-[var(--text-muted)] font-medium text-[11px]">
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
-                  onclick={() => togglePenjualanSort('no_struk')}
-                >
-                  <span>No. Struk</span>
-                  {#if penjualanSortKey === 'no_struk'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
-                  onclick={() => togglePenjualanSort('created_ms')}
-                >
-                  <span>Waktu</span>
-                  {#if penjualanSortKey === 'created_ms'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-center">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
-                  onclick={() => togglePenjualanSort('total_barang')}
-                >
-                  <span>Jumlah Barang</span>
-                  {#if penjualanSortKey === 'total_barang'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
-                  onclick={() => togglePenjualanSort('total_harga_modal')}
-                >
-                  <span>Total Modal</span>
-                  {#if penjualanSortKey === 'total_harga_modal'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
-                  onclick={() => togglePenjualanSort('total_harga_jual')}
-                >
-                  <span>Total Penjualan</span>
-                  {#if penjualanSortKey === 'total_harga_jual'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
-                  onclick={() => togglePenjualanSort('laba_kotor')}
-                >
-                  <span>Laba Kotor</span>
-                  {#if penjualanSortKey === 'laba_kotor'}
-                    {#if penjualanSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[var(--border-subtle)]">
-            {#if paginatedPenjualan.length === 0}
+      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse min-w-[750px]">
+            <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
               <tr>
-                <td colspan="6" class="py-12 text-center text-[var(--text-muted)]">
-                  <Receipt class="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p class="font-medium text-xs">Tidak ada riwayat transaksi penjualan.</p>
-                </td>
+                <th class="py-2.5 px-4 text-left">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePenjualanSort('no_struk')}
+                  >
+                    <span>No. Struk</span>
+                    {#if penjualanSortKey === 'no_struk'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-left">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePenjualanSort('created_ms')}
+                  >
+                    <span>Waktu</span>
+                    {#if penjualanSortKey === 'created_ms'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-center">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium mx-auto"
+                    onclick={() => togglePenjualanSort('total_barang')}
+                  >
+                    <span>Jumlah Barang</span>
+                    {#if penjualanSortKey === 'total_barang'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePenjualanSort('total_harga_modal')}
+                  >
+                    <span>Total Modal</span>
+                    {#if penjualanSortKey === 'total_harga_modal'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePenjualanSort('total_harga_jual')}
+                  >
+                    <span>Total Penjualan</span>
+                    {#if penjualanSortKey === 'total_harga_jual'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePenjualanSort('laba_kotor')}
+                  >
+                    <span>Laba Kotor</span>
+                    {#if penjualanSortKey === 'laba_kotor'}
+                      {#if penjualanSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
               </tr>
-            {:else}
-              {#each paginatedPenjualan as p}
-                <tr class="hover:bg-[var(--bg-hover)] transition-colors">
-                  <td class="py-3 px-4 font-semibold text-[var(--text-primary)] text-xs">{p.no_struk}</td>
-                  <td class="py-3 px-4 text-[var(--text-secondary)] text-xs whitespace-nowrap">{formatDateTime(p.created_ms)}</td>
-                  <td class="py-3 px-4 text-center text-xs tabular-nums font-medium text-[var(--text-secondary)]">{formatNumber(p.total_barang)}</td>
-                  <td class="py-3 px-4 text-right text-xs tabular-nums text-[var(--text-secondary)]">{formatRupiah(p.total_harga_modal)}</td>
-                  <td class="py-3 px-4 text-right text-xs tabular-nums font-medium text-[var(--text-primary)]">{formatRupiah(p.total_harga_jual)}</td>
-                  <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+            </thead>
+            <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+              {#if paginatedPenjualan.length === 0}
+                <tr>
+                  <td colspan="6" class="py-12 text-center text-neutral-500">
+                    <Receipt class="w-8 h-8 mx-auto mb-2 opacity-40 text-neutral-400" />
+                    <p class="font-medium text-xs">Tidak ada riwayat transaksi penjualan.</p>
+                  </td>
                 </tr>
-              {/each}
+              {:else}
+                {#each paginatedPenjualan as p}
+                  <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
+                    <td class="py-3 px-4 font-semibold text-neutral-900 dark:text-neutral-100 text-xs">{p.no_struk}</td>
+                    <td class="py-3 px-4 text-neutral-500 text-xs whitespace-nowrap tabular-nums">{formatDateTime(p.created_ms)}</td>
+                    <td class="py-3 px-4 text-center text-xs tabular-nums font-medium text-neutral-600 dark:text-neutral-400">{formatNumber(p.total_barang)}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums text-neutral-500">{formatRupiah(p.total_harga_modal)}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-neutral-900 dark:text-neutral-100">{formatRupiah(p.total_harga_jual)}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">+{formatRupiah(p.total_harga_jual - p.total_harga_modal)}</td>
+                  </tr>
+                {/each}
+              {/if}
+            </tbody>
+            {#if sortedPenjualan.length > 0}
+              <tfoot class="bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] font-medium text-xs text-[var(--text-primary)]">
+                <tr>
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    <span>Total Item: <strong class="tabular-nums font-bold">{formatNumber(totalQty)} unit</strong></span>
+                  </td>
+                  <td class="py-3 px-4"></td>
+                  <td class="py-3 px-4 text-center tabular-nums font-semibold text-neutral-700 dark:text-neutral-300">
+                    {formatNumber(totalQty)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums text-neutral-600 dark:text-neutral-400 font-medium">
+                    {formatRupiah(totalHpp)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums font-bold text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                    {formatRupiah(totalOmzet)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                    +{formatRupiah(labaKotor)}
+                  </td>
+                </tr>
+              </tfoot>
             {/if}
-          </tbody>
-          {#if sortedPenjualan.length > 0}
-            <tfoot class="sticky bottom-0 z-20 bg-[var(--bg-subtle)]">
-              <tr class="font-semibold text-xs text-[var(--text-primary)]">
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 whitespace-nowrap">
-                  <span>Total Item: <strong class="tabular-nums font-bold">{formatNumber(totalQty)} unit</strong></span>
-                </td>
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4"></td>
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 text-center tabular-nums font-semibold text-[var(--text-secondary)]">
-                  {formatNumber(totalQty)}
-                </td>
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 text-right tabular-nums text-[var(--text-secondary)] font-medium">
-                  {formatRupiah(totalHpp)}
-                </td>
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 text-right tabular-nums font-semibold text-[var(--text-primary)] whitespace-nowrap">
-                  {formatRupiah(totalOmzet)}
-                </td>
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 text-right tabular-nums font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                  +{formatRupiah(labaKotor)}
-                </td>
-              </tr>
-            </tfoot>
-          {/if}
-        </table>
-      </div>
+          </table>
+        </div>
 
-      <!-- Pagination & Total Indicator with Limit -->
-      <TablePagination
-        bind:currentPage={penjualanPage}
-        bind:pageSize={penjualanPageSize}
-        totalItems={sortedPenjualan.length}
-        currentItemsCount={paginatedPenjualan.length}
-        itemLabel="transaksi"
-        storageKey="laporan_penjualan_limit"
-      />
+        <!-- Pagination & Total Indicator with Limit -->
+        <TablePagination
+          bind:currentPage={penjualanPage}
+          bind:pageSize={penjualanPageSize}
+          totalItems={sortedPenjualan.length}
+          currentItemsCount={paginatedPenjualan.length}
+          itemLabel="transaksi"
+          storageKey="laporan_penjualan_limit"
+        />
+      </div>
 
     <!-- Tab 3: Rincian Pengeluaran Table -->
     {:else if activeTab === 'pengeluaran'}
-      <div class="overflow-x-auto max-h-[440px] overflow-y-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead class="sticky top-0 z-20 bg-[var(--bg-subtle)]">
-            <tr class="text-[var(--text-muted)] font-medium text-[11px]">
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 w-48">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
-                  onclick={() => togglePengeluaranSort('created_ms')}
-                >
-                  <span>Waktu</span>
-                  {#if pengeluaranSortKey === 'created_ms'}
-                    {#if pengeluaranSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
-                  onclick={() => togglePengeluaranSort('deskripsi')}
-                >
-                  <span>Keperluan / Deskripsi</span>
-                  {#if pengeluaranSortKey === 'deskripsi'}
-                    {#if pengeluaranSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-              <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-right w-44">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
-                  onclick={() => togglePengeluaranSort('jumlah_uang')}
-                >
-                  <span>Nominal Pengeluaran</span>
-                  {#if pengeluaranSortKey === 'jumlah_uang'}
-                    {#if pengeluaranSortAsc}
-                      <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
-                    {:else}
-                      <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
-                    {/if}
-                  {:else}
-                    <ArrowUpDown class="w-3 h-3 opacity-40" />
-                  {/if}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[var(--border-subtle)]">
-            {#if paginatedPengeluaran.length === 0}
+      <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse min-w-[650px]">
+            <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
               <tr>
-                <td colspan="3" class="py-12 text-center text-[var(--text-muted)]">
-                  <TrendingDown class="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p class="font-medium text-xs">Tidak ada data pengeluaran operasional.</p>
-                </td>
+                <th class="py-2.5 px-4 text-left w-48">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePengeluaranSort('created_ms')}
+                  >
+                    <span>Waktu</span>
+                    {#if pengeluaranSortKey === 'created_ms'}
+                      {#if pengeluaranSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-left">
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium"
+                    onclick={() => togglePengeluaranSort('deskripsi')}
+                  >
+                    <span>Keperluan / Deskripsi</span>
+                    {#if pengeluaranSortKey === 'deskripsi'}
+                      {#if pengeluaranSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
+                <th class="py-2.5 px-4 text-right w-44">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors text-[11px] font-medium ml-auto"
+                    onclick={() => togglePengeluaranSort('jumlah_uang')}
+                  >
+                    <span>Nominal Pengeluaran</span>
+                    {#if pengeluaranSortKey === 'jumlah_uang'}
+                      {#if pengeluaranSortAsc}
+                        <ArrowUp class="w-3 h-3 text-[var(--brand)]" />
+                      {:else}
+                        <ArrowDown class="w-3 h-3 text-[var(--brand)]" />
+                      {/if}
+                    {:else}
+                      <ArrowUpDown class="w-3 h-3 opacity-40" />
+                    {/if}
+                  </button>
+                </th>
               </tr>
-            {:else}
-              {#each paginatedPengeluaran as exp}
-                <tr class="hover:bg-[var(--bg-hover)] transition-colors">
-                  <td class="py-3 px-4 text-[var(--text-secondary)] text-xs whitespace-nowrap">{formatDateTime(exp.created_ms)}</td>
-                  <td class="py-3 px-4 font-semibold text-[var(--text-primary)] text-xs">{exp.deskripsi}</td>
-                  <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+            </thead>
+            <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+              {#if paginatedPengeluaran.length === 0}
+                <tr>
+                  <td colspan="3" class="py-12 text-center text-neutral-500">
+                    <TrendingDown class="w-8 h-8 mx-auto mb-2 opacity-40 text-neutral-400" />
+                    <p class="font-medium text-xs">Tidak ada data pengeluaran operasional.</p>
+                  </td>
                 </tr>
-              {/each}
+              {:else}
+                {#each paginatedPengeluaran as exp}
+                  <tr class="hover:bg-neutral-50/70 dark:hover:bg-neutral-900/40 transition-colors">
+                    <td class="py-3 px-4 text-neutral-500 text-xs whitespace-nowrap tabular-nums">{formatDateTime(exp.created_ms)}</td>
+                    <td class="py-3 px-4 font-semibold text-neutral-900 dark:text-neutral-100 text-xs">{exp.deskripsi}</td>
+                    <td class="py-3 px-4 text-right text-xs tabular-nums font-semibold text-red-600 dark:text-red-400">-{formatRupiah(exp.jumlah_uang)}</td>
+                  </tr>
+                {/each}
+              {/if}
+            </tbody>
+            {#if sortedPengeluaran.length > 0}
+              <tfoot class="bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] font-medium text-xs text-[var(--text-primary)]">
+                <tr>
+                  <td colspan="2" class="py-3 px-4 font-semibold text-neutral-900 dark:text-neutral-100">
+                    Total Pengeluaran: {formatNumber(sortedPengeluaran.length)}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
+                    -{formatRupiah(totalPengeluaran)}
+                  </td>
+                </tr>
+              </tfoot>
             {/if}
-          </tbody>
-          {#if sortedPengeluaran.length > 0}
-            <tfoot class="sticky bottom-0 z-20 bg-[var(--bg-subtle)]">
-              <tr class="font-semibold text-xs text-[var(--text-primary)]">
-                <td colspan="2" class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 font-semibold text-[var(--text-primary)]">
-                  Total Pengeluaran: {formatNumber(sortedPengeluaran.length)}
-                </td>
-                <td class="sticky bottom-0 z-20 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] shadow-[inset_0_1px_0_var(--border-subtle)] py-3 px-4 text-right tabular-nums font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
-                  -{formatRupiah(totalPengeluaran)}
-                </td>
-              </tr>
-            </tfoot>
-          {/if}
-        </table>
-      </div>
+          </table>
+        </div>
 
-      <!-- Pagination & Total Indicator with Limit -->
-      <TablePagination
-        bind:currentPage={pengeluaranPage}
-        bind:pageSize={pengeluaranPageSize}
-        totalItems={sortedPengeluaran.length}
-        currentItemsCount={paginatedPengeluaran.length}
-        itemLabel="pengeluaran"
-        storageKey="laporan_pengeluaran_limit"
-      />
+        <!-- Pagination & Total Indicator with Limit -->
+        <TablePagination
+          bind:currentPage={pengeluaranPage}
+          bind:pageSize={pengeluaranPageSize}
+          totalItems={sortedPengeluaran.length}
+          currentItemsCount={paginatedPengeluaran.length}
+          itemLabel="pengeluaran"
+          storageKey="laporan_pengeluaran_limit"
+        />
+      </div>
     {/if}
   </div>
 </div>
@@ -870,11 +864,17 @@
 <!-- Print Report Layout -->
 <div id="financial-print-report" class="hidden print:block font-sans text-black p-8 bg-white max-w-4xl mx-auto text-xs">
   <div class="text-center pb-4 border-b-2 border-black">
-    <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo.store_name || 'KASIRKU POS'}</h1>
+    <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo?.name || auth.publicInfo?.store_name || 'KASIRKU POS'}</h1>
+    {#if auth.publicInfo?.desc || auth.publicInfo?.store_desc}
+      <p class="text-xs text-neutral-600 mt-0.5">{auth.publicInfo?.desc || auth.publicInfo?.store_desc}</p>
+    {/if}
     <p class="text-sm font-semibold mt-0.5">LAPORAN RINGKASAN KEUANGAN</p>
     <p class="text-xs mt-1">Periode: {formatTanggalIndo(startDate)} s/d {formatTanggalIndo(endDate)}</p>
-    {#if auth.publicInfo.store_address}
-      <p class="text-[10px] text-neutral-600">{auth.publicInfo.store_address}</p>
+    {#if auth.publicInfo?.address || auth.publicInfo?.store_address}
+      <p class="text-[10px] text-neutral-600">{auth.publicInfo?.address || auth.publicInfo?.store_address}</p>
+    {/if}
+    {#if auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}
+      <p class="text-[10px] text-neutral-600">Telp: {auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}</p>
     {/if}
   </div>
 

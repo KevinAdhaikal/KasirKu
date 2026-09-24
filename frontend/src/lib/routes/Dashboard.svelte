@@ -16,6 +16,7 @@
   import Rupiah from '../components/ui/Rupiah.svelte';
   import DatePicker from '../components/ui/DatePicker.svelte';
   import TablePagination from '../components/ui/TablePagination.svelte';
+  import Input from '../components/ui/Input.svelte';
   import { formatRupiah, formatNumber, formatDate } from '../utils/format';
   import {
     LayoutDashboard,
@@ -252,7 +253,7 @@
       </div>
       {#if lastSyncedTime}
         <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-          Terakhir disinkron: <strong class="font-mono text-neutral-600 dark:text-neutral-300">{lastSyncedTime}</strong>
+          Terakhir disinkron: <strong class="text-neutral-600 dark:text-neutral-300">{lastSyncedTime}</strong>
         </p>
       {/if}
     </div>
@@ -298,7 +299,7 @@
         <!-- Kolom Kiri (50%): Laba Kotor & Beban Pengeluaran -->
         <div class="divide-y divide-neutral-200/80 dark:divide-neutral-800/80">
           <!-- Kiri 1: Laba Kotor -->
-          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
                 <TrendingUp class="w-4 h-4" />
@@ -320,7 +321,7 @@
           </div>
 
           <!-- Kiri 2: Pengeluaran Toko -->
-          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex items-center justify-center shrink-0">
                 <TrendingDown class="w-4 h-4" />
@@ -345,7 +346,7 @@
         <!-- Kolom Kanan (50%): Total Omzet & Laba Bersih -->
         <div class="divide-y divide-neutral-200/80 dark:divide-neutral-800/80">
           <!-- Kanan 1: Total Omzet -->
-          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700/80 flex items-center justify-center shrink-0">
                 <DollarSign class="w-4 h-4" />
@@ -367,7 +368,7 @@
           </div>
 
           <!-- Kanan 2: Laba Bersih -->
-          <div class="px-5 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50/60 dark:hover:bg-neutral-800/25 transition-colors">
+          <div class="px-5 py-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg {labaBersih >= 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'} border flex items-center justify-center shrink-0">
                 <Wallet class="w-4 h-4" />
@@ -391,7 +392,7 @@
       </div>
 
       <!-- Bottom Row: Volume Terjual -->
-      <div class="px-5 py-3.5 border-t border-neutral-200/80 dark:border-neutral-800/80 flex items-center justify-between bg-neutral-50/30 dark:bg-neutral-900/20 hover:bg-neutral-50/60 dark:hover:bg-neutral-900/40 transition-colors">
+      <div class="px-5 py-3.5 border-t border-neutral-200/80 dark:border-neutral-800/80 flex items-center justify-between bg-neutral-50/30 dark:bg-neutral-900/20">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700/80 flex items-center justify-center shrink-0">
             <ShoppingBag class="w-4 h-4" />
@@ -430,12 +431,17 @@
         <!-- Search input if items exist -->
         {#if barangKosong.length > 4}
           <div class="mb-3">
-            <input
-              type="text"
+            <Input
+              id="search-barang-kosong-input"
               bind:value={filterBarangKosongQuery}
               placeholder="Cari barang kosong…"
-              class="w-full px-2.5 py-1.5 rounded-md border text-xs bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/25 focus:border-[var(--brand)] dark:focus:ring-[var(--brand)]/25 dark:focus:border-[var(--brand)]"
-            />
+              clearable
+              class="h-8 text-xs"
+            >
+              {#snippet prefix()}
+                <Search class="w-3.5 h-3.5 text-neutral-400" />
+              {/snippet}
+            </Input>
           </div>
         {/if}
 
@@ -463,7 +469,7 @@
                   <p class="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                     {item.nama_barang}
                   </p>
-                  <span class="inline-block mt-0.5 text-[10px] text-red-600 dark:text-red-400 font-mono font-medium">
+                  <span class="inline-block mt-0.5 text-[10px] text-red-600 dark:text-red-400 font-medium">
                     Stok: 0
                   </span>
                 </div>
@@ -544,28 +550,33 @@
         <!-- Custom Date Range Pickers & Filter -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-200/60 dark:border-neutral-800/60">
           <div class="flex items-center gap-2 text-xs">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
               <DatePicker
                 bind:value={startDate}
+                align="left"
                 onchange={() => { activePreset = 'custom'; fetchBarangTerjualTanggal(); }}
               />
               <span class="text-neutral-400 text-xs">s/d</span>
               <DatePicker
                 bind:value={endDate}
-                align="left"
+                align="right"
                 onchange={() => { activePreset = 'custom'; fetchBarangTerjualTanggal(); }}
               />
             </div>
           </div>
 
-          <div class="relative w-full sm:w-56">
-            <Search class="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-2.5 pointer-events-none" />
-            <input
-              type="text"
+          <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+            <Input
+              id="search-terjual-input"
               bind:value={filterTerjualQuery}
               placeholder="Cari produk…"
-              class="w-full pl-8 pr-2.5 py-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 text-xs bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/25 focus:border-[var(--brand)] dark:focus:ring-[var(--brand)]/25 dark:focus:border-[var(--brand)]"
-            />
+              clearable
+              class="h-8 text-xs"
+            >
+              {#snippet prefix()}
+                <Search class="w-3.5 h-3.5 text-neutral-400" />
+              {/snippet}
+            </Input>
           </div>
         </div>
 
@@ -584,51 +595,51 @@
               {#if filterTerjualQuery}
                 Tidak ditemukan produk yang cocok dengan kata kunci "{filterTerjualQuery}".
               {:else}
-                Tidak ada riwayat penjualan produk pada rentang tanggal {startDate} s/d {endDate}.
+                Tidak ada riwayat penjualan produk.
               {/if}
             </p>
           </div>
         {:else}
-          <div class="overflow-x-auto -mx-5 -my-2 max-h-[340px] overflow-y-auto">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead class="sticky top-0 z-20 bg-[var(--bg-subtle)]">
-                <tr class="text-[var(--text-muted)] text-[11px] font-medium uppercase tracking-wider">
-                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium w-12">#</th>
-                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium">NAMA PRODUK</th>
-                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium text-right">VOLUME TERJUAL</th>
-                  <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] px-5 py-2.5 font-medium text-right w-28">KONTRIBUSI</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
-                {#each paginatedBarangTerjual as row, idx}
-                  {@const rowJumlah = Number(row.jumlah) || 0}
-                  {@const sharePct = totalBarangTerjualPeriode > 0 ? ((rowJumlah / totalBarangTerjualPeriode) * 100).toFixed(1) : '0.0'}
-                  <tr class="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/30 transition-colors">
-                    <td class="px-5 py-2.5 tabular-nums text-neutral-400 text-[11px]">
-                      {(terjualPage - 1) * terjualPageSize + idx + 1}
-                    </td>
-                    <td class="px-5 py-2.5 font-medium text-neutral-900 dark:text-neutral-100">
-                      {row.nama_barang}
-                    </td>
-                    <td class="px-5 py-2.5 text-right tabular-nums font-semibold text-neutral-800 dark:text-neutral-200">
-                      {formatNumber(rowJumlah)} <span class="text-[11px] font-normal text-neutral-500">item</span>
-                    </td>
-                    <td class="px-5 py-2.5 text-right tabular-nums text-neutral-500 text-[11px]">
-                      <div class="flex items-center justify-end gap-1.5">
-                        <span>{sharePct}%</span>
-                        <div class="w-12 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden shrink-0">
-                          <div class="h-full bg-neutral-900 dark:bg-neutral-100" style:width={`${sharePct}%`}></div>
-                        </div>
-                      </div>
-                    </td>
+          <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse min-w-[500px]">
+                <thead class="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
+                  <tr>
+                    <th class="py-2.5 px-4 text-center w-12 font-medium">#</th>
+                    <th class="py-2.5 px-4 text-left font-medium">Nama Produk</th>
+                    <th class="py-2.5 px-4 text-right font-medium w-36">Volume Terjual</th>
+                    <th class="py-2.5 px-4 text-right font-medium w-36">Kontribusi</th>
                   </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody class="divide-y divide-neutral-200/70 dark:divide-neutral-800/80">
+                  {#each paginatedBarangTerjual as row, idx}
+                    {@const rowJumlah = Number(row.jumlah) || 0}
+                    {@const sharePct = totalBarangTerjualPeriode > 0 ? ((rowJumlah / totalBarangTerjualPeriode) * 100).toFixed(1) : '0.0'}
+                    <tr class="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/30 transition-colors">
+                      <td class="py-2.5 px-4 text-center tabular-nums text-neutral-400 text-xs">
+                        {(terjualPage - 1) * terjualPageSize + idx + 1}
+                      </td>
+                      <td class="py-2.5 px-4 font-medium text-neutral-900 dark:text-neutral-100 text-xs">
+                        {row.nama_barang}
+                      </td>
+                      <td class="py-2.5 px-4 text-right tabular-nums font-semibold text-neutral-800 dark:text-neutral-200 text-xs">
+                        {formatNumber(rowJumlah)} <span class="text-[11px] font-normal text-neutral-500">item</span>
+                      </td>
+                      <td class="py-2.5 px-4 text-right tabular-nums text-neutral-500 text-xs">
+                        <div class="flex items-center justify-end gap-1.5">
+                          <span>{sharePct}%</span>
+                          <div class="w-12 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden shrink-0">
+                            <div class="h-full bg-neutral-900 dark:bg-neutral-100" style:width={`${sharePct}%`}></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </div>
 
-          <!-- Pagination with Limit -->
-          <div class="-mx-5 -mb-5 mt-2">
+            <!-- Pagination with Limit -->
             <TablePagination
               bind:currentPage={terjualPage}
               bind:pageSize={terjualPageSize}

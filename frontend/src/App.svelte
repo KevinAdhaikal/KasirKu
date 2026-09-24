@@ -102,7 +102,7 @@
         <Settings />
       {:else}
         <div class="py-16 text-center">
-          <h2 class="text-2xl font-bold font-mono">404</h2>
+          <h2 class="text-2xl font-bold">404</h2>
           <p class="text-xs text-neutral-500 mt-1">Halaman tidak ditemukan.</p>
           <button
             type="button"

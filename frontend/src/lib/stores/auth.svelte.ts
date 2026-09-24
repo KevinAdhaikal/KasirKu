@@ -38,6 +38,10 @@ export interface UserProfile {
 }
 
 export interface StorePublicInfo {
+  name?: string;
+  desc?: string;
+  address?: string;
+  phone_num?: string;
   store_name?: string;
   store_desc?: string;
   store_address?: string;
@@ -53,24 +57,40 @@ class AuthStore {
       ? (() => {
           try {
             const cached = localStorage.getItem('kasirku_public_info');
-            return (
-              (cached && JSON.parse(cached)) || {
-                store_name: 'KasirKu',
-                store_desc: 'Sistem Kasir & Inventaris Modern',
-                store_address: '',
-                store_phone_num: '',
-              }
-            );
-          } catch {
-            return {
-              store_name: 'KasirKu',
-              store_desc: 'Sistem Kasir & Inventaris Modern',
-              store_address: '',
-              store_phone_num: '',
-            };
-          }
+            if (cached) {
+              const p = JSON.parse(cached);
+              const n = p.name || p.store_name || 'KasirKu';
+              const d = p.desc || p.description || p.store_desc || 'Sistem Kasir & Inventaris Modern';
+              const a = p.address || p.store_address || '';
+              const ph = p.phone_num || p.no_phone || p.telepon || p.store_phone_num || '';
+              return {
+                name: n,
+                desc: d,
+                address: a,
+                phone_num: ph,
+                store_name: n,
+                store_desc: d,
+                store_address: a,
+                store_phone_num: ph,
+              };
+            }
+          } catch {}
+          return {
+            name: 'KasirKu',
+            desc: 'Sistem Kasir & Inventaris Modern',
+            address: '',
+            phone_num: '',
+            store_name: 'KasirKu',
+            store_desc: 'Sistem Kasir & Inventaris Modern',
+            store_address: '',
+            store_phone_num: '',
+          };
         })()
       : {
+          name: 'KasirKu',
+          desc: 'Sistem Kasir & Inventaris Modern',
+          address: '',
+          phone_num: '',
           store_name: 'KasirKu',
           store_desc: 'Sistem Kasir & Inventaris Modern',
           store_address: '',
@@ -267,13 +287,51 @@ class AuthStore {
       const data = await api.get<any>('/api/public_info');
       const parsed = typeof data === 'string' ? JSON.parse(data) : data;
       const storeInfo = parsed?.store || parsed || {};
-      this.publicInfo = { ...this.publicInfo, ...storeInfo };
+      const n = storeInfo.name || storeInfo.store_name || this.publicInfo.name || this.publicInfo.store_name || 'KasirKu';
+      const d = storeInfo.desc || storeInfo.description || storeInfo.store_desc || this.publicInfo.desc || this.publicInfo.store_desc || '';
+      const a = storeInfo.address || storeInfo.store_address || this.publicInfo.address || this.publicInfo.store_address || '';
+      const ph = storeInfo.phone_num || storeInfo.no_phone || storeInfo.telepon || storeInfo.store_phone_num || this.publicInfo.phone_num || this.publicInfo.store_phone_num || '';
+
+      this.publicInfo = {
+        ...this.publicInfo,
+        name: n,
+        desc: d,
+        address: a,
+        phone_num: ph,
+        store_name: n,
+        store_desc: d,
+        store_address: a,
+        store_phone_num: ph,
+      };
       if (typeof window !== 'undefined') {
         localStorage.setItem('kasirku_public_info', JSON.stringify(this.publicInfo));
       }
       return this.publicInfo;
     } catch (err) {
       return this.publicInfo;
+    }
+  }
+
+  updatePublicInfo(info: any) {
+    const store = info?.store || info || {};
+    const n = store.name ?? store.store_name ?? this.publicInfo.name ?? this.publicInfo.store_name;
+    const d = store.desc ?? store.description ?? store.store_desc ?? this.publicInfo.desc ?? this.publicInfo.store_desc;
+    const a = store.address ?? store.store_address ?? this.publicInfo.address ?? this.publicInfo.store_address;
+    const ph = store.phone_num ?? store.no_phone ?? store.telepon ?? store.store_phone_num ?? this.publicInfo.phone_num ?? this.publicInfo.store_phone_num;
+
+    this.publicInfo = {
+      ...this.publicInfo,
+      name: n,
+      desc: d,
+      address: a,
+      phone_num: ph,
+      store_name: n,
+      store_desc: d,
+      store_address: a,
+      store_phone_num: ph,
+    };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kasirku_public_info', JSON.stringify(this.publicInfo));
     }
   }
 

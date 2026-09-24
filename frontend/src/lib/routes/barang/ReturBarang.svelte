@@ -403,14 +403,30 @@
     </div>
   </div>
 
-  <!-- Date Navigation Toolbar & Summary -->
+  <!-- Toolbar: Search (Left) & Date Navigation (Right) -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Search Filter on Records -->
+    <div class="w-full sm:w-64 md:w-72 lg:w-80 shrink-0 relative">
+      <Input
+        id="search-table-retur"
+        bind:value={filterTableQuery}
+        placeholder="Cari nama produk atau alasan retur…"
+        clearable
+        class="h-9 text-xs"
+      >
+        {#snippet prefix()}
+          <Search class="w-3.5 h-3.5 text-neutral-400" />
+        {/snippet}
+      </Input>
+    </div>
+
+    <!-- Date Navigation Controls -->
     <div class="flex items-center gap-2 flex-wrap">
-        <DatePicker
-          bind:value={selectedDate}
-          placeholder="Pilih tanggal"
-          align="left"
-        />
+      <DatePicker
+        bind:value={selectedDate}
+        placeholder="Pilih tanggal"
+        align="right"
+      />
 
       <div class="flex items-center gap-1">
         <Button variant="secondary" size="sm" onclick={setToday}>
@@ -420,31 +436,13 @@
           Kemarin
         </Button>
       </div>
-
-      <span class="text-xs text-neutral-500 hidden md:inline ml-2">
-        {formatTanggalIndo(selectedDate)}
-      </span>
     </div>
-
-  <!-- Search Filter on Records -->
-  <div class="max-w-sm">
-    <Input
-      id="search-table-retur"
-      bind:value={filterTableQuery}
-      placeholder="Cari nama produk atau alasan retur…"
-      clearable
-      class="h-9 text-xs"
-    >
-      {#snippet prefix()}
-        <Search class="w-3.5 h-3.5" />
-      {/snippet}
-    </Input>
   </div>
-</div>
 
-  <!-- Return Records Table -->
+  <!-- Return Records Table & Mobile Cards -->
   <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
-    <table class="w-full text-left text-xs border-collapse">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse min-w-[650px]">
       <thead>
         <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
           <th class="py-2.5 px-4 w-20">
@@ -591,6 +589,8 @@
         {/if}
       </tbody>
     </table>
+    </div>
+
 
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
@@ -658,12 +658,12 @@
                 <div class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                   {p.nama_barang}
                 </div>
-                <div class="text-[11px] text-neutral-400 font-mono truncate">
+                <div class="text-[11px] text-neutral-400 truncate">
                   {p.barcode_barang ? `Barcode: ${p.barcode_barang}` : 'Tanpa Barcode'}
                 </div>
               </div>
               <div class="text-right shrink-0">
-                <span class="text-xs font-mono font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
+                <span class="text-xs font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
                   Stok: {formatNumber(p.stok_barang)} unit
                 </span>
               </div>
@@ -684,7 +684,7 @@
             <div class="font-semibold text-neutral-900 dark:text-neutral-100 text-xs">
               {selectedProduct.nama_barang}
             </div>
-            <div class="text-[11px] text-neutral-500 font-mono">
+            <div class="text-[11px] text-neutral-500">
               Stok Gudang: <strong>{formatNumber(selectedProduct.stok_barang)} unit</strong>
             </div>
           </div>
@@ -744,7 +744,7 @@
         {@const parsedRetur = Number(String(formJumlah).replace(/\./g, '')) || 0}
         <div class="flex flex-col justify-center">
           <span class="text-[11px] text-neutral-500">Sisa Stok Akhir:</span>
-          <div class="text-sm font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums">
+          <div class="text-sm font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
             {formatNumber(selectedProduct.stok_barang)} - {formatNumber(parsedRetur)} = 
             <span class="{selectedProduct.stok_barang - parsedRetur < 0 ? 'text-red-500 dark:text-red-400 font-bold' : 'text-amber-600 dark:text-amber-400'}">
               {formatNumber(selectedProduct.stok_barang - parsedRetur)} unit

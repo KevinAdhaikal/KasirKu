@@ -181,7 +181,7 @@ class SseStore {
               this.status = 'online';
               settle(true);
               if (data.type === 8 && data.code === 'UPDATE_TOKO_SETTING') {
-                auth.publicInfo = { ...auth.publicInfo, ...data.data };
+                auth.updatePublicInfo(data.data);
               }
             }
 

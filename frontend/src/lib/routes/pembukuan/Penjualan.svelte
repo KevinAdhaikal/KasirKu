@@ -23,6 +23,8 @@
     formatTanggalKey,
     getTanggalKey
   } from '../../utils/format';
+  import { renderReceiptHtml, type StoreInfo } from '../../utils/receipt';
+  import type { ReceiptData } from '../../components/pos/PaymentModal.svelte';
   import {
     Receipt,
     ReceiptText,
@@ -130,9 +132,8 @@
     }
   }
 
-  async function openDetail(item: PenjualanItem) {
+  async function loadDetailData(item: PenjualanItem) {
     selectedPenjualan = item;
-    isDetailModalOpen = true;
     loadingDetail = true;
     detailItems = [];
     try {
@@ -146,13 +147,80 @@
     }
   }
 
-  function handlePrint(item?: PenjualanItem) {
-    if (item && item.id !== selectedPenjualan?.id) {
-      openDetail(item).then(() => {
+  async function openDetail(item: PenjualanItem) {
+    isDetailModalOpen = true;
+    await loadDetailData(item);
+  }
+
+  async function handlePrint(item?: PenjualanItem) {
+    const targetItem = item || selectedPenjualan;
+    if (!targetItem) return;
+
+    if (!selectedPenjualan || targetItem.id !== selectedPenjualan.id || detailItems.length === 0) {
+      await loadDetailData(targetItem);
+    }
+
+    // Ensure public info is fresh
+    await auth.fetchPublicInfo();
+
+    // Load custom struk template if available
+    let strukTemplate: string | null = null;
+    try {
+      const res = await api.get<{ store_struk?: string | null; content?: string | null }>('/api/settings/struk');
+      const val = res?.store_struk ?? res?.content;
+      if (val && val.trim()) {
+        strukTemplate = val;
+      }
+    } catch {}
+
+    const storeInfo: StoreInfo = {
+      name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
+      desc: auth.publicInfo?.desc?.trim() || auth.publicInfo?.description?.trim() || auth.publicInfo?.store_desc?.trim() || '',
+      address: auth.publicInfo?.address?.trim() || auth.publicInfo?.store_address?.trim() || '',
+      phone_num: auth.publicInfo?.phone_num?.trim() || auth.publicInfo?.no_phone?.trim() || auth.publicInfo?.store_phone_num?.trim() || '',
+    };
+
+    const receiptData: ReceiptData = {
+      receiptNo: targetItem.no_struk,
+      timestamp: targetItem.created_ms,
+      cashierName: targetItem.nama_kasir || 'Kasir',
+      totalAmount: targetItem.total_belanja,
+      totalItems: targetItem.total_barang,
+      cashPaid: targetItem.tunai,
+      changeAmount: targetItem.kembalian,
+      items: detailItems.map((d) => ({
+        nama_barang: d.nama_barang,
+        harga_jual: d.harga_jual,
+        jumlah_barang: d.jumlah_barang,
+      })),
+    };
+
+    const receiptHtml = renderReceiptHtml(strukTemplate, receiptData, storeInfo);
+
+    // Print via clean hidden iframe (same as Kasir ReceiptModal)
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(receiptHtml);
+      doc.close();
+      iframe.contentWindow?.focus();
+      setTimeout(() => {
+        iframe.contentWindow?.print();
         setTimeout(() => {
-          window.print();
-        }, 300);
-      });
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }, 1000);
+      }, 250);
     } else {
       window.print();
     }
@@ -243,6 +311,7 @@
 
   onMount(() => {
     fetchData();
+    auth.fetchPublicInfo();
 
     unsubscribeSSE = sse.subscribe((event) => {
       // type 2 is TRANSACTION / CHECKOUT event
@@ -312,14 +381,16 @@
 
       <!-- Custom Date Inputs -->
       <div class="flex items-center gap-2 text-xs">
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 flex-wrap">
           <DatePicker
             bind:value={startDate}
+            align="left"
             onchange={() => { filterPreset = 'custom'; fetchData(); }}
           />
           <span class="text-neutral-400 text-xs">s/d</span>
           <DatePicker
             bind:value={endDate}
+            align="right"
             onchange={() => { filterPreset = 'custom'; fetchData(); }}
           />
         </div>
@@ -343,7 +414,7 @@
   <!-- Table Card -->
   <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
+      <table class="w-full text-left text-xs border-collapse min-w-[750px]">
         <thead>
           <tr class="border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-muted)] font-medium text-[11px]">
             <th class="px-4 py-2.5">
@@ -566,6 +637,7 @@
       </table>
     </div>
 
+
     <!-- Pagination & Total Indicator with Limit -->
     <TablePagination
       bind:currentPage
@@ -582,7 +654,6 @@
 <Modal
   open={isDetailModalOpen}
   title="Rincian Transaksi Penjualan"
-  description={`Struk ${selectedPenjualan?.no_struk || ''} pada ${selectedPenjualan ? formatDateTime(selectedPenjualan.created_ms) : ''}`}
   size="xl"
   onclose={() => (isDetailModalOpen = false)}
 >
@@ -593,13 +664,13 @@
       <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/50 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
         <div>
           <span class="text-neutral-500 block">Nomor Struk:</span>
-          <span class="font-mono font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
+          <span class="font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
             {selectedPenjualan.no_struk}
           </span>
         </div>
         <div>
           <span class="text-neutral-500 block">Waktu Transaksi:</span>
-          <span class="font-mono text-neutral-800 dark:text-neutral-200 mt-0.5 block">
+          <span class="text-neutral-800 dark:text-neutral-200 mt-0.5 block">
             {formatDateTime(selectedPenjualan.created_ms)}
           </span>
         </div>
@@ -611,7 +682,7 @@
         </div>
         <div>
           <span class="text-neutral-500 block">Total Kuantitas:</span>
-          <span class="font-mono font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
+          <span class="font-bold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5 block">
             {formatNumber(selectedPenjualan.total_barang)} unit
           </span>
         </div>
@@ -621,7 +692,7 @@
       <div class="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 text-neutral-500 font-mono text-[11px]">
+            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 text-neutral-500 text-[11px]">
               <th class="px-4 py-2.5 font-medium">PRODUK / ITEM</th>
               <th class="px-4 py-2.5 font-medium text-center">QTY</th>
               <th class="px-4 py-2.5 font-medium text-right">HARGA SATUAN</th>
@@ -650,13 +721,13 @@
                   <td class="px-4 py-2.5 font-medium text-neutral-900 dark:text-neutral-100">
                     {item.nama_barang}
                   </td>
-                  <td class="px-4 py-2.5 text-center font-mono font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
+                  <td class="px-4 py-2.5 text-center font-medium text-neutral-700 dark:text-neutral-300 tabular-nums">
                     {formatNumber(item.jumlah)}
                   </td>
-                  <td class="px-4 py-2.5 text-right font-mono text-neutral-600 dark:text-neutral-400 tabular-nums">
+                  <td class="px-4 py-2.5 text-right text-neutral-600 dark:text-neutral-400 tabular-nums">
                     {formatRupiah(item.harga_jual)}
                   </td>
-                  <td class="px-4 py-2.5 text-right font-mono font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
+                  <td class="px-4 py-2.5 text-right font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
                     {formatRupiah(item.total_harga_jual)}
                   </td>
                 </tr>
@@ -670,14 +741,14 @@
       <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div class="space-y-1">
           <div class="text-neutral-500">Estimasi Laba Kotor:</div>
-          <div class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             +{formatRupiah(itemLaba)}
           </div>
         </div>
 
         <div class="text-right space-y-0.5">
           <div class="text-neutral-500">Grand Total Belanja:</div>
-          <div class="text-2xl font-bold font-mono text-neutral-900 dark:text-neutral-100 tabular-nums">
+          <div class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
             {formatRupiah(selectedPenjualan.total_harga_jual)}
           </div>
         </div>
@@ -706,14 +777,17 @@
 
 <!-- Thermal Printable Struk Template -->
 {#if selectedPenjualan}
-  <div id="thermal-receipt" class="hidden print:block font-mono text-black bg-white p-4 max-w-[320px] mx-auto text-xs">
+  <div id="thermal-receipt" class="hidden print:block text-black bg-white p-4 max-w-[320px] mx-auto text-xs">
     <div class="text-center pb-3 border-b border-dashed border-black">
-      <h2 class="font-bold text-sm uppercase">{auth.publicInfo.store_name || 'KASIRKU POS'}</h2>
-      {#if auth.publicInfo.store_address}
-        <p class="text-[10px] mt-0.5">{auth.publicInfo.store_address}</p>
+      <h2 class="font-bold text-sm uppercase">{auth.publicInfo?.name || auth.publicInfo?.store_name || 'KASIRKU POS'}</h2>
+      {#if auth.publicInfo?.desc || auth.publicInfo?.store_desc}
+        <p class="text-[10px] text-neutral-600">{auth.publicInfo?.desc || auth.publicInfo?.store_desc}</p>
       {/if}
-      {#if auth.publicInfo.store_phone_num}
-        <p class="text-[10px]">Telp: {auth.publicInfo.store_phone_num}</p>
+      {#if auth.publicInfo?.address || auth.publicInfo?.store_address}
+        <p class="text-[10px] mt-0.5">{auth.publicInfo?.address || auth.publicInfo?.store_address}</p>
+      {/if}
+      {#if auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}
+        <p class="text-[10px]">Telp: {auth.publicInfo?.phone_num || auth.publicInfo?.store_phone_num}</p>
       {/if}
     </div>
 

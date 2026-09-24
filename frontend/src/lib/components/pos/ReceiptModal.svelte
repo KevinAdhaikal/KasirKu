@@ -66,10 +66,10 @@
   }
 
   const storeInfo = $derived<StoreInfo>({
-    name: auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
-    desc: auth.publicInfo?.store_desc?.trim() || '',
-    address: auth.publicInfo?.store_address?.trim() || '',
-    phone_num: auth.publicInfo?.store_phone_num?.trim() || '',
+    name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
+    desc: auth.publicInfo?.desc?.trim() || auth.publicInfo?.description?.trim() || auth.publicInfo?.store_desc?.trim() || '',
+    address: auth.publicInfo?.address?.trim() || auth.publicInfo?.store_address?.trim() || '',
+    phone_num: auth.publicInfo?.phone_num?.trim() || auth.publicInfo?.no_phone?.trim() || auth.publicInfo?.store_phone_num?.trim() || '',
   });
 
   const receiptHtml = $derived(
@@ -90,11 +90,13 @@
 
   onMount(() => {
     loadStrukTemplate();
+    auth.fetchPublicInfo();
   });
 
   $effect(() => {
     if (open) {
       loadStrukTemplate();
+      auth.fetchPublicInfo();
     }
   });
 </script>
@@ -114,7 +116,7 @@
         <div class="inline-flex rounded-md border border-neutral-200 dark:border-neutral-800 p-0.5 bg-neutral-100 dark:bg-neutral-900">
           <button
             type="button"
-            class={`px-2 py-0.5 text-xs rounded font-mono transition-colors ${
+            class={`px-2 py-0.5 text-xs rounded transition-colors ${
               receiptWidth === '58mm'
                 ? 'bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 shadow-2xs font-semibold'
                 : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
@@ -125,7 +127,7 @@
           </button>
           <button
             type="button"
-            class={`px-2 py-0.5 text-xs rounded font-mono transition-colors ${
+            class={`px-2 py-0.5 text-xs rounded transition-colors ${
               receiptWidth === '80mm'
                 ? 'bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 shadow-2xs font-semibold'
                 : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'

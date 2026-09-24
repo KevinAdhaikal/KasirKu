@@ -187,7 +187,8 @@
   {:else}
     <div class="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
       <div class="max-h-[380px] overflow-y-auto">
-        <table class="w-full text-xs border-collapse">
+        <!-- Desktop Table View (sm and up) -->
+        <table class="hidden sm:table w-full text-xs border-collapse">
           <thead class="sticky top-0 z-20 bg-[var(--bg-subtle)]">
             <tr class="text-[var(--text-muted)] font-medium text-[11px]">
               <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-left">Nama Produk</th>
@@ -197,54 +198,106 @@
               <th class="sticky top-0 z-20 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] shadow-[inset_0_-1px_0_var(--border-subtle)] py-2.5 px-4 text-center w-24">Aksi</th>
             </tr>
           </thead>
-        <tbody class="divide-y divide-[var(--border-subtle)]">
+          <tbody class="divide-y divide-[var(--border-subtle)]">
+            {#each paginatedProducts as product}
+              {@const isOutOfStock = product.stok_barang <= 0}
+              <tr class="hover:bg-[var(--bg-hover)] transition-colors">
+                <td class="py-2.5 px-4 text-left font-medium text-[var(--text-primary)]">
+                  {product.nama_barang}
+                </td>
+                <td class="py-2.5 px-4 text-left tabular-nums text-[var(--text-secondary)]">
+                  {#if product.barcode_barang}
+                    <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] font-medium">
+                      <Barcode class="w-3 h-3 opacity-60" />
+                      {product.barcode_barang}
+                    </span>
+                  {:else}
+                    <span class="text-[var(--text-muted)] text-[11px]">-</span>
+                  {/if}
+                </td>
+                <td class="py-2.5 px-4 text-center">
+                  {#if isOutOfStock}
+                    <Badge variant="danger" size="sm">Habis</Badge>
+                  {:else if product.stok_barang <= 5}
+                    <Badge variant="warning" size="sm">{product.stok_barang} tersisa</Badge>
+                  {:else}
+                    <span class="tabular-nums text-[var(--text-primary)] font-medium">
+                      {formatNumber(product.stok_barang)}
+                    </span>
+                  {/if}
+                </td>
+                <td class="py-2.5 px-4 text-right tabular-nums font-semibold text-[var(--text-primary)]">
+                  <Rupiah value={product.harga_jual} />
+                </td>
+                <td class="py-2.5 px-4 text-center">
+                  <div class="flex items-center justify-center">
+                    <Button
+                      variant={isOutOfStock ? 'secondary' : 'primary'}
+                      size="sm"
+                      disabled={isOutOfStock}
+                      onclick={() => handleSelect(product)}
+                    >
+                      <Plus class="w-3.5 h-3.5" />
+                      <span>Tambah</span>
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+
+        <!-- Mobile Card List View (< sm) -->
+        <div class="sm:hidden divide-y divide-[var(--border-subtle)]">
           {#each paginatedProducts as product}
             {@const isOutOfStock = product.stok_barang <= 0}
-            <tr class="hover:bg-[var(--bg-hover)] transition-colors">
-              <td class="py-2.5 px-4 text-left font-medium text-[var(--text-primary)]">
-                {product.nama_barang}
-              </td>
-              <td class="py-2.5 px-4 text-left tabular-nums text-[var(--text-secondary)]">
-                {#if product.barcode_barang}
-                  <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] font-medium">
-                    <Barcode class="w-3 h-3 opacity-60" />
-                    {product.barcode_barang}
-                  </span>
-                {:else}
-                  <span class="text-[var(--text-muted)] text-[11px]">-</span>
-                {/if}
-              </td>
-              <td class="py-2.5 px-4 text-center">
-                {#if isOutOfStock}
-                  <Badge variant="danger" size="sm">Habis</Badge>
-                {:else if product.stok_barang <= 5}
-                  <Badge variant="warning" size="sm">{product.stok_barang} tersisa</Badge>
-                {:else}
-                  <span class="tabular-nums text-[var(--text-primary)] font-medium">
-                    {formatNumber(product.stok_barang)}
-                  </span>
-                {/if}
-              </td>
-              <td class="py-2.5 px-4 text-right tabular-nums font-semibold text-[var(--text-primary)]">
-                <Rupiah value={product.harga_jual} />
-              </td>
-              <td class="py-2.5 px-4 text-center">
-                <div class="flex items-center justify-center">
-                  <Button
-                    variant={isOutOfStock ? 'secondary' : 'primary'}
-                    size="sm"
-                    disabled={isOutOfStock}
-                    onclick={() => handleSelect(product)}
-                  >
-                    <Plus class="w-3.5 h-3.5" />
-                    <span>Tambah</span>
-                  </Button>
+            <div class="p-3.5 space-y-2.5 bg-[var(--bg-surface)]">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold text-xs text-[var(--text-primary)] leading-tight">
+                    {product.nama_barang}
+                  </p>
+                  <div class="flex items-center gap-2 mt-1 flex-wrap">
+                    {#if product.barcode_barang}
+                      <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-[var(--text-secondary)]">
+                        <Barcode class="w-3 h-3 opacity-60" />
+                        {product.barcode_barang}
+                      </span>
+                    {/if}
+                    {#if isOutOfStock}
+                      <Badge variant="danger" size="sm">Habis</Badge>
+                    {:else if product.stok_barang <= 5}
+                      <Badge variant="warning" size="sm">{product.stok_barang} sisa</Badge>
+                    {:else}
+                      <span class="text-[10px] text-[var(--text-muted)] font-medium">
+                        Stok: {formatNumber(product.stok_barang)}
+                      </span>
+                    {/if}
+                  </div>
                 </div>
-              </td>
-            </tr>
+
+                <div class="text-right shrink-0">
+                  <span class="text-xs font-bold text-[var(--brand)] tabular-nums block">
+                    <Rupiah value={product.harga_jual} />
+                  </span>
+                </div>
+              </div>
+
+              <div class="pt-1">
+                <Button
+                  variant={isOutOfStock ? 'secondary' : 'primary'}
+                  size="sm"
+                  class="w-full h-8 text-xs font-medium"
+                  disabled={isOutOfStock}
+                  onclick={() => handleSelect(product)}
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  <span>Tambah ke Keranjang</span>
+                </Button>
+              </div>
+            </div>
           {/each}
-        </tbody>
-      </table>
+        </div>
       </div>
     </div>
   {/if}
