@@ -108,12 +108,6 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 - RAM: 256 MB (512 MB recommended)
 - Storage: 1 GB (5 GB recommended)
 - OS: Linux / Windows / macOS / Android (Termux)
-### Browser
-KasirKu dapat dijalankan di browser modern seperti:
-- Chrome 
-- Firefox
-- Edge
-- Safari
 
 ## Cara Menjalankan
 ### Pakai Bun
