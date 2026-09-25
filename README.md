@@ -11,17 +11,43 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 
 ## Preview
 
-- Frontend Installer
+<details>
+<summary><h3>Frontend Installer</h3></summary>
+<br>
 
-  | Step 1 - Selamat Datang | Step 2 - Jaringan & Port |
-  | :---: | :---: |
-  | ![Step 1 - Selamat Datang](screenshots/installer_frontend/step1.png) | ![Step 2 - Jaringan & Port](screenshots/installer_frontend/step2.png) |
-  | **Step 3 - Mesin Database** | **Step 4 - Koneksi Database (SQLite)** |
-  | ![Step 3 - Mesin Database](screenshots/installer_frontend/step3.png) | ![Step 4 - Koneksi Database (SQLite)](screenshots/installer_frontend/step4_sqlite.png) |
-  | **Step 4 - Koneksi Database (MySQL / PostgreSQL)** | **Step 5 - Akun Administrator** |
-  | ![Step 4 - Koneksi Database (MySQL / PostgreSQL)](screenshots/installer_frontend/step4_mysql_postgresql.png) | ![Step 5 - Akun Administrator](screenshots/installer_frontend/step5.png) |
-  | **Step 6 - Profil Toko** | **Instalasi Selesai** |
-  | ![Step 6 - Profil Toko](screenshots/installer_frontend/step6.png) | ![Instalasi Selesai](screenshots/installer_frontend/installation_done.png) |
+| Step 1 - Selamat Datang | Step 2 - Jaringan & Port |
+| :---: | :---: |
+| ![Step 1 - Selamat Datang](screenshots/installer_frontend/step1.png) | ![Step 2 - Jaringan & Port](screenshots/installer_frontend/step2.png) |
+| **Step 3 - Mesin Database** | **Step 4 - Koneksi Database (SQLite)** |
+| ![Step 3 - Mesin Database](screenshots/installer_frontend/step3.png) | ![Step 4 - Koneksi Database (SQLite)](screenshots/installer_frontend/step4_sqlite.png) |
+| **Step 4 - Koneksi Database (MySQL / PostgreSQL)** | **Step 5 - Akun Administrator** |
+| ![Step 4 - Koneksi Database (MySQL / PostgreSQL)](screenshots/installer_frontend/step4_mysql_postgresql.png) | ![Step 5 - Akun Administrator](screenshots/installer_frontend/step5.png) |
+| **Step 6 - Profil Toko** | **Instalasi Selesai** |
+| ![Step 6 - Profil Toko](screenshots/installer_frontend/step6.png) | ![Instalasi Selesai](screenshots/installer_frontend/installation_done.png) |
+
+</details>
+
+<details>
+<summary><h3>Main Frontend</h3></summary>
+<br>
+
+| Login | Dashboard |
+| :---: | :---: |
+| ![Login](screenshots/main_frontend/login.png) | ![Dashboard](screenshots/main_frontend/dashboard.png) |
+| **Kasir (Point of Sale)** | **Daftar Barang** |
+| ![Kasir](screenshots/main_frontend/kasir.png) | ![Daftar Barang](screenshots/main_frontend/daftar_barang.png) |
+| **Kategori Barang** | **Barang Masuk** |
+| ![Kategori Barang](screenshots/main_frontend/kategori_barang.png) | ![Barang Masuk](screenshots/main_frontend/barang_masuk.png) |
+| **Retur Barang** | **Riwayat Penjualan** |
+| ![Retur Barang](screenshots/main_frontend/retur_barang.png) | ![Riwayat Penjualan](screenshots/main_frontend/penjualan.png) |
+| **Pengeluaran Toko** | **Laporan Keuangan** |
+| ![Pengeluaran Toko](screenshots/main_frontend/pengeluaran.png) | ![Laporan Keuangan](screenshots/main_frontend/laporan.png) |
+| **Manajemen Pengguna** | **Peran & Hak Akses (Roles)** |
+| ![Manajemen Pengguna](screenshots/main_frontend/users.png) | ![Peran & Hak Akses](screenshots/main_frontend/roles.png) |
+| **Pengaturan Sistem** | **Profil Pengguna** |
+| ![Pengaturan Sistem](screenshots/main_frontend/settings.png) | ![Profil Pengguna](screenshots/main_frontend/profile.png) |
+
+</details>
 
 ## Table of contents
 - [Preview](#preview)
