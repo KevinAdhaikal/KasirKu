@@ -40,29 +40,19 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 | ![Retur Barang](screenshots/main_frontend/retur_barang.png) | ![Riwayat Penjualan](screenshots/main_frontend/penjualan.png) |
 | **Pengeluaran Toko** | **Laporan Keuangan** |
 | ![Pengeluaran Toko](screenshots/main_frontend/pengeluaran.png) | ![Laporan Keuangan](screenshots/main_frontend/laporan.png) |
-| **Manajemen Pengguna** | **Peran & Hak Akses (Roles)** |
-| ![Manajemen Pengguna](screenshots/main_frontend/users.png) | ![Peran & Hak Akses](screenshots/main_frontend/roles.png) |
-| **Pengaturan Sistem** | **Profil Pengguna** |
-| ![Pengaturan Sistem](screenshots/main_frontend/settings.png) | ![Profil Pengguna](screenshots/main_frontend/profile.png) |
+| **User Management** | **Roles & Permissions** |
+| ![User Management](screenshots/main_frontend/users.png) | ![Roles & Permissions](screenshots/main_frontend/roles.png) |
+| **Pengaturan** | **Profile** |
+| ![Pengaturan](screenshots/main_frontend/settings.png) | ![Profile](screenshots/main_frontend/profile.png) |
 
 </details>
 
 ## Table of contents
-- [Preview](#preview)
 - [Fitur](#fitur)
 - [Requirements](#requirements)
 - [Cara Menjalankan](#cara-menjalankan)
   - [Menggunakan Bun](#pakai-bun)
   - [Pakai Docker](#pakai-docker)
-- [Configuration](#configuration)
-  - [Example Config](#example-config)
-  - [Configuration Options](#configuration-options)
-    - [General Settings](#general-settings)
-    - [Database Specifics](#database-specifics)
-      - [PostgreSQL Configuration](#postgresql-configuration)
-      - [MySQL Configurations](#mysql-configuration)
-  - [Notes](#notes)
-  - [Automatic Setup](#automatic-setup)
 - [Akses](#akses)
 - [QnA](#qna)
   - [Q: Kenapa Anda membuat aplikasi ini?](#q-kenapa-anda-membuat-aplikasi-ini)
@@ -100,13 +90,11 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 - **Single Page Application (SPA)**  
   Navigasi halaman cepat tanpa reload penuh.
 - **Responsive UI**  
-  Antarmuka berbasis AdminLTE yang nyaman digunakan di berbagai ukuran layar.
+  Antarmuka yang nyaman digunakan di berbagai ukuran layar.
 - **Dark Mode**  
   Mendukung tampilan terang dan gelap.
 - **Session Authentication**  
   Sistem login dengan session untuk keamanan akses.
-- **Assets Optimization & Compression**  
-  File HTML dan JavaScript di-*minify* serta dikompresi menggunakan Brotli untuk mengurangi ukuran file, menghemat bandwidth, dan meningkatkan kecepatan loading halaman.
 - **Minimal Dependency**  
   Backend ringan menggunakan Bun dan TypeScript dengan dependensi minimal.
 - **Dukungan Multi Database**  
@@ -139,7 +127,6 @@ bun run index.ts
 <!-- TODO: Revisi kalimatnya -->
 ### Pakai Docker
 Demi "environment ready". Sudah di siapkan file `docker-compose` yang sudah termasuk database postgre.
-Pastikan file `.env` ada karena docker akan membaca file configurasi dari file .env tersebut
 ```
 docker compose up -d
 ```
@@ -148,53 +135,6 @@ Untuk menghentikan
 ```
 docker compose down
 ```
-
-## Configuration
-
-KasirKu menggunakan file `.env` yang berada di root project. Silahkan copy dari file `.env.example` lalu sesuaikan valuenya sesuai kebutuhan
-```
-cp .env.example .env
-```
-
-
-### Configuration Options
-#### General Settings
-| Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `listen_port` | `Number` | `443` | Port server HTTPS. (Alt: `8443`) |
-| `db_type` | `String` | `sqlite` | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
-| `db_name` | `String` | `kasirku` | Nama database (disarankan lowercase). |
-
----
-
-#### Database Specifics
-
-##### PostgreSQL Configuration
-Digunakan jika `db_type: "postgresql"`
-* **Host:** `postgresql.host` (Contoh: `127.0.0.1`)
-* **Port:** `postgresql.port` (Default: `5432`)
-* **User:** `postgresql.user`
-* **Password:** `postgresql.password`
-
-##### MySQL Configuration
-Digunakan jika `db_type: "mysql"`
-* **Host:** `mysql.host` (Contoh: `127.0.0.1`)
-* **Port:** `mysql.port` (Default: `3306`)
-* **User:** `mysql.user`
-* **Password:** `mysql.password`
-
----
-
-### Notes
-* Jika menggunakan **SQLite**, konfigurasi MySQL dan PostgreSQL akan **diabaikan**.
-* Sistem hanya akan membaca konfigurasi yang sesuai dengan nilai `db_type`.
-
-<!-- TODO: Revisi bagian ini karena sudah menggunakan .env -->
-### Automatic Setup
-Jika `config.json` tidak ditemukan saat startup, **KasirKu** akan:
-1. Menanyakan konfigurasi via CLI.
-2. Menampilkan preview konfigurasi.
-3. Membuat file `config.json` secara otomatis.
 
 ## Akses
 Buka `https://localhost` di browser, dan untuk default Username / Password: `admin` / `admin`.
@@ -354,7 +294,6 @@ Dari situ saya belajar bahwa kadang kita tidak perlu selalu memilih solusi yang 
 Yang penting adalah **project bisa berkembang, bisa diselesaikan, dan bisa digunakan oleh orang lain.**
 
 ## Credit
-- AdminLTE 3 Template by [AdminLTE.io](https://adminlte.io/)
 - Icon Cash Register by [Kameleon (icon-icons.com)](https://icon-icons.com/icon/cashier-cash-register/118071)
 - NProgress by [rstacruz](https://github.com/rstacruz/nprogress)
 - 404 Not Found Template by [colorlib](https://colorlib.com/wp/template/colorlib-error-404-1/)
