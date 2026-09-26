@@ -11,7 +11,7 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 
 ## Preview
 
-<details>
+<details open>
 <summary><b>Frontend Installer</b></summary>
 
 | Step 1 - Selamat Datang | Step 2 - Jaringan & Port |
@@ -26,7 +26,7 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 
 </details>
 
-<details>
+<details open>
 <summary><b>Main Frontend</b></summary>
 
 | Login | Dashboard |
