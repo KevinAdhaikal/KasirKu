@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
 </p>
 
-**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien.
+**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien. Dilengkapi dengan **perhitungan keuntungan otomatis**, **dukungan cetak struk thermal**, serta **desain struk yang dapat dikustomisasi**.
 
 KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai frontend. Aplikasi ini juga mendukung **realtime data updates**, sehingga perubahan data dapat ditampilkan secara langsung tanpa perlu melakukan refresh halaman.
 
@@ -70,37 +70,54 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 
 ## Fitur
 - **Point of Sale System**  
-  Mendukung proses transaksi penjualan barang secara cepat dan sederhana.
-- **Manajemen Barang**  
-  Menambahkan, mengedit, dan menghapus data barang yang dijual.
-- **Dashboard**  
-  Dashboard interaktif yang menampilkan statistik toko secara realtime, termasuk:
+  Mendukung proses transaksi penjualan barang secara cepat, pencarian instan, scan barcode, dan kalkulasi pembayaran tunai.
+- **Perhitungan Keuntungan Otomatis (Profit Calculation)**  
+  Menghitung estimasi margin dan keuntungan toko secara transparan dan akurat:
+  - **Laba Kotor per Transaksi**: Menghitung laba kotor di setiap transaksi/struk belanja (harga jual dikurangi harga modal produk).
+  - **Laba Bersih & Analisis Keuangan**: Laporan pembukuan lengkap yang mengkalkulasi total omzet, total modal produk, total pengeluaran operasional toko, hingga laba bersih riil.
+  - **Statistik Realtime di Dashboard**: Menampilkan informasi total penjualan, keuntungan, pengeluaran, dan pendapatan harian secara realtime.
+- **Fitur Cetak Struk Belanja & Laporan (Thermal Print Support)**  
+  Mendukung pencetakan fisik menggunakan printer thermal (ukuran standar 58mm dan 80mm):
+  - Cetak struk belanja otomatis begitu transaksi pembayaran selesai di kasir.
+  - Cetak ulang struk (*reprint receipt*) kapan saja melalui menu Riwayat Penjualan maupun modal Rincian Transaksi.
+  - Cetak ringkasan Laporan Keuangan siap cetak maupun simpan sebagai dokumen PDF.
+- **Kustomisasi Format Struk Belanja (Custom Receipt Template)**  
+  Desain tampilan struk kasir dapat dikustomisasi secara fleksibel sesuai kebutuhan identitas toko:
+  - Desain struk menggunakan kode **HTML & CSS** langsung dari menu Pengaturan.
+  - Dilengkapi **Code Editor** dengan syntax highlighting dan template presets siap pakai.
+  - Fitur **Live Preview** interaktif (simulasi lebar kertas 58mm & 80mm) dan tombol **Uji Print** ke printer.
+  - Mendukung banyak **Variabel Dinamis** lengkap (`{{nama_toko}}`, `{{alamat_toko}}`, `{{telepon_toko}}`, `{{no_struk}}`, `{{tanggal}}`, `{{kasir}}`, `{{daftar_barang}}`, `{{total_belanja}}`, `{{tunai}}`, `{{kembalian}}`, dll) dengan modal panduan variabel dan tombol salin tag sekali klik.
+  - Pengaturan fleksibel: fitur cetak struk dapat diaktifkan atau dinonaktifkan (semua tombol cetak otomatis nonaktif/disabled bila fitur dimatikan).
+- **Manajemen Barang & Inventaris**  
+  Menambahkan, mengedit, dan menghapus data barang, pemantauan stok, pengelolaan kategori barang, barang masuk, serta retur barang.
+- **Dashboard Interaktif**  
+  Dashboard analitik yang menampilkan statistik toko secara realtime, termasuk:
   - Informasi Total Hari Ini (Total Barang Terjual, Penjualan, Keuntungan, Pengeluaran, Pendapatan)
-  - Informasi Barang Kosong
-  - Barang Total Terjual
-- **Pembukuan**  
-  Mencatat transaksi keuangan toko termasuk pemasukan, pengeluaran, serta perhitungan keuntungan dari hasil penjualan (Laporan).
-- **User Management**  
-  Mengelola akun pengguna dalam sistem, termasuk:
+  - Informasi Barang Kosong & Stok Menipis
+  - Peringkat Barang Total Terjual
+- **Pembukuan Lengkap**  
+  Mencatat riwayat transaksi penjualan, rincian item transaksi, pencatatan pengeluaran operasional toko, dan rekapitulasi laba rugi berkala.
+- **User Management & Role Permissions**  
+  Mengelola akun pengguna dalam sistem:
   - Mengubah profil pengguna seperti foto profil, username, dan password
   - Menambahkan, mengedit, dan menghapus pengguna
-  - Mengatur role dan permission untuk membatasi akses ke fitur tertentu
+  - Mengatur role dan permission bertingkat (Administrator, Kasir, Manage Pembukuan, Manage Barang) untuk membatasi hak akses
 - **Realtime Update (Server-Sent Event)**  
-  Perubahan data dapat langsung tersinkron secara realtime tanpa reload halaman.
+  Perubahan data transaksi, inventaris, dan pengaturan langsung tersinkron di seluruh layar secara realtime tanpa reload halaman.
 - **Single Page Application (SPA)**  
-  Navigasi halaman cepat tanpa reload penuh.
+  Navigasi antar halaman cepat dan mulus tanpa reload penuh.
 - **Responsive UI**  
-  Antarmuka yang nyaman digunakan di berbagai ukuran layar.
+  Antarmuka modern dan nyaman digunakan di berbagai ukuran layar (desktop, tablet, hingga smartphone).
 - **Dark Mode**  
-  Mendukung tampilan terang dan gelap.
+  Mendukung tampilan mode terang (*Light*) dan mode gelap (*Dark*).
 - **Session Authentication**  
-  Sistem login dengan session untuk keamanan akses.
+  Sistem login aman berbasis sesi dengan hashing Argon2id.
 - **Minimal Dependency**  
-  Backend ringan menggunakan Bun dan TypeScript dengan dependensi minimal.
+  Backend super ringan menggunakan Bun dan TypeScript dengan dependensi minimal.
 - **Dukungan Multi Database**  
   Mendukung SQLite, MySQL, dan PostgreSQL.
 - **Docker Support**  
-  Dapat dijalankan dengan mudah menggunakan container Docker.
+  Dapat dijalankan dengan mudah dan instan menggunakan container Docker.
 
 ## Requirements
 ### Server
@@ -174,6 +191,8 @@ Beberapa keunggulannya:
 - Bisa berjalan di hardware low-end (misalnya perangkat lama)
 - Realtime data, jadi tidak perlu refresh halaman (menggunakan **SSE**)
 - Menggunakan SPA (Single Page Application), sehingga perpindahan halaman terasa lebih cepat tanpa reload
+- **Perhitungan keuntungan otomatis**, mengetahui laba kotor per transaksi hingga laba bersih toko setelah dikurangi biaya operasional
+- **Fitur cetak struk yang fleksibel**, mendukung printer thermal (58mm & 80mm) dan desain struk yang bisa dikustomisasi bebas dengan HTML & CSS
 
 ---
 
