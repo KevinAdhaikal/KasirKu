@@ -10,7 +10,7 @@ profile_img/
 profile_img/**/
 html_build/
 html_build/**/
-database/kasirku.db
+database/*.db
 
 config.json
 .env
