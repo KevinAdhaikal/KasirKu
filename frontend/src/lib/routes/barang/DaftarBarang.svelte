@@ -419,8 +419,8 @@
   }
 
   async function handleDeleteBarang(item: BarangItem) {
-    const confirmed = await confirmDialog.show({
-      title: 'Hapus Produk dari Inventaris?',
+    let confirmed = await confirmDialog.show({
+      title: 'Hapus Produk dari Daftar Barang?',
       message: `Apakah Anda yakin ingin menghapus "${item.nama_barang}"? Tindakan ini akan menghapus data produk dari katalog sistem.`,
       confirmLabel: 'Hapus Produk',
       cancelLabel: 'Batal',
@@ -430,8 +430,20 @@
     if (!confirmed) return;
 
     try {
-      const body = new URLSearchParams({ id: String(item.id) });
-      await api.delete('/barang', body);
+      let res = await api.delete('/barang', new URLSearchParams({ id: String(item.id), force: 0 }));
+      if (res === "1") {
+        confirmed = await confirmDialog.show({
+          title: 'Konfirmasi Hapus Produk',
+          message: `Barang "${item.nama_barang}" masih memiliki data Barang Masuk atau Retur Barang. Jika produk ini dihapus, seluruh data Barang Masuk dan Retur Barang yang terkait juga akan ikut terhapus. Apakah Anda yakin ingin melanjutkan?`,
+          confirmLabel: 'Hapus Produk',
+          cancelLabel: 'Batal',
+          variant: 'danger',
+        });
+
+        if (!confirmed) return;
+
+        res = await api.delete('/barang', new URLSearchParams({ id: String(item.id), force: 1 }));
+      }
       toast.success(`Produk "${item.nama_barang}" berhasil dihapus.`);
       barangList = barangList.filter((b) => b.id !== item.id);
     } catch (err: any) {

@@ -124,7 +124,7 @@ export default async function(req: Request, token: string) {
             }
         });
     } catch (e) {
-        console.log("An error occured in post_method.ts at /masuk_ke_pembukuan:", e);
+        console.log("An error occured in POST Method at /masuk_ke_pembukuan:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
                 

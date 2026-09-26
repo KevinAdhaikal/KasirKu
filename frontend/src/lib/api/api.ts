@@ -13,8 +13,6 @@ export class ApiError extends Error {
   }
 }
 
-export const API_BASE = '';
-
 export async function request<T = any>(
   path: string,
   options: RequestInit = {}
@@ -28,7 +26,7 @@ export async function request<T = any>(
     headers.set('token', token);
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${path}`, {
     ...options,
     headers,
   });
@@ -42,7 +40,13 @@ export async function request<T = any>(
   }
 
   if (res.status === 429) {
-    throw new ApiError(429, 'Terlalu banyak permintaan (Rate limit). Mohon tunggu beberapa detik.');
+    throw new ApiError(429, 'Terlalu banyak permintaan. Mohon tunggu beberapa detik.');
+  }
+
+  if (res.status === 403) {
+    let errorText = await res.text();
+    if (errorText === "0") throw new ApiError(403, "Anda tidak memiliki akses untuk melakukan ini.")
+    else return <T>errorText
   }
 
   if (!res.ok) {

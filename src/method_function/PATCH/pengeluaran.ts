@@ -62,7 +62,7 @@ export default async function(req: Request, token: string) {
             ))
         .execute();
     } catch(e) {
-        console.log("Unexpected error in patch_method.ts at /pengeluaran:", e);
+        console.log("Unexpected error in PATCH Method at /pengeluaran:", e);
         return new Response("Internal Server Error", {status: 500});
     }
 

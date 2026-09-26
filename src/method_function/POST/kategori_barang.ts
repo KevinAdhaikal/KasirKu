@@ -50,7 +50,7 @@ export default async function(req: Request, token: string) {
         last_row = Number(result.id);
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
-        console.log("An error occured in post_method.ts at /kategori_barang:", e);
+        console.log("An error occured in POST Method at /kategori_barang:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

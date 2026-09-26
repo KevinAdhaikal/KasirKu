@@ -707,5 +707,6 @@
 <ReceiptModal
   bind:open={receiptModalOpen}
   data={lastReceiptData}
+  isReceiptEnabled={isReceiptEnabled}
   onclose={handleReceiptClose}
 />

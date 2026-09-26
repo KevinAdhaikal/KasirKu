@@ -66,7 +66,7 @@ export default async function(req: Request, token: string) {
         });
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
-        console.log("Unexpected error in post_method.ts at /user:", e);
+        console.log("Unexpected error in POST Method at /user:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

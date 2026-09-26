@@ -72,7 +72,7 @@ export default async function(req: Request, token: string) {
             }
         })
     } catch(e) {
-        console.log("An error occured in patch_method.ts at /change_password:", e);
+        console.log("An error occured in PATCH Method at /change_password:", e);
         return new Response("Internal Server Error", {status: 500}); 
     }
 }

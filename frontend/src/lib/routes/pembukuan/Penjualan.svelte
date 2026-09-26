@@ -46,7 +46,8 @@
     Copy,
     Check,
     ChevronRight,
-    Sparkles
+    Sparkles,
+    AlertCircle
   } from 'lucide-svelte';
 
   export interface PenjualanItem {
@@ -96,6 +97,16 @@
   let copiedStruk = $state<string | null>(null);
   let receiptModalOpen = $state(false);
   let receiptModalData = $state<ReceiptData | null>(null);
+  let isReceiptEnabled = $state(true);
+
+  async function checkReceiptSetting() {
+    try {
+      const res = await api.get<{ enabled?: boolean | string | null }>('/api/settings/struk');
+      if (res && res.enabled !== undefined && res.enabled !== null) {
+        isReceiptEnabled = String(res.enabled).toLowerCase() === 'true' || res.enabled === true;
+      }
+    } catch {}
+  }
 
   // Presets handler
   function applyPreset(preset: 'today' | 'week' | 'month') {
@@ -156,6 +167,10 @@
   }
 
   async function handlePrint(item?: PenjualanItem) {
+    if (!isReceiptEnabled) {
+      toast.warning('Fitur cetak struk dinonaktifkan di Pengaturan.');
+      return;
+    }
     const targetItem = item || selectedPenjualan;
     if (!targetItem) return;
 
@@ -279,12 +294,18 @@
 
   onMount(() => {
     fetchData();
+    checkReceiptSetting();
     auth.fetchPublicInfo();
 
     unsubscribeSSE = sse.subscribe((event) => {
       // type 2 is TRANSACTION / CHECKOUT event
       if (event.type === 2) {
         fetchData();
+      }
+      if (event?.code === 'UPDATE_STRUK_SETTING') {
+        if (event?.data?.enabled !== undefined) {
+          isReceiptEnabled = String(event.data.enabled).toLowerCase() === 'true' || event.data.enabled === true;
+        }
       }
     });
   });
@@ -590,9 +611,10 @@
                     </button>
                     <button
                       type="button"
-                      onclick={() => handlePrint(item)}
-                      title="Cetak Ulang Struk Kasir"
-                      class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 shadow-2xs transition-all flex items-center justify-center"
+                      disabled={!isReceiptEnabled}
+                      onclick={() => isReceiptEnabled && handlePrint(item)}
+                      title={isReceiptEnabled ? 'Cetak Ulang Struk Kasir' : 'Fitur cetak struk dinonaktifkan di Pengaturan'}
+                      class="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 shadow-2xs transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-neutral-800 disabled:hover:text-neutral-600 dark:disabled:hover:text-neutral-300"
                     >
                       <Printer class="w-3.5 h-3.5" />
                     </button>
@@ -708,19 +730,26 @@
       <!-- Financial Recap Box -->
       <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-[var(--bg-subtle)]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div class="space-y-1">
-          <div class="text-neutral-500">Estimasi Laba Kotor:</div>
+          <div class="text-neutral-500">Estimasi Keuntungan:</div>
           <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             +{formatRupiah(itemLaba)}
           </div>
         </div>
 
         <div class="text-right space-y-0.5">
-          <div class="text-neutral-500">Grand Total Belanja:</div>
+          <div class="text-neutral-500">Total Belanjaan:</div>
           <div class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
             {formatRupiah(selectedPenjualan.total_harga_jual)}
           </div>
         </div>
       </div>
+
+      {#if !isReceiptEnabled}
+        <div class="p-3 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+          <AlertCircle class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span>Fitur cetak struk dinonaktifkan pada Pengaturan. Tombol cetak struk dinonaktifkan.</span>
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -735,10 +764,12 @@
     <Button
       variant="primary"
       size="sm"
-      onclick={() => handlePrint()}
+      disabled={!isReceiptEnabled}
+      onclick={() => isReceiptEnabled && handlePrint()}
+      title={isReceiptEnabled ? 'Cetak Struk' : 'Fitur cetak struk dinonaktifkan di Pengaturan'}
     >
       <Printer class="w-4 h-4" />
-      <span>Cetak Struk (Thermal)</span>
+      <span>Cetak Struk</span>
     </Button>
   {/snippet}
 </Modal>
@@ -746,5 +777,6 @@
 <ReceiptModal
   bind:open={receiptModalOpen}
   data={receiptModalData}
+  isReceiptEnabled={isReceiptEnabled}
   closeLabel="Tutup (Esc)"
 />

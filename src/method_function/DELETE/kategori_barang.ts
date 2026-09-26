@@ -58,7 +58,7 @@ export default async function(req: Request, token: string) {
             .where(eq(schema.kategori_barang.id, id))
         .execute();
     } catch (e) {
-        console.log("An error occured in delete_method.ts at /kategori_barang:", e);
+        console.log("An error occured in DELETE Method at /kategori_barang:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
     

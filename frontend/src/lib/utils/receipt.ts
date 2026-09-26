@@ -17,15 +17,15 @@ export interface TemplateVariable {
 
 export const TEMPLATE_VARIABLES: TemplateVariable[] = [
   // Toko
-  { key: '{{nama_toko}}', label: 'Nama Toko / Usaha', example: 'SUMBER JAYA MAKMUR', category: 'toko' },
-  { key: '{{deskripsi_toko}}', label: 'Deskripsi / Slogan', example: 'Toko dengan harga Murah & Lengkap!', category: 'toko' },
-  { key: '{{alamat_toko}}', label: 'Alamat Lengkap Toko', example: 'Jl. Merdeka Raya No. 88, Bandung', category: 'toko' },
-  { key: '{{telepon_toko}}', label: 'Nomor Telepon / WA', example: '(022) 1234-5678', category: 'toko' },
+  { key: '{{nama_toko}}', label: 'Nama Toko / Usaha', example: 'EXMAPLE MART', category: 'toko' },
+  { key: '{{deskripsi_toko}}', label: 'Deskripsi / Slogan', example: 'Sahabat Belanja Hemat', category: 'toko' },
+  { key: '{{alamat_toko}}', label: 'Alamat Lengkap Toko', example: 'Jl. Example No. 1, Jakarta', category: 'toko' },
+  { key: '{{telepon_toko}}', label: 'Nomor Telepon / WA', example: '0812-3456-7890', category: 'toko' },
 
   // Transaksi
-  { key: '{{no_struk}}', label: 'Nomor Struk / Nota', example: 'TRX-20260719-004281', category: 'transaksi' },
+  { key: '{{no_struk}}', label: 'Nomor Struk / Nota', example: `TRX-${Date.now()}`, category: 'transaksi' },
   { key: '{{tanggal}}', label: 'Tanggal & Jam Transaksi', example: '19-07-2026 14:32:08', category: 'transaksi' },
-  { key: '{{kasir}}', label: 'Nama Kasir Bertugas', example: 'John Doe', category: 'transaksi' },
+  { key: '{{kasir}}', label: 'Nama Kasir yang Bertugas', example: 'John Doe', category: 'transaksi' },
 
   // Produk
   { key: '{{daftar_barang}}', label: 'Daftar Item / Produk (HTML Table)', example: 'Tabel daftar item belanjaan', category: 'produk' },
@@ -39,7 +39,7 @@ export const TEMPLATE_VARIABLES: TemplateVariable[] = [
 
 export const RECEIPT_PRESETS = [
   {
-    id: 'sumbermart',
+    id: 'common_struk',
     name: 'Struk Rinci & Lengkap',
     description: 'Format struk ritel lengkap dengan pembagian baris, tabel item dinamis, dan header rapi.',
     template: `<!DOCTYPE html>

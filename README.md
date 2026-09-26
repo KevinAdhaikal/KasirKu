@@ -5,25 +5,54 @@
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
 </p>
 
-**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien.
+**KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien. Dilengkapi dengan **perhitungan keuntungan otomatis**, **dukungan cetak struk thermal**, serta **desain struk yang dapat dikustomisasi**.
 
 KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai frontend. Aplikasi ini juga mendukung **realtime data updates**, sehingga perubahan data dapat ditampilkan secara langsung tanpa perlu melakukan refresh halaman.
 
+## Preview
+
+<details open>
+<summary><b>Frontend Installer</b></summary>
+
+| Step 1 - Selamat Datang | Step 2 - Jaringan & Port |
+| :---: | :---: |
+| ![Step 1 - Selamat Datang](screenshots/installer_frontend/step1.png) | ![Step 2 - Jaringan & Port](screenshots/installer_frontend/step2.png) |
+| **Step 3 - Mesin Database** | **Step 4 - Koneksi Database (SQLite)** |
+| ![Step 3 - Mesin Database](screenshots/installer_frontend/step3.png) | ![Step 4 - Koneksi Database (SQLite)](screenshots/installer_frontend/step4_sqlite.png) |
+| **Step 4 - Koneksi Database (MySQL / PostgreSQL)** | **Step 5 - Akun Administrator** |
+| ![Step 4 - Koneksi Database (MySQL / PostgreSQL)](screenshots/installer_frontend/step4_mysql_postgresql.png) | ![Step 5 - Akun Administrator](screenshots/installer_frontend/step5.png) |
+| **Step 6 - Profil Toko** | **Instalasi Selesai** |
+| ![Step 6 - Profil Toko](screenshots/installer_frontend/step6.png) | ![Instalasi Selesai](screenshots/installer_frontend/installation_done.png) |
+
+</details>
+
+<details open>
+<summary><b>Main Frontend</b></summary>
+
+| Login | Dashboard |
+| :---: | :---: |
+| ![Login](screenshots/main_frontend/login.png) | ![Dashboard](screenshots/main_frontend/dashboard.png) |
+| **Kasir (Point of Sale)** | **Daftar Barang** |
+| ![Kasir](screenshots/main_frontend/kasir.png) | ![Daftar Barang](screenshots/main_frontend/daftar_barang.png) |
+| **Kategori Barang** | **Barang Masuk** |
+| ![Kategori Barang](screenshots/main_frontend/kategori_barang.png) | ![Barang Masuk](screenshots/main_frontend/barang_masuk.png) |
+| **Retur Barang** | **Riwayat Penjualan** |
+| ![Retur Barang](screenshots/main_frontend/retur_barang.png) | ![Riwayat Penjualan](screenshots/main_frontend/penjualan.png) |
+| **Pengeluaran Toko** | **Laporan Keuangan** |
+| ![Pengeluaran Toko](screenshots/main_frontend/pengeluaran.png) | ![Laporan Keuangan](screenshots/main_frontend/laporan.png) |
+| **User Management** | **Roles & Permissions** |
+| ![User Management](screenshots/main_frontend/users.png) | ![Roles & Permissions](screenshots/main_frontend/roles.png) |
+| **Pengaturan** | **Profile** |
+| ![Pengaturan](screenshots/main_frontend/settings.png) | ![Profile](screenshots/main_frontend/profile.png) |
+
+</details>
+
 ## Table of contents
 - [Fitur](#fitur)
-- [Requrements](#requirements)
+- [Requirements](#requirements)
 - [Cara Menjalankan](#cara-menjalankan)
   - [Menggunakan Bun](#pakai-bun)
   - [Pakai Docker](#pakai-docker)
-- [Configuration](#configuration)
-  - [Example Config](#example-config)
-  - [Configuration Options](#configuration-options)
-    - [General Settings](#general-settings)
-    - [Database Specifics](#database-specifics)
-      - [PostgreSQL Configuration](#postgresql-configuration)
-      - [MySQL Configurations](#mysql-configuration)
-  - [Notes](#notes)
-  - [Automatic Setup](#automatic-setup)
 - [Akses](#akses)
 - [QnA](#qna)
   - [Q: Kenapa Anda membuat aplikasi ini?](#q-kenapa-anda-membuat-aplikasi-ini)
@@ -41,39 +70,54 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 
 ## Fitur
 - **Point of Sale System**  
-  Mendukung proses transaksi penjualan barang secara cepat dan sederhana.
-- **Manajemen Barang**  
-  Menambahkan, mengedit, dan menghapus data barang yang dijual.
-- **Dashboard**  
-  Dashboard interaktif yang menampilkan statistik toko secara realtime, termasuk:
+  Mendukung proses transaksi penjualan barang secara cepat, pencarian instan, scan barcode, dan kalkulasi pembayaran tunai.
+- **Perhitungan Keuntungan Otomatis (Profit Calculation)**  
+  Menghitung estimasi margin dan keuntungan toko secara transparan dan akurat:
+  - **Laba Kotor per Transaksi**: Menghitung laba kotor di setiap transaksi/struk belanja (harga jual dikurangi harga modal produk).
+  - **Laba Bersih & Analisis Keuangan**: Laporan pembukuan lengkap yang mengkalkulasi total omzet, total modal produk, total pengeluaran operasional toko, hingga laba bersih riil.
+  - **Statistik Realtime di Dashboard**: Menampilkan informasi total penjualan, keuntungan, pengeluaran, dan pendapatan harian secara realtime.
+- **Fitur Cetak Struk Belanja & Laporan (Thermal Print Support)**  
+  Mendukung pencetakan fisik menggunakan printer thermal (ukuran standar 58mm dan 80mm):
+  - Cetak struk belanja otomatis begitu transaksi pembayaran selesai di kasir.
+  - Cetak ulang struk (*reprint receipt*) kapan saja melalui menu Riwayat Penjualan maupun modal Rincian Transaksi.
+  - Cetak ringkasan Laporan Keuangan siap cetak maupun simpan sebagai dokumen PDF.
+- **Kustomisasi Format Struk Belanja (Custom Receipt Template)**  
+  Desain tampilan struk kasir dapat dikustomisasi secara fleksibel sesuai kebutuhan identitas toko:
+  - Desain struk menggunakan kode **HTML & CSS** langsung dari menu Pengaturan.
+  - Dilengkapi **Code Editor** dengan syntax highlighting dan template presets siap pakai.
+  - Fitur **Live Preview** interaktif (simulasi lebar kertas 58mm & 80mm) dan tombol **Uji Print** ke printer.
+  - Mendukung banyak **Variabel Dinamis** lengkap dengan modal panduan variabel.
+  - Pengaturan fleksibel: fitur cetak struk dapat diaktifkan atau dinonaktifkan (semua tombol cetak otomatis nonaktif/disabled bila fitur dimatikan).
+- **Manajemen Barang & Inventaris**  
+  Menambahkan, mengedit, dan menghapus data barang, pemantauan stok, pengelolaan kategori barang, barang masuk, serta retur barang.
+- **Dashboard Interaktif**  
+  Dashboard analitik yang menampilkan statistik toko secara realtime, termasuk:
   - Informasi Total Hari Ini (Total Barang Terjual, Penjualan, Keuntungan, Pengeluaran, Pendapatan)
-  - Informasi Barang Kosong
-  - Barang Total Terjual
-- **Pembukuan**  
-  Mencatat transaksi keuangan toko termasuk pemasukan, pengeluaran, serta perhitungan keuntungan dari hasil penjualan (Laporan).
-- **User Management**  
-  Mengelola akun pengguna dalam sistem, termasuk:
+  - Informasi Barang Kosong & Stok Menipis
+  - Peringkat Barang Total Terjual
+- **Pembukuan Lengkap**  
+  Mencatat riwayat transaksi penjualan, rincian item transaksi, pencatatan pengeluaran operasional toko, dan rekapitulasi laba rugi berkala.
+- **User Management & Role Permissions**  
+  Mengelola akun pengguna dalam sistem:
   - Mengubah profil pengguna seperti foto profil, username, dan password
   - Menambahkan, mengedit, dan menghapus pengguna
-  - Mengatur role dan permission untuk membatasi akses ke fitur tertentu
+  - Mengatur role dan permission bertingkat (Administrator, Kasir, Manage Pembukuan, Manage Barang) untuk membatasi hak akses
 - **Realtime Update (Server-Sent Event)**  
-  Perubahan data dapat langsung tersinkron secara realtime tanpa reload halaman.
+  Perubahan data transaksi, inventaris, dan pengaturan langsung tersinkron di seluruh layar secara realtime tanpa reload halaman.
 - **Single Page Application (SPA)**  
-  Navigasi halaman cepat tanpa reload penuh.
+  Navigasi antar halaman cepat dan mulus tanpa reload penuh.
 - **Responsive UI**  
-  Antarmuka berbasis AdminLTE yang nyaman digunakan di berbagai ukuran layar.
+  Antarmuka modern dan nyaman digunakan di berbagai ukuran layar (desktop, tablet, hingga smartphone).
 - **Dark Mode**  
-  Mendukung tampilan terang dan gelap.
+  Mendukung tampilan mode terang (*Light*) dan mode gelap (*Dark*).
 - **Session Authentication**  
-  Sistem login dengan session untuk keamanan akses.
-- **Assets Optimization & Compression**  
-  File HTML dan JavaScript di-*minify* serta dikompresi menggunakan Brotli untuk mengurangi ukuran file, menghemat bandwidth, dan meningkatkan kecepatan loading halaman.
+  Sistem login aman berbasis sesi dengan hashing Argon2id.
 - **Minimal Dependency**  
-  Backend ringan menggunakan Bun dan TypeScript dengan dependensi minimal.
+  Backend super ringan menggunakan Bun dan TypeScript dengan dependensi minimal.
 - **Dukungan Multi Database**  
   Mendukung SQLite, MySQL, dan PostgreSQL.
 - **Docker Support**  
-  Dapat dijalankan dengan mudah menggunakan container Docker.
+  Dapat dijalankan dengan mudah dan instan menggunakan container Docker.
 
 ## Requirements
 ### Server
@@ -81,12 +125,6 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 - RAM: 256 MB (512 MB recommended)
 - Storage: 1 GB (5 GB recommended)
 - OS: Linux / Windows / macOS / Android (Termux)
-### Browser
-KasirKu dapat dijalankan di browser modern seperti:
-- Chrome 
-- Firefox
-- Edge
-- Safari
 
 ## Cara Menjalankan
 ### Pakai Bun
@@ -100,7 +138,6 @@ bun run index.ts
 <!-- TODO: Revisi kalimatnya -->
 ### Pakai Docker
 Demi "environment ready". Sudah di siapkan file `docker-compose` yang sudah termasuk database postgre.
-Pastikan file `.env` ada karena docker akan membaca file configurasi dari file .env tersebut
 ```
 docker compose up -d
 ```
@@ -109,53 +146,6 @@ Untuk menghentikan
 ```
 docker compose down
 ```
-
-## Configuration
-
-KasirKu menggunakan file `.env` yang berada di root project. Silahkan copy dari file `.env.example` lalu sesuaikan valuenya sesuai kebutuhan
-```
-cp .env.example .env
-```
-
-
-### Configuration Options
-#### General Settings
-| Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `listen_port` | `Number` | `443` | Port server HTTPS. (Alt: `8443`) |
-| `db_type` | `String` | `sqlite` | Jenis database: `sqlite`, `mysql`, atau `postgresql`. |
-| `db_name` | `String` | `kasirku` | Nama database (disarankan lowercase). |
-
----
-
-#### Database Specifics
-
-##### PostgreSQL Configuration
-Digunakan jika `db_type: "postgresql"`
-* **Host:** `postgresql.host` (Contoh: `127.0.0.1`)
-* **Port:** `postgresql.port` (Default: `5432`)
-* **User:** `postgresql.user`
-* **Password:** `postgresql.password`
-
-##### MySQL Configuration
-Digunakan jika `db_type: "mysql"`
-* **Host:** `mysql.host` (Contoh: `127.0.0.1`)
-* **Port:** `mysql.port` (Default: `3306`)
-* **User:** `mysql.user`
-* **Password:** `mysql.password`
-
----
-
-### Notes
-* Jika menggunakan **SQLite**, konfigurasi MySQL dan PostgreSQL akan **diabaikan**.
-* Sistem hanya akan membaca konfigurasi yang sesuai dengan nilai `db_type`.
-
-<!-- TODO: Revisi bagian ini karena sudah menggunakan .env -->
-### Automatic Setup
-Jika `config.json` tidak ditemukan saat startup, **KasirKu** akan:
-1. Menanyakan konfigurasi via CLI.
-2. Menampilkan preview konfigurasi.
-3. Membuat file `config.json` secara otomatis.
 
 ## Akses
 Buka `https://localhost` di browser, dan untuk default Username / Password: `admin` / `admin`.
@@ -201,6 +191,8 @@ Beberapa keunggulannya:
 - Bisa berjalan di hardware low-end (misalnya perangkat lama)
 - Realtime data, jadi tidak perlu refresh halaman (menggunakan **SSE**)
 - Menggunakan SPA (Single Page Application), sehingga perpindahan halaman terasa lebih cepat tanpa reload
+- **Perhitungan keuntungan otomatis**, mengetahui laba kotor per transaksi hingga laba bersih toko setelah dikurangi biaya operasional
+- **Fitur cetak struk yang fleksibel**, mendukung printer thermal (58mm & 80mm) dan desain struk yang bisa dikustomisasi bebas dengan HTML & CSS
 
 ---
 
@@ -315,7 +307,6 @@ Dari situ saya belajar bahwa kadang kita tidak perlu selalu memilih solusi yang 
 Yang penting adalah **project bisa berkembang, bisa diselesaikan, dan bisa digunakan oleh orang lain.**
 
 ## Credit
-- AdminLTE 3 Template by [AdminLTE.io](https://adminlte.io/)
 - Icon Cash Register by [Kameleon (icon-icons.com)](https://icon-icons.com/icon/cashier-cash-register/118071)
 - NProgress by [rstacruz](https://github.com/rstacruz/nprogress)
 - 404 Not Found Template by [colorlib](https://colorlib.com/wp/template/colorlib-error-404-1/)

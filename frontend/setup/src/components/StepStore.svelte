@@ -35,7 +35,7 @@
         id="store-name"
         type="text"
         bind:value={config.store_name}
-        placeholder="Contoh: Toko Berkah Jaya"
+        placeholder="Contoh: EXMAPLE MART"
         class="w-full px-4 py-2.5 rounded-xl border border-line bg-surface text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
       />
     </div>
@@ -49,7 +49,7 @@
         id="store-desc"
         type="text"
         bind:value={config.store_desc}
-        placeholder="Contoh: Belanja Hemat & Lengkap"
+        placeholder="Contoh: Sahabat Belanja Hemat"
         class="w-full px-4 py-2.5 rounded-xl border border-line bg-surface text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
       />
     </div>
@@ -68,19 +68,6 @@
       />
     </div>
 
-    <!-- Email -->
-    <div>
-      <label for="store-email" class="block text-sm font-semibold text-ink mb-2">
-        Email Toko <span class="text-ink-faint font-normal">(opsional)</span>
-      </label>
-      <input
-        id="store-email"
-        type="text"
-        bind:value={config.store_email}
-        placeholder="Contoh: 0812-3456-7890"
-        class="w-full px-4 py-2.5 rounded-xl border border-line bg-surface text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
-      />
-    </div>
 
     <!-- Store Address -->
     <div>
@@ -91,7 +78,7 @@
         id="store-address"
         rows="3"
         bind:value={config.store_address}
-        placeholder="Contoh: Jl. Merdeka No. 12, Bandung"
+        placeholder="Contoh: Jl. Example No. 1, Jakarta"
         class="w-full px-4 py-2.5 rounded-xl border border-line bg-surface text-sm text-ink transition-colors focus:outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30 resize-none leading-relaxed"
       ></textarea>
     </div>
