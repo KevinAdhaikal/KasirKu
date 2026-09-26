@@ -86,7 +86,7 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
   - Desain struk menggunakan kode **HTML & CSS** langsung dari menu Pengaturan.
   - Dilengkapi **Code Editor** dengan syntax highlighting dan template presets siap pakai.
   - Fitur **Live Preview** interaktif (simulasi lebar kertas 58mm & 80mm) dan tombol **Uji Print** ke printer.
-  - Mendukung banyak **Variabel Dinamis** lengkap (`{{nama_toko}}`, `{{alamat_toko}}`, `{{telepon_toko}}`, `{{no_struk}}`, `{{tanggal}}`, `{{kasir}}`, `{{daftar_barang}}`, `{{total_belanja}}`, `{{tunai}}`, `{{kembalian}}`, dll) dengan modal panduan variabel dan tombol salin tag sekali klik.
+  - Mendukung banyak **Variabel Dinamis** lengkap dengan modal panduan variabel.
   - Pengaturan fleksibel: fitur cetak struk dapat diaktifkan atau dinonaktifkan (semua tombol cetak otomatis nonaktif/disabled bila fitur dimatikan).
 - **Manajemen Barang & Inventaris**  
   Menambahkan, mengedit, dan menghapus data barang, pemantauan stok, pengelolaan kategori barang, barang masuk, serta retur barang.
