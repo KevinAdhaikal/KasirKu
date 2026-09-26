@@ -73,7 +73,7 @@ export default async function(req: Request, token: string) {
             }));
         }
     } catch(e) {
-        console.log("An error occured in delete_method.ts at /pengeluaran:", e);
+        console.log("An error occured in DELETE Method at /pengeluaran:", e);
         return new Response("Internal Server Error", {status: 500});
     }
             

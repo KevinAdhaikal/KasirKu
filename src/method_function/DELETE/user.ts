@@ -47,7 +47,7 @@ export default async function(req: Request, token: string) {
             .where(eq(schema.users.id, id))
         .execute();
     } catch (e) {
-        console.log("An error occured in delete_method.ts at /user:", e);
+        console.log("An error occured in DELETE Method at /user:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
                 

@@ -52,7 +52,7 @@ export default async function(req: Request, token: string) {
         });
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
-        console.log("An error occured in post_method.ts at /role:", e);
+        console.log("An error occured in POST Method at /role:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
     

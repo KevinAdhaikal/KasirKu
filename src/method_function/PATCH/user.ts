@@ -83,7 +83,7 @@ export default async function(req: Request, token: string) {
         .execute();
     } catch (e) {
         if (check_sql_is_duplicate_error(e)) return new Response("3", {status: 403});
-        console.log("Unexpected error in patch_method.ts at /user:", e);
+        console.log("Unexpected error in PATCH Method at /user:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

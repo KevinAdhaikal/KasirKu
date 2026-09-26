@@ -58,7 +58,7 @@ export default async function(req: Request, token: string) {
             .where(eq(schema.roles.id, id))
         .execute();
     } catch (e) {
-        console.log("An error occured in delete_method.ts at /role:", e);
+        console.log("An error occured in DELETE Method at /role:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
     

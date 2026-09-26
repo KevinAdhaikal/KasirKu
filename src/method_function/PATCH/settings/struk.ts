@@ -33,11 +33,11 @@ export default async function(req: Request, token: string) {
 
     const { enabled, content } = await req.json();
 
-    if (enabled) {
+    if (content !== undefined && content !== null) {
         await db
             .update(settings)
             .set({
-                value: content ?? "",
+                value: String(content),
                 modified_ms: Date.now(),
             })
             .where(

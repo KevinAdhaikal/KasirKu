@@ -58,7 +58,7 @@ export default async function(req: Request, token: string) {
         }).returning();
         last_row = Number(result.id);
     } catch (e) {
-        console.log("Unexpected error in post_method.ts at /pengeluaran:", e);
+        console.log("Unexpected error in POST Method at /pengeluaran:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

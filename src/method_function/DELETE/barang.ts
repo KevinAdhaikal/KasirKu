@@ -56,7 +56,7 @@ export default async function(req: Request, token: string) {
             )
         .execute();
     } catch (e) {
-        console.log("An error occured in delete_method.ts at /barang:", e);
+        console.log("An error occured in DELETE Method at /barang:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
     
