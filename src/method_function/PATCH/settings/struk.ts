@@ -33,7 +33,7 @@ export default async function(req: Request, token: string) {
 
     const { enabled, content } = await req.json();
 
-    if (content !== undefined && content !== null) {
+    if (content !== undefined || content !== null) {
         await db
             .update(settings)
             .set({
@@ -65,7 +65,7 @@ export default async function(req: Request, token: string) {
         type: 8,
         code: "UPDATE_STRUK_SETTING",
         data: {
-            enabled, content
+            enabled, ...(content ?? {})
         }
     }));
 

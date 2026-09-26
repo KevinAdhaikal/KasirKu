@@ -13,7 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
 
 export default async function(req: Request, token: string) {
@@ -35,9 +35,11 @@ export default async function(req: Request, token: string) {
     const user_input = new URLSearchParams(await req.text());
     
     const id = Number(user_input.get("id"));
-    
+    const force = Number(user_input.get("force"));
+
     if (
-        Number.isNaN(id) || !id
+        Number.isNaN(id) || !id ||
+        Number.isNaN(force)
     ) return new Response("Bad Request", {status: 400});
     
     const [res] = await db
@@ -47,12 +49,45 @@ export default async function(req: Request, token: string) {
     .limit(1);
     
     if (!res) return new Response("Not Found", { status: 404 });
+
+    // kita perlu cek barang masuk dan barang keluar dulu nih.
+    if (!force) {
+        const [res_barang_masuk] = await db
+            .select({barang_id: schema.barang_masuk.barang_id})
+            .from(schema.barang_masuk)
+            .where(eq(schema.barang_masuk.barang_id, id))
+        .limit(1);
+
+        if (res_barang_masuk) return new Response("1", {status: 403});
+
+        const [res_retur_barang] = await db
+            .select({barang_id: schema.retur_barang.barang_id})
+            .from(schema.retur_barang)
+            .where(eq(schema.retur_barang.barang_id, id))
+        .limit(1);
+
+        if (res_retur_barang) return new Response("2", {status: 403});
+    }
     
     try {
         await db
             .delete(schema.barang)
             .where(
                 eq(schema.barang.id, id)
+            )
+        .execute();
+
+        await db
+            .delete(schema.barang_masuk)
+            .where(
+                eq(schema.barang_masuk.barang_id, id)
+            )
+        .execute();
+
+        await db
+            .delete(schema.retur_barang)
+            .where(
+                eq(schema.retur_barang.barang_id, id)
             )
         .execute();
     } catch (e) {

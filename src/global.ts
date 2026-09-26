@@ -42,7 +42,7 @@ export const global = {
     database: null as any,
 
     // Database Schema
-    schema: null as any,
+    schema: null as any as typeof schemaType,
 
     // Permissions
     permissions: {

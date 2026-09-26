@@ -121,9 +121,9 @@
   // Sample data for real-time live preview
   const sampleStoreInfo = $derived<StoreInfo>({
     name: namaToko.trim() || 'EXMAPLE MART',
-    desc: deskripsiToko.trim() || 'Sahabat Belanja Hemat & Terpercaya',
-    address: alamatToko.trim() || 'Jl. Merdeka Raya No. 88, Bandung',
-    phone_num: teleponToko.trim() || '(022) 1234-5678'
+    desc: deskripsiToko.trim() || 'Sahabat Belanja Hemat',
+    address: alamatToko.trim() || 'Jl. Example No. 1, Jakarta',
+    phone_num: teleponToko.trim() || '0812-3456-7890'
   });
 
   const sampleReceiptData = {
@@ -247,9 +247,10 @@
     strukErrorMessage = null;
     isSavingStruk = true;
     try {
+      console.log(isStrukEnabled);
       await api.patch('/api/settings/struk', {
         enabled: isStrukEnabled,
-        content: strukContent || RECEIPT_PRESETS[0].template,
+        content: isStrukEnabled === true ? strukContent : "",
       });
       initialStrukContent = strukContent;
       initialStrukEnabled = isStrukEnabled;
