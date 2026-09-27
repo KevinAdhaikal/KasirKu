@@ -13,6 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
 import { get_password_hash_only } from "../../utils/utils";
 
@@ -25,16 +26,20 @@ export default async function(req: Request, token: string) {
     const old_pass = <string>user_input.get("old_pass");
     const new_pass = <string>user_input.get("new_pass");
     
-    if (!old_pass || !new_pass || new_pass.length < 8) return new Response("Bad Request", {status: 400});
+    if (
+        !old_pass ||
+        !new_pass || new_pass.length < 8
+    ) return new Response("Bad Request", {status: 400});
                 
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
+    const { users } = global.schema;
     
     const user = await db
-    .selectFrom('users')
-    .select('password_hash')
-    .where('id', '=', user_info.user_id)
-    .executeTakeFirst();
+        .select({ password_hash: users.password_hash })
+        .from(users)
+        .where(eq(users.id, user_info.user_id))
+        .limit(1)
+    .then((r: any) => r[0]);
     
     if (!user) return new Response("Internal Server Error", { status: 500 });
     if (!Bun.password.verifySync(old_pass, global.ph_text + user.password_hash)) return new Response("0", { status: 403 }); // incorrect old password
@@ -48,14 +53,14 @@ export default async function(req: Request, token: string) {
             }),
         );
         
-        await db.updateTable('users')
-        .set({
-            password_hash: new_hash_pass,
-            modified_ms: Date.now()
-        })
-        .where('id', '=', user_info.user_id)
+        await db.update(users)
+            .set({
+                password_hash: new_hash_pass,
+                modified_ms: Date.now()
+            })
+            .where(eq(users.id, user_info.user_id))
         .execute();
-                    
+
         global.sse_clients.remove_by_user_id(user_info.user_id);
         global.user_sessions.revoke_all_by_userid(user_info.user_id);
         
@@ -67,7 +72,7 @@ export default async function(req: Request, token: string) {
             }
         })
     } catch(e) {
-        console.log("An error occured in patch_method.ts at /change_password:", e);
+        console.log("An error occured in PATCH Method at /change_password:", e);
         return new Response("Internal Server Error", {status: 500}); 
     }
 }

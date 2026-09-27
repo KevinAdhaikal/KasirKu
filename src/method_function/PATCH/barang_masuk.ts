@@ -13,7 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { sql } from "kysely";
+import { and, eq, sql } from "drizzle-orm";
 import { global } from "../../global";
 
 export default async function(req: Request, token: string) {
@@ -21,11 +21,16 @@ export default async function(req: Request, token: string) {
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const { roles, barang_masuk, barang } = global.schema;
+    const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_PEMBUKUAN
+        )
+    )) return new Response("0", {status: 403});
     
     const user_input = new URLSearchParams(await req.text());
 
@@ -35,42 +40,41 @@ export default async function(req: Request, token: string) {
     const jumlah_barang = Number(user_input.get("jumlah_barang"));
     
     if (
-        isNaN(id) || !id
-        || isNaN(tanggal_key) || !tanggal_key
-        || !deskripsi
-        || isNaN(jumlah_barang) || !jumlah_barang
+        Number.isNaN(id) || !id ||
+        Number.isNaN(tanggal_key) || !tanggal_key ||
+        !deskripsi ||
+        Number.isNaN(jumlah_barang) || !jumlah_barang
     ) return new Response("Bad Request", {status: 400});
 
     const now = Date.now();
     
-    const res = await db.selectFrom("barang_masuk")
-    .select(["jumlah_barang", "barang_id"])
-    .where("id", '=', id)
-    .where("tanggal_key", '=', tanggal_key)
-    .executeTakeFirst();
+    const res = await db.select({ jumlah_barang: barang_masuk.jumlah_barang, barang_id: barang_masuk.barang_id })
+        .from(barang_masuk)
+        .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
+        .limit(1)
+    .then((r: any) => r[0]);
 
     if (!res) return new Response("Not Found", {status: 404});
 
     let stok_barang;
     try {
-        stok_barang = await db.transaction().execute(async (trx) => {
+        stok_barang = await db.transaction(async (trx: any) => {
             await trx
-            .updateTable("barang_masuk")
-            .set({
-                deskripsi,
-                jumlah_barang,
-                modified_ms: now
-            })
-            .where("id", "=", id)
-            .where("tanggal_key", "=", tanggal_key)
+                .update(barang_masuk)
+                .set({
+                    deskripsi,
+                    jumlah_barang,
+                    modified_ms: now
+                })
+                .where(and(eq(barang_masuk.id, id), eq(barang_masuk.tanggal_key, tanggal_key)))
             .execute();
             
             await trx
-            .updateTable("barang")
-            .set({
-                stok_barang: sql`stok_barang + ${jumlah_barang - res.jumlah_barang}`
-            })
-            .where("id", "=", res.barang_id)
+                .update(barang)
+                .set({
+                    stok_barang: sql`${barang.stok_barang} + ${jumlah_barang - res.jumlah_barang}`
+                })
+                .where(eq(barang.id, res.barang_id))
             .execute();
         });
     }

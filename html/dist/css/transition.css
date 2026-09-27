@@ -1,8 +1,0 @@
-.content-wrapper .content,
-.content-wrapper .content-header {
-    transition: opacity .18s ease;
-}
-
-.page-hidden {
-    opacity: 0;
-}

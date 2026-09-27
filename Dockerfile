@@ -6,7 +6,8 @@ RUN bun install
 
 COPY index.ts tsconfig.json ./
 COPY src/ ./src/
-COPY html/ ./html/
+COPY dist/ ./dist/
+COPY database/ ./database/
 
 VOLUME ["/app/database", "/app/cert", "/app/profile_img"]
 EXPOSE 80 443

@@ -1,28 +1,113 @@
-import { migrations } from "./migrations";
-import { Kysely } from "kysely";
+/*
+──────────────────────────────────────────────────────────────
+                           KasirKu
+        Simple & Efficient Point of Sale (PoS) System
 
-export async function migrate_up( db: Kysely<any>, current_version: number) {
-    for (const migration of migrations) {
-        if (migration.version > current_version) {
-            try {
-                await migration.up(db);
-                console.log(`[INFO] Migration "${migration.name}" completed successfully.`);
-            } catch (error) {
-                console.error(`[ERROR] Migration "${migration.name}" failed.`, error);
-                throw error;
-            }
+            Author      : Kevin Adhaikal
+            Copyright   : (C) 2026 Kevin Adhaikal
+            License     : AplikasiKasir License
+
+    Permission is granted to modify and distribute this
+    software, but the author's name must not be removed
+                     or altered.
+──────────────────────────────────────────────────────────────
+*/
+
+import { readMigrationFiles } from "drizzle-orm/migrator";
+import { sql } from "drizzle-orm";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import type { MySql2Database } from "drizzle-orm/mysql2";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
+import type * as schemaType from "./schema/sqlite";
+
+export type DatabaseType = "sqlite" | "mysql" | "postgresql";
+export type MigrationSchema = typeof schemaType;
+export type MigrationDb = (BaseSQLiteDatabase<any, any> | MySql2Database<any> | NodePgDatabase<any>) & {
+    insert: (table: any) => any;
+    select: (fields?: any) => any;
+    update: (table: any) => any;
+    delete: (table: any) => any;
+    execute: (query: any) => Promise<any>;
+    run?: (query: any) => any;
+    all?: (query: any) => any;
+    transaction: any;
+    [key: string]: any;
+};
+
+async function execSql(db: any, query: any) {
+    return typeof db.run === "function" ? db.run(query) : await db.execute(query); // ini buat ngecek apakah ini ada db.run atau nggak. kalo gaada, fallback langsung ke db.execute();
+}
+
+async function getAppliedMigrations(db: any, type: DatabaseType, table: any): Promise<Set<number>> {
+    try {
+        let rows: any[] = [];
+        if (type === "sqlite") rows = db.all(sql`SELECT created_at FROM ${table}`);
+        else {
+            const res = await db.execute(sql`SELECT created_at FROM ${table}`);
+            rows = Array.isArray(res) ? (Array.isArray(res[0]) ? res[0] : res) : (res?.rows || []);
         }
+        return new Set(rows.map((r: any) => Number(r.created_at ?? r.CREATED_AT)));
+    } catch {
+        return new Set();
     }
 }
 
-export async function migrate_down(db: Kysely<any>) {
-    for (const migration of [...migrations].reverse()) {
-        try {
-            await migration.down(db);
-            console.log(`[INFO] Rollback for "${migration.name}" completed successfully.`);
-        } catch (error) {
-            console.error(`[ERROR] Rollback for "${migration.name}" failed.`, error);
-            throw error;
+async function runHook(db: MigrationDb, type: DatabaseType, tag: string) {
+    const hooksDir = path.resolve("./database/migrations/hooks");
+    if (!existsSync(hooksDir)) return;
+
+    const files: string[] = readdirSync(hooksDir);
+    const prefix = tag.split("_")[0]; // e.g. "0000"
+    const match = files.find((f: string) => f.startsWith(tag) || f.startsWith(prefix));
+    if (!match) return;
+
+    const mod = await import(path.join(hooksDir, match));
+    const fn = mod.default || mod.up || mod.afterMigration;
+    if (typeof fn === "function") {
+        await fn(db, type);
+    }
+}
+
+export async function migrate_up(
+    db: BaseSQLiteDatabase<any, any> | MySql2Database<any> | NodePgDatabase<any>,
+    db_type?: DatabaseType,
+    run_first_migrate_only = false
+) {
+    const type = db_type || (Bun.env.DB_TYPE as DatabaseType) || "sqlite";
+    const folder = `./database/migrations/${type}`;
+
+    const table = sql`__kasirku_migrations`;
+    await execSql(db, sql`
+        CREATE TABLE IF NOT EXISTS ${table} (
+            id SERIAL PRIMARY KEY,
+            hash TEXT NOT NULL,
+            created_at BIGINT
+        )
+    `);
+
+    const applied = await getAppliedMigrations(db, type, table);
+    const migrations = readMigrationFiles({ migrationsFolder: folder });
+
+    const journalPath = path.resolve(`${folder}/meta/_journal.json`);
+    const journal = existsSync(journalPath) ? JSON.parse(await Bun.file(journalPath).text()) : null;
+
+    for (const m of migrations) {
+        if (applied.has(m.folderMillis)) continue;
+
+        const entry = journal?.entries?.find((e: any) => e.when === m.folderMillis);
+        const tag = entry?.tag || `${m.folderMillis}`;
+
+        for (const query of m.sql) {
+            if (query.trim()) await execSql(db, sql.raw(query));
         }
+
+        await execSql(db, sql`INSERT INTO ${table} (hash, created_at) VALUES (${m.hash}, ${m.folderMillis})`);
+        applied.add(m.folderMillis);
+
+        await runHook(db as MigrationDb, type, tag);
+
+        if (run_first_migrate_only) return;
     }
 }

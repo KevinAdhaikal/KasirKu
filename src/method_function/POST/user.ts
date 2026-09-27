@@ -13,19 +13,24 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
-import { get_password_hash_only } from "../../utils/utils";
+import { check_sql_is_duplicate_error, get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const schema = global.schema;
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 
@@ -35,9 +40,10 @@ export default async function(req: Request, token: string) {
     const role_id = Number(user_input.get("role_id"));
 
     if (
-        !username || !full_name || !password || !role_id || isNaN(role_id) // kalo misalnya username, full_name, password dan role_id nya ga ada
-        || password.length < 8 // kalo misalnya password nya kurang dari 8 length nya
-        || !/^[a-z0-9_]+$/.test(username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !username || !/^[a-z0-9_]+$/.test(username) || // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !full_name ||
+        !password || password.length < 8 || // kalo misalnya password nya kurang dari 8 length nya
+        isNaN(role_id) || !role_id // kalo misalnya username, full_name, password dan role_id nya ga ada
     ) return new Response("Bad Request", {status: 400});
 
     const now = Date.now();
@@ -50,20 +56,17 @@ export default async function(req: Request, token: string) {
             }),
         );
         
-        await db
-        .insertInto('users')
-        .values({
+        await db.insert(schema.users).values({
             username,
             full_name,
             password_hash: passwordHash,
             role_id,
             created_ms: now,
             modified_ms: now
-        })
-        .execute();
-    } catch (e: any) {
-        if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
-        console.log("Unexpected error in post_method.ts at /user:", e);
+        });
+    } catch (e) {
+        if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
+        console.log("Unexpected error in POST Method at /user:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

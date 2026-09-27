@@ -13,6 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
 
 export default async function(req: Request, token: string) {
@@ -20,18 +21,26 @@ export default async function(req: Request, token: string) {
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const schema = global.schema;
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & (global.permissions.ADMINISTRATOR | global.permissions.MANAGE_PEMBUKUAN))) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR |
+            global.permissions.MANAGE_PEMBUKUAN
+        )
+    )) return new Response("0", {status: 403});
 
     const user_input = new URLSearchParams(await req.text());
 
     const deskripsi = <string>user_input.get("deskripsi");
     const nominal = Number(user_input.get("nominal"));
 
-    if (!deskripsi || !nominal) return new Response("Bad Reuqest", {status: 400});
+    if (
+        !deskripsi ||
+        Number.isNaN(nominal) || !nominal
+    ) return new Response("Bad Reuqest", {status: 400});
     
     const date = global.date;
     const now = date.getTime();
@@ -39,16 +48,17 @@ export default async function(req: Request, token: string) {
     let last_row;
 
     try {
-        last_row = await global.sql_dialect.insert_return_id(db, "pembukuan", {
+        const [result] = await db.insert(schema.pembukuan).values({
             tipe: 1,
             deskripsi,
             jumlah_uang: nominal,
             tanggal_key: date_now,
             created_ms: now,
             modified_ms: now
-        });
+        }).returning();
+        last_row = Number(result.id);
     } catch (e) {
-        console.log("Unexpected error in post_method.ts at /pengeluaran:", e);
+        console.log("Unexpected error in POST Method at /pengeluaran:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

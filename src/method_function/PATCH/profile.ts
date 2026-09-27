@@ -13,8 +13,9 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
-import { check_image_type } from "../../utils/utils";
+import { check_image_type, check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
@@ -27,21 +28,22 @@ export default async function(req: Request, token: string) {
     let new_profile_img = <Buffer<ArrayBufferLike> | Uint8Array<ArrayBufferLike> | string>user_input.get("new_profile_img");
 
     if (
-        !new_username || !new_full_name // kalo username dan full name nya kosong
-        || !/^[a-z0-9_]+$/.test(new_username) // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !new_username || !/^[a-z0-9_]+$/.test(new_username) || // kalo username nya mengandung diluar a to z, 0 to 9 dan _
+        !new_full_name // kalo username dan full name nya kosong
     ) return new Response("Bad Request", {status: 400});
 
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
+    const { users } = global.schema;
 
     let body_res = "";
     let header_res: any = {}
 
     const user = await db
-    .selectFrom('users')
-    .select('username')
-    .where('id', '=', user_info.user_id)
-    .executeTakeFirst();
+        .select({ username: users.username })
+        .from(users)
+        .where(eq(users.id, user_info.user_id))
+        .limit(1)
+    .then((r: any) => r[0]);
 
     if (!user) return new Response("Internal Server Error", { status: 500 });
 
@@ -65,15 +67,14 @@ export default async function(req: Request, token: string) {
                 await Bun.write(file_path_img, img_buffer);
             }
         }
-                
-        await db.updateTable('users')
-        .set(update_data)
-        .where('id', '=', user_info.user_id)
+
+        await db.update(users)
+            .set(update_data)
+            .where(eq(users.id, user_info.user_id))
         .execute();
-    } catch (e: any) {
-        if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
-        
-        console.log("An error occured in patch_method.ts at /profile:", e);
+    } catch (e) {
+        if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
+        console.log("An error occured in PATCH Method at /profile:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

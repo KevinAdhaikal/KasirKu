@@ -13,19 +13,24 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { sql } from "kysely";
+import { eq, sql } from "drizzle-orm";
 import { global } from "../../global";
+import { check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
     const user_info = global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const { roles } = global.schema;
+    const res_role = await db.select({ permission_level: roles.permission_level }).from(roles).where(eq(roles.id, user_info.role_id)).limit(1).then((r: any) => r[0]);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
 
-    if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403}); // you don't have a permission to do that.
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR
+        )
+    )) return new Response("0", {status: 403}); // you don't have a permission to do that.
 
     const user_input = new URLSearchParams(await req.text());
 
@@ -33,31 +38,33 @@ export default async function(req: Request, token: string) {
     const new_role_name = <string>user_input.get("new_role_name");
     let new_permission_level = <null | number>Number(user_input.get("new_permission_level"));
 
-    if (!id || isNaN(id) || !new_role_name || isNaN(<number>new_permission_level) || (<number>new_permission_level & global.permissions.ADMINISTRATOR)) return new Response("Bad Request", {status: 400});
+    if (
+        !id || isNaN(id) ||
+        !new_role_name || isNaN(<number>new_permission_level) || (<number>new_permission_level & global.permissions.ADMINISTRATOR)) return new Response("Bad Request", {status: 400});
 
     try {
         const role = await db
-        .selectFrom('roles')
-        .select('permission_level')
-        .where('id', '=', id)
-        .executeTakeFirst();
+        .select({ permission_level: roles.permission_level })
+        .from(roles)
+        .where(eq(roles.id, id))
+        .limit(1)
+        .then((r: any) => r[0]);
 
         if (!role) return new Response("Internal Server Error", { status: 500 });
 
         await db
-        .updateTable('roles')
+        .update(roles)
         .set({
             name: new_role_name,
-            permission_level: id === 1 ? sql`permission_level` : (new_permission_level ?? sql`permission_level`),
+            permission_level: id === 1 ? sql`${roles.permission_level}` : (new_permission_level != null ? new_permission_level : sql`${roles.permission_level}`),
             modified_ms: Date.now()
         })
-        .where('id', '=', id)
+        .where(eq(roles.id, id))
         .execute();
 
-    } catch (e: any) {
-        if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return new Response("1", { status: 403 });
-        
-        console.log("An error occured in patch_method.ts at /role:", e);
+    } catch (e) {
+        if (check_sql_is_duplicate_error(e)) return new Response("1", {status: 403});
+        console.log("An error occured in PATCH Method at /role:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
 

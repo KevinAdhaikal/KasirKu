@@ -13,6 +13,7 @@
 ──────────────────────────────────────────────────────────────
 */
 
+import { eq } from "drizzle-orm";
 import { global } from "../../global";
 
 export default async function(req: Request, token: string) {
@@ -20,27 +21,33 @@ export default async function(req: Request, token: string) {
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
                 
     const db = global.database;
-    if (!db) return new Response("Internal Server Error", {status: 500});
-    const res_role = await db.selectFrom('roles').select('permission_level').where('id', '=', user_info.role_id).executeTakeFirst();
+    const schema = global.schema;
+    const [res_role] = await db.select({permission_level: schema.roles.permission_level}).from(schema.roles).where(eq(schema.roles.id, user_info.role_id)).limit(1);
     if (!res_role) return new Response("Internal Server Error", {status: 500});
     
-    if (!(res_role.permission_level & global.permissions.ADMINISTRATOR)) return new Response("0", {status: 403});
+    if (!(
+        res_role.permission_level & (
+            global.permissions.ADMINISTRATOR
+        )
+    )) return new Response("0", {status: 403});
     
     const user_input = new URLSearchParams(await req.text());
     
     const id = Number(user_input.get("id"));
-    if (!id || isNaN(id)) return new Response("Bad Request", {status: 400});
+    if (
+        Number.isNaN(id) || !id
+    ) return new Response("Bad Request", {status: 400});
     
     if (id === user_info.user_id) return new Response("1", {status: 403});
     if (id === 1) return new Response("2", {status: 403});
     
     try {
         await db
-        .deleteFrom('users')
-        .where('id', '=', id)
+            .delete(schema.users)
+            .where(eq(schema.users.id, id))
         .execute();
     } catch (e) {
-        console.log("An error occured in delete_method.ts at /user:", e);
+        console.log("An error occured in DELETE Method at /user:", e);
         return new Response("Internal Server Error", { status: 500 });
     }
                 
