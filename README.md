@@ -53,7 +53,6 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 - [Cara Menjalankan](#cara-menjalankan)
   - [Menggunakan Bun](#pakai-bun)
   - [Pakai Docker](#pakai-docker)
-- [Akses](#akses)
 - [QnA](#qna)
   - [Q: Kenapa Anda membuat aplikasi ini?](#q-kenapa-anda-membuat-aplikasi-ini)
   - [Q: Target pengguna KasirKu itu siapa aja?](#q-target-pengguna-kasirku-itu-siapa-aja)
@@ -109,7 +108,7 @@ KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai
 - **Responsive UI**  
   Antarmuka modern dan nyaman digunakan di berbagai ukuran layar (desktop, tablet, hingga smartphone).
 - **Dark Mode**  
-  Mendukung tampilan mode terang (*Light*) dan mode gelap (*Dark*).
+  Mendukung tampilan mode terang (Light mode) dan mode gelap (Dark mode).
 - **Session Authentication**  
   Sistem login aman berbasis sesi dengan hashing Argon2id.
 - **Minimal Dependency**  
@@ -135,20 +134,21 @@ bun install
 bun run index.ts
 ```
 
-<!-- TODO: Revisi kalimatnya -->
 ### Pakai Docker
-Demi "environment ready". Sudah di siapkan file `docker-compose` yang sudah termasuk database postgre.
-```
+
+Untuk mempermudah menyiapkan environment, tersedia file `docker-compose.yml` yang sudah mencakup database PostgreSQL.
+
+Jalankan perintah berikut untuk menjalankan seluruh service:
+
+```bash
 docker compose up -d
 ```
 
-Untuk menghentikan
-```
+Untuk menghentikan service:
+
+```bash
 docker compose down
 ```
-
-## Akses
-Buka `https://localhost` di browser, dan untuk default Username / Password: `admin` / `admin`.
 
 ## QnA
 ### Q: Kenapa Anda membuat aplikasi ini?
