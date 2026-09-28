@@ -102,7 +102,6 @@ class AuthStore {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      (window as any).__AUTH__ = this;
       window.addEventListener('auth:unauthorized', () => {
         this.token = null;
         this.user = null;

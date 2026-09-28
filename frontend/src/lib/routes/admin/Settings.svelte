@@ -18,6 +18,7 @@
   import Modal from '../../components/ui/Modal.svelte';
   import {
     renderReceiptHtml,
+    sanitizeReceiptHtml,
     RECEIPT_PRESETS,
     TEMPLATE_VARIABLES,
     type StoreInfo
@@ -326,7 +327,7 @@
     const doc = iframe.contentWindow?.document;
     if (doc) {
       doc.open();
-      doc.write(renderedPreviewHtml);
+      doc.write(sanitizeReceiptHtml(renderedPreviewHtml));
       doc.close();
       iframe.contentWindow?.focus();
       setTimeout(() => {
