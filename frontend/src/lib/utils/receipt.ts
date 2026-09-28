@@ -1,4 +1,5 @@
 import { formatRupiah, formatNumber, formatDateTime } from './format';
+import DOMPurify from 'dompurify';
 import type { ReceiptData } from '../components/pos/PaymentModal.svelte';
 
 export interface StoreInfo {
@@ -431,6 +432,48 @@ export const RECEIPT_PRESETS = [
   }
 ];
 
+export function escapeHtml(str: unknown): string {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+export function sanitizeReceiptHtml(htmlContent: string): string {
+  if (!htmlContent || typeof htmlContent !== 'string') return '';
+  if (typeof window === 'undefined') return htmlContent;
+
+  const purifier = typeof (DOMPurify as any)?.sanitize === 'function'
+    ? DOMPurify
+    : (typeof DOMPurify === 'function' ? (DOMPurify as any)(window) : null);
+
+  if (!purifier || typeof purifier.sanitize !== 'function') {
+    return htmlContent;
+  }
+
+  return purifier.sanitize(htmlContent, {
+    WHOLE_DOCUMENT: true,
+    ALLOWED_TAGS: [
+      'html', 'head', 'body', 'title', 'meta', 'style',
+      'div', 'span', 'p', 'b', 'strong', 'i', 'em', 'u', 's',
+      'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+      'hr', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'small', 'pre', 'center', 'section', 'header', 'footer'
+    ],
+    ALLOWED_ATTR: [
+      'class', 'id', 'style', 'width', 'height', 'align',
+      'colspan', 'rowspan', 'border', 'cellpadding', 'cellspacing',
+      'lang', 'dir', 'charset', 'name', 'content'
+    ],
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'button', 'select', 'base', 'link', 'audio', 'video', 'canvas', 'svg', 'math'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onkeydown', 'onkeyup', 'href', 'src', 'action', 'data', 'formaction'],
+    ALLOW_DATA_ATTR: false,
+  });
+}
+
 export function generateItemsHtml(items: Array<{ nama_barang: string; harga_jual: number; jumlah_barang: number }>): string {
   if (!items || items.length === 0) {
     return `<div style="color: #888; text-align: center; padding: 4px 0; font-size: 11px;">(Tidak ada item)</div>`;
@@ -439,8 +482,9 @@ export function generateItemsHtml(items: Array<{ nama_barang: string; harga_jual
   return items
     .map((item) => {
       const subtotal = item.harga_jual * item.jumlah_barang;
+      const safeName = escapeHtml(item.nama_barang);
       return `<div class="item" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; font-size: 11px; line-height: 1.35; gap: 4px;">
-        <span class="item-name" style="flex: 1; min-width: 0; word-break: break-word; overflow-wrap: anywhere; white-space: normal;">${item.nama_barang}</span>
+        <span class="item-name" style="flex: 1; min-width: 0; word-break: break-word; overflow-wrap: anywhere; white-space: normal;">${safeName}</span>
         <span class="item-qty" style="width: 24px; text-align: center; white-space: nowrap; flex-shrink: 0;">${formatNumber(item.jumlah_barang)}</span>
         <span class="item-price" style="width: 66px; text-align: right; white-space: nowrap; flex-shrink: 0;">${formatRupiah(item.harga_jual)}</span>
         <span class="item-total" style="width: 72px; text-align: right; font-weight: bold; white-space: nowrap; flex-shrink: 0;">${formatRupiah(subtotal)}</span>
@@ -456,18 +500,18 @@ export function renderReceiptHtml(
 ): string {
   let content = template && template.trim() ? template : RECEIPT_PRESETS[0].template;
 
-  const namaToko = storeInfo?.name?.trim() || 'KASIRKU POS';
-  const descToko = storeInfo?.desc?.trim() || '';
-  const alamatToko = storeInfo?.address?.trim() || '';
-  const telpToko = storeInfo?.phone_num?.trim() || '';
+  const namaToko = escapeHtml(storeInfo?.name?.trim() || 'KASIRKU POS');
+  const descToko = escapeHtml(storeInfo?.desc?.trim() || '');
+  const alamatToko = escapeHtml(storeInfo?.address?.trim() || '');
+  const telpToko = escapeHtml(storeInfo?.phone_num?.trim() || '');
 
-  const noStruk = data?.receiptNo || 'TRX-20260719-004281';
-  const tanggal = data?.timestamp ? formatDateTime(data.timestamp) : formatDateTime(Date.now());
-  const kasir = data?.cashierName || 'Kasir Utama';
-  const totalBarang = data?.totalItems !== undefined ? `${formatNumber(data.totalItems)} item` : '7 item';
-  const totalBelanja = data?.totalAmount !== undefined ? formatRupiah(data.totalAmount) : 'Rp 172.000';
-  const tunai = data?.cashPaid !== undefined ? formatRupiah(data.cashPaid) : 'Rp 200.000';
-  const kembalian = data?.changeAmount !== undefined ? formatRupiah(data.changeAmount) : 'Rp 28.000';
+  const noStruk = escapeHtml(data?.receiptNo || 'TRX-20260719-004281');
+  const tanggal = escapeHtml(data?.timestamp ? formatDateTime(data.timestamp) : formatDateTime(Date.now()));
+  const kasir = escapeHtml(data?.cashierName || 'Kasir Utama');
+  const totalBarang = escapeHtml(data?.totalItems !== undefined ? `${formatNumber(data.totalItems)} item` : '7 item');
+  const totalBelanja = escapeHtml(data?.totalAmount !== undefined ? formatRupiah(data.totalAmount) : 'Rp 172.000');
+  const tunai = escapeHtml(data?.cashPaid !== undefined ? formatRupiah(data.cashPaid) : 'Rp 200.000');
+  const kembalian = escapeHtml(data?.changeAmount !== undefined ? formatRupiah(data.changeAmount) : 'Rp 28.000');
 
   const dummyItems = [
     { nama_barang: 'Indomie Goreng Rasa Ayam Geprek Sambal Korek Pedas Nampol Limited Edition', harga_jual: 3500, jumlah_barang: 2 },
@@ -497,8 +541,9 @@ export function renderReceiptHtml(
     .replaceAll('{{kembalian}}', kembalian);
 
   // If content is a snippet without full <html> wrapper, wrap it cleanly for iframe rendering
+  let fullHtml = rendered;
   if (!rendered.includes('<html') && !rendered.includes('<!DOCTYPE')) {
-    return `<!DOCTYPE html>
+    fullHtml = `<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -520,5 +565,5 @@ export function renderReceiptHtml(
 </html>`;
   }
 
-  return rendered;
+  return sanitizeReceiptHtml(fullHtml);
 }
