@@ -8,6 +8,7 @@
   import { api } from '../../api/api';
   import { toast } from '../../stores/toast.svelte';
   import { sse } from '../../stores/sse.svelte';
+  import { auth } from '../../stores/auth.svelte';
   import Button from '../../components/ui/Button.svelte';
   import Input from '../../components/ui/Input.svelte';
   import Card from '../../components/ui/Card.svelte';
