@@ -27,7 +27,7 @@
       if (sse.status !== 'online') {
         await sse.connect();
       }
-      router.navigate('/', true);
+      router.navigate(auth.getDefaultAvailablePath(), true);
       return;
     }
 
@@ -65,7 +65,7 @@
     try {
       await auth.login(username.trim(), password, rememberPassword);
       await sse.connect();
-      router.navigate('/');
+      router.navigate(auth.getDefaultAvailablePath());
     } catch (err: any) {
       errorMessage = err.message || 'Gagal masuk ke sistem. Silakan periksa kredensial Anda.';
     } finally {
@@ -197,7 +197,7 @@
               bind:checked={rememberPassword}
               class="rounded border-[var(--border-contrast)] text-[var(--brand)] focus:ring-0 focus:ring-offset-0"
             />
-            <span>Remember my Account</span>
+            <span>Remember me for 1 week</span>
           </label>
         </div>
 

@@ -27,6 +27,17 @@ export const Permissions = {
   DASHBOARD: 1 << 4,     // 16
 } as const;
 
+export function getRequiredPermissionForPath(path: string): number | null {
+  const p = path.split('?')[0].split('#')[0];
+  if (p === '/' || p === '/dashboard') return Permissions.DASHBOARD;
+  if (p === '/kasir') return Permissions.KASIR;
+  if (p.startsWith('/barang/') || p === '/barang') return Permissions.MANAGE_BARANG;
+  if (p.startsWith('/pembukuan/') || p === '/penjualan' || p === '/pengeluaran' || p === '/laporan') return Permissions.MANAGE_PEMBUKUAN;
+  if (p === '/users' || p === '/rp' || p === '/settings') return Permissions.ADMINISTRATOR;
+  if (p === '/profile' || p === '/login') return null;
+  return null;
+}
+
 export interface UserProfile {
   id: number;
   username: string;
@@ -106,6 +117,9 @@ class AuthStore {
         this.token = null;
         this.user = null;
       });
+      window.addEventListener('auth:forbidden', () => {
+        this.fetchProfile().catch(() => {});
+      });
     }
   }
 
@@ -121,6 +135,26 @@ class AuthStore {
     // Administrator has all permissions
     if (userRole === 'Administrator' || (userPerm & Permissions.ADMINISTRATOR)) return true;
     return (userPerm & permission) !== 0;
+  }
+
+  isPathAllowed(path: string): boolean {
+    if (!this.user) {
+      return true;
+    }
+    const cleanPath = path.split('?')[0].split('#')[0];
+    if (cleanPath === '/profile' || cleanPath === '/login') return true;
+    const required = getRequiredPermissionForPath(cleanPath);
+    if (required === null) return true;
+    return this.can(required);
+  }
+
+  getDefaultAvailablePath(): string {
+    if (this.can(Permissions.DASHBOARD)) return '/';
+    if (this.can(Permissions.KASIR)) return '/kasir';
+    if (this.can(Permissions.MANAGE_BARANG)) return '/barang/daftar_barang';
+    if (this.can(Permissions.MANAGE_PEMBUKUAN)) return '/pembukuan/penjualan';
+    if (this.can(Permissions.ADMINISTRATOR)) return '/users';
+    return '/profile';
   }
 
   hasSavedCredentials(): boolean {

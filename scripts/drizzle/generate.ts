@@ -7,7 +7,6 @@ if (!migration_name) {
     process.exit(1);
 }
 
-
 console.log(`[DRIZZLE] Generating SQLite migrations (name: ${migration_name})...`);
 await $`bunx drizzle-kit generate --config=config/drizzle/sqlite.config.ts --name=${migration_name}`;
 

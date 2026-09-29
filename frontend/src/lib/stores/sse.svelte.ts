@@ -144,6 +144,7 @@ class SseStore {
                   settle(true);
                   break;
                 case 'CHANGE_PROFILE':
+                case 'REFRESH_RP':
                   this.status = 'online';
                   settle(true);
                   await auth.fetchProfile();

@@ -44,7 +44,7 @@ async function stop_server() {
 }
 
 function init_global() {
-    global.user_sessions = new user_session(600, 60, 32); // user sessions
+    global.user_sessions = new user_session(32); // user sessions
     global.sse_clients = new sse_server(5000); // sse clients
     global.rate_limit = new rate_limit(10, 100, 5); // rate limit (max req 100/10 seconds. jail for 25 seconds)
 }
@@ -101,7 +101,7 @@ export function main() {
 
                 // SSE endpoint
                 if (api_path === "/sse") {
-                    const user_info = token ? global.user_sessions.get(token) : null;
+                    const user_info = token ? await global.user_sessions.get(token) : null;
 
                     if (!token || !user_info) {
                         return with_cors(new Response(new ReadableStream({
@@ -135,7 +135,7 @@ export function main() {
                 }
 
                 // Normal GET API endpoint
-                const user_info = token ? global.user_sessions.get(token) : null;
+                const user_info = token ? await global.user_sessions.get(token) : null;
                 if (api_path !== "/public_info" && (!token || !user_info)) {
                     return with_cors(new Response("Unauthorized", { status: 401 }), req);
                 }
