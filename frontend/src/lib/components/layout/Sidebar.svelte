@@ -41,7 +41,7 @@
   // Di mobile / android (< 1024px), sidebar drawer selalu tampil penuh dengan teks
   const isCollapsed = $derived(!isMobile && ui.sidebarCollapsed && !ui.mobileSidebarOpen);
 
-  const isSseDown = $derived(sse.status !== 'online');
+  const isSseDown = $derived(sse.status !== 'online' && !sse.isTokenReconnecting);
 
   function handleNav(path: string) {
     if (isSseDown) {

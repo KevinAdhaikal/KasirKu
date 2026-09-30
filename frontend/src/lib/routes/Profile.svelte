@@ -4,6 +4,7 @@
 
 <script lang="ts">
   import { auth } from '../stores/auth.svelte';
+  import { sse } from '../stores/sse.svelte';
   import { api } from '../api/api';
   import { toast } from '../stores/toast.svelte';
   import Card from '../components/ui/Card.svelte';
@@ -176,10 +177,14 @@
         new_pass: newPassword,
       });
 
+      // Prepare SSE for token switch so it stays online and avoids showing offline states
+      sse.beginTokenSwitch();
+
       const newToken = await api.patch<string>('/api/change_password', params);
       if (newToken) {
-        auth.token = newToken;
-        localStorage.setItem('token', newToken);
+        await sse.completeTokenSwitch(newToken);
+      } else {
+        sse.cancelTokenSwitch();
       }
 
       oldPassword = '';
@@ -187,6 +192,7 @@
       confirmPassword = '';
       toast.success('Kata sandi berhasil diperbarui.');
     } catch (err: any) {
+      sse.cancelTokenSwitch();
       if (err.status === 403 || err.message === '0') {
         passwordError = 'Kata sandi saat ini salah.';
       } else {

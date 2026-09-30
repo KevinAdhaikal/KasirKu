@@ -64,7 +64,8 @@ export class user_session {
                         role_id,
                         token,
                         created_ms: now,
-                        expired_ms: now + this.expired_ms
+                        expired_ms: now + this.expired_ms,
+                        is_active: 1
                     });
 
                 return token;
@@ -79,18 +80,37 @@ export class user_session {
             .select({
                 user_id: this.schema.user_sessions.user_id,
                 role_id: this.schema.user_sessions.role_id,
+                is_active: this.schema.user_sessions.is_active,
                 expired_ms: this.schema.user_sessions.expired_ms
             })
             .from(this.schema.user_sessions)
             .where(eq(this.schema.user_sessions.token, token))
         .limit(1);
 
-        if (Date.now() >= row.expired_ms) {
-            await this.remove(token);
-            global.sse_clients.remove(token);
-            return false;
+        if (!row) return false;
+
+        const now = Date.now();
+
+        if (now >= row.expired_ms) {
+            if (!row.is_active) {
+                await this.remove(token);
+                global.sse_clients.remove(token);
+                return false;
+            } else {
+                if (now >= row.expired_ms + this.expired_ms) {
+                    await this.remove(token);
+                    global.sse_clients.remove(token);
+                    return false;
+                }
+                await this.db
+                    .update(this.schema.user_sessions)
+                    .set({
+                        is_active: 1,
+                        expired_ms: now + this.expired_ms
+                    })
+                .where(eq(this.schema.user_sessions.token, token));
+            }
         }
-        
         return row ?? false;
     }
 
@@ -100,7 +120,7 @@ export class user_session {
                 token: this.schema.user_sessions.token
             })
             .from(this.schema.user_sessions)
-            .where(eq(this.schema.user_sessions.user_id, userid));
+        .where(eq(this.schema.user_sessions.user_id, userid));
 
         return rows.map(row => row.token);
     }
@@ -111,7 +131,7 @@ export class user_session {
                 token: this.schema.user_sessions.token
             })
             .from(this.schema.user_sessions)
-            .where(eq(this.schema.user_sessions.role_id, roleid));
+        .where(eq(this.schema.user_sessions.role_id, roleid));
 
         return rows.map(row => row.token);
     }
@@ -140,7 +160,7 @@ export class user_session {
     async revoke_all_by_roleid(role_id: number): Promise<void> {
         await this.db
             .delete(this.schema.user_sessions)
-            .where(eq(this.schema.user_sessions.role_id, role_id));
+        .where(eq(this.schema.user_sessions.role_id, role_id));
     }
 
     destroy() {

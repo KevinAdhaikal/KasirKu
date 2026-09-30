@@ -864,7 +864,7 @@
 <!-- Print Report Layout -->
 <div id="financial-print-report" class="hidden print:block font-sans text-black p-8 bg-white max-w-4xl mx-auto text-xs">
   <div class="text-center pb-4 border-b-2 border-black">
-    <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo?.name || auth.publicInfo?.store_name || 'KASIRKU POS'}</h1>
+    <h1 class="text-xl font-bold uppercase tracking-wide">{auth.publicInfo?.name || auth.publicInfo?.store_name || 'EXAMPLE MART'}</h1>
     {#if auth.publicInfo?.desc || auth.publicInfo?.store_desc}
       <p class="text-xs text-neutral-600 mt-0.5">{auth.publicInfo?.desc || auth.publicInfo?.store_desc}</p>
     {/if}

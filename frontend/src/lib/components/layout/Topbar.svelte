@@ -100,15 +100,15 @@
       <button
         type="button"
         onclick={() => {
-          if (sse.status !== 'online') {
+          if (sse.status !== 'online' && !sse.isTokenReconnecting) {
             toast.warning('Server sedang terputus (SSE offline). Navigasi dinonaktifkan.', 'Koneksi Offline');
             return;
           }
           router.navigate('/kasir');
         }}
-        disabled={sse.status !== 'online'}
-        title={sse.status !== 'online' ? 'Server terputus (SSE offline) - Navigasi dinonaktifkan' : 'Buka Kasir'}
-        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--brand)] text-[var(--accent-fg)] hover:bg-[var(--brand-hover)] shadow-2xs transition-colors {sse.status !== 'online' ? 'opacity-40 cursor-not-allowed' : ''}"
+        disabled={sse.status !== 'online' && !sse.isTokenReconnecting}
+        title={sse.status !== 'online' && !sse.isTokenReconnecting ? 'Server terputus (SSE offline) - Navigasi dinonaktifkan' : 'Buka Kasir'}
+        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--brand)] text-[var(--accent-fg)] hover:bg-[var(--brand-hover)] shadow-2xs transition-colors {sse.status !== 'online' && !sse.isTokenReconnecting ? 'opacity-40 cursor-not-allowed' : ''}"
       >
         <ShoppingBag class="w-3.5 h-3.5" />
         <span>Buka Kasir</span>

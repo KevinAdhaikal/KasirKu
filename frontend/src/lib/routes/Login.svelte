@@ -4,7 +4,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { auth, getCookie } from '../stores/auth.svelte';
+  import { auth } from '../stores/auth.svelte';
   import { router } from '../stores/router.svelte';
   import { toast } from '../stores/toast.svelte';
   import { sse } from '../stores/sse.svelte';
@@ -13,9 +13,8 @@
   import ThemeToggle from '../components/layout/ThemeToggle.svelte';
   import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-svelte';
 
-  let username = $state(typeof window !== 'undefined' ? getCookie('username') || localStorage.getItem('username') || '' : '');
-  let password = $state(typeof window !== 'undefined' ? getCookie('password') || localStorage.getItem('password') || '' : '');
-  let rememberPassword = $state(typeof window !== 'undefined' ? !!(getCookie('password') || localStorage.getItem('password') || localStorage.getItem('remember_password')) : true);
+  let username = $state('');
+  let password = $state('');
   let showPassword = $state(false);
   let loading = $state(false);
   let errorMessage = $state<string | null>(null);
@@ -63,7 +62,7 @@
 
     loading = true;
     try {
-      await auth.login(username.trim(), password, rememberPassword);
+      await auth.login(username.trim(), password);
       await sse.connect();
       router.navigate(auth.getDefaultAvailablePath());
     } catch (err: any) {
@@ -189,17 +188,7 @@
           </Input>
         </div>
 
-        <div class="flex items-center justify-between text-xs pt-1">
-          <label class="flex items-center gap-2 cursor-pointer select-none text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-            <input
-              type="checkbox"
-              id="remember_password"
-              bind:checked={rememberPassword}
-              class="rounded border-[var(--border-contrast)] text-[var(--brand)] focus:ring-0 focus:ring-offset-0"
-            />
-            <span>Remember me for 1 week</span>
-          </label>
-        </div>
+
 
         <div class="pt-2">
           <Button

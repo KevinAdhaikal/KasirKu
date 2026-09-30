@@ -12,7 +12,7 @@
 
   let { children }: Props = $props();
 
-  const isSseDown = $derived(sse.status !== 'online');
+  const isSseDown = $derived(sse.status !== 'online' && !sse.isTokenReconnecting);
 </script>
 
 <div class="min-h-screen flex bg-[var(--bg-canvas)] text-neutral-900 dark:text-neutral-100">

@@ -157,65 +157,23 @@ class AuthStore {
     return '/profile';
   }
 
-  hasSavedCredentials(): boolean {
-    const creds = this.getSavedCredentials();
-    return !!creds && !!creds.username && !!creds.password;
-  }
-
-  getSavedCredentials(): { username: string; password: string } | null {
-    const u = getCookie('username') || (typeof window !== 'undefined' ? localStorage.getItem('username') : null);
-    const p = getCookie('password') || (typeof window !== 'undefined' ? localStorage.getItem('password') : null);
-    if (u && p && u.trim() && p.trim()) {
-      return { username: u.trim(), password: p.trim() };
+  updateToken(newToken: string) {
+    this.token = newToken;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', newToken);
     }
-    return null;
+    if (typeof document !== 'undefined') {
+      document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+    }
   }
 
   clearSavedPassword() {
     deleteCookie('password');
+    deleteCookie('username');
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('username');
       localStorage.removeItem('password');
       localStorage.removeItem('remember_password');
-    }
-  }
-
-  async reloginWithSavedCredentials(): Promise<boolean> {
-    const creds = this.getSavedCredentials();
-    if (!creds) return false;
-
-    try {
-      const params = new URLSearchParams({ username: creds.username, password: creds.password });
-      const res = await fetch('/login', {
-        method: 'POST',
-        body: params,
-      });
-
-      if (res.status === 200) {
-        const token = await res.text();
-        this.token = token;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', token);
-        }
-        if (typeof document !== 'undefined') {
-          document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-          setCookie('username', creds.username, 30);
-          setCookie('password', creds.password, 30);
-        }
-        const profileData = await api.get<UserProfile>('/api/profile');
-        const userProfile = typeof profileData === 'string' ? JSON.parse(profileData) : profileData;
-        await this.fetchPublicInfo();
-
-        this.user = userProfile;
-        if (typeof window !== 'undefined' && userProfile) {
-          localStorage.setItem('kasirku_user', JSON.stringify(userProfile));
-        }
-        return !!this.user;
-      }
-      return false;
-    } catch {
-      this.token = null;
-      this.user = null;
-      return false;
     }
   }
 
@@ -262,20 +220,8 @@ class AuthStore {
       }
     }
 
-    // 2. If token check was not successful, attempt auto-relogin using saved credentials (Remember My Account)
-    if (!authSucceeded && this.hasSavedCredentials()) {
-      try {
-        const relogged = await this.reloginWithSavedCredentials();
-        if (relogged && this.user) {
-          authSucceeded = true;
-        } else {
-          this.clearSavedPassword();
-        }
-      } catch (err) {
-        console.warn('Auto-relogin with remembered credentials failed:', err);
-        this.clearSavedPassword();
-      }
-    }
+    // 2. Ensure any legacy stored credentials from previous versions are purged
+    this.clearSavedPassword();
 
     // 3. If authentication did not succeed, ensure clean state and fetch public store info for login page
     if (!authSucceeded) {
@@ -368,7 +314,7 @@ class AuthStore {
     }
   }
 
-  async login(username: string, password: string, rememberPassword = true): Promise<boolean> {
+  async login(username: string, password: string): Promise<boolean> {
     const params = new URLSearchParams({ username, password });
     const res = await fetch('/login', {
       method: 'POST',
@@ -383,20 +329,8 @@ class AuthStore {
         document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
       }
 
-      // Handle Remember my Account via Cookie & localStorage
-      if (rememberPassword) {
-        setCookie('username', username, 30);
-        setCookie('password', password, 30);
-        localStorage.setItem('username', username);
-        localStorage.setItem('password', password);
-        localStorage.setItem('remember_password', 'true');
-      } else {
-        deleteCookie('username');
-        deleteCookie('password');
-        localStorage.removeItem('password');
-        localStorage.removeItem('remember_password');
-        localStorage.setItem('username', username);
-      }
+      // Purge any legacy stored credentials from previous versions
+      this.clearSavedPassword();
 
       // Fetch profile & public info first without setting this.user immediately
       const profileData = await api.get<UserProfile>('/api/profile');
@@ -434,11 +368,9 @@ class AuthStore {
       localStorage.removeItem('token');
       localStorage.removeItem('kasirku_user');
       localStorage.removeItem('kasirku_public_info');
-      localStorage.removeItem('password');
-      localStorage.removeItem('remember_password');
     }
+    this.clearSavedPassword();
     if (typeof document !== 'undefined') {
-      deleteCookie('password');
       document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
     }
 
