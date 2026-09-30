@@ -1,13 +1,16 @@
 <img width="1250" height="417" alt="KasirKu-1" src="https://github.com/user-attachments/assets/a53d2bf5-8f01-4bf5-97a4-9212273f0889" />
 <p align="center">
-<img src="https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Bun">
-<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
-<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Bun">
+  <img src="https://img.shields.io/badge/Svelte%205-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" alt="Svelte 5">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 </p>
 
 **KasirKu** adalah aplikasi **Point of Sale (PoS)** yang dirancang untuk membantu pemilik usaha dalam mengelola transaksi, produk, inventaris, dan operasional kasir dengan lebih mudah dan efisien. Dilengkapi dengan **perhitungan keuntungan otomatis**, **dukungan cetak struk thermal**, serta **desain struk yang dapat dikustomisasi**.
 
 KasirKu dibangun menggunakan **Bun.js** sebagai backend dan **Svelte 5** sebagai frontend. Aplikasi ini juga mendukung **realtime data updates**, sehingga perubahan data dapat ditampilkan secara langsung tanpa perlu melakukan refresh halaman.
+
+Untuk mencoba KasirKu secara langsung, silakan kunjungi: https://kasirku.adhaikalk.workers.dev/
 
 ## Preview
 
