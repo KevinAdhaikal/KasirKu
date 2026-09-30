@@ -5,7 +5,7 @@
   import { auth } from '../../stores/auth.svelte';
   import { api } from '../../api/api';
   import { sse } from '../../stores/sse.svelte';
-  import { renderReceiptHtml, type StoreInfo } from '../../utils/receipt';
+  import { renderReceiptHtml, sanitizeReceiptHtml, type StoreInfo } from '../../utils/receipt';
   import { Printer, Check, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-svelte';
   import type { ReceiptData } from './PaymentModal.svelte';
 
@@ -47,7 +47,7 @@
     const doc = iframe.contentWindow?.document;
     if (doc) {
       doc.open();
-      doc.write(receiptHtml);
+      doc.write(sanitizeReceiptHtml(receiptHtml));
       doc.close();
       iframe.contentWindow?.focus();
       setTimeout(() => {
@@ -89,7 +89,7 @@
   }
 
   const storeInfo = $derived<StoreInfo>({
-    name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
+    name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'EXAMPLE MART',
     desc: auth.publicInfo?.desc?.trim() || auth.publicInfo?.description?.trim() || auth.publicInfo?.store_desc?.trim() || '',
     address: auth.publicInfo?.address?.trim() || auth.publicInfo?.store_address?.trim() || '',
     phone_num: auth.publicInfo?.phone_num?.trim() || auth.publicInfo?.no_phone?.trim() || auth.publicInfo?.store_phone_num?.trim() || '',

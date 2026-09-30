@@ -16,6 +16,7 @@
   import Badge from '../../components/ui/Badge.svelte';
   import Skeleton from '../../components/ui/Skeleton.svelte';
   import TablePagination from '../../components/ui/TablePagination.svelte';
+  import Avatar from '../../components/ui/Avatar.svelte';
   import { formatDateTime } from '../../utils/format';
   import {
     Users,
@@ -591,9 +592,7 @@
                 <!-- User Name & Avatar -->
                 <td class="py-2.5 px-3 text-center">
                   <div class="flex items-center justify-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center font-bold text-xs text-neutral-700 dark:text-neutral-300 shrink-0">
-                      {user.full_name.charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar src={user.profile_img} name={user.full_name || user.username} size="md" />
                     <div>
                       <div class="flex items-center gap-1.5">
                         <span class="font-medium text-neutral-900 dark:text-neutral-100">
@@ -805,6 +804,15 @@
           <span>{editErrorMessage}</span>
         </div>
       {/if}
+
+      <!-- User Profile Header -->
+      <div class="flex items-center gap-3 p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)]">
+        <Avatar src={editingUser.profile_img} name={editingUser.full_name || editingUser.username} size="lg" />
+        <div class="min-w-0">
+          <div class="font-medium text-sm text-[var(--text-primary)] truncate">{editingUser.full_name}</div>
+          <div class="text-xs text-[var(--text-muted)] truncate">@{editingUser.username} &bull; ID: {editingUser.id}</div>
+        </div>
+      </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input

@@ -12,7 +12,7 @@
 
   let { children }: Props = $props();
 
-  const isSseDown = $derived(sse.status !== 'online');
+  const isSseDown = $derived(sse.status !== 'online' && !sse.isTokenReconnecting);
 </script>
 
 <div class="min-h-screen flex bg-[var(--bg-canvas)] text-neutral-900 dark:text-neutral-100">
@@ -67,7 +67,7 @@
           rel="noopener noreferrer"
           class="group inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
         >
-          <span>KasirKu v2.0.0</span>
+          <span>KasirKu v2.0.1</span>
           <svg class="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>

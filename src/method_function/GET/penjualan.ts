@@ -47,7 +47,8 @@ export default async function(req: Request, url: URL, user_info: user_session_in
             tanggal_key: penjualan.tanggal_key,
             created_ms: penjualan.created_ms,
             modified_ms: penjualan.modified_ms,
-            nama_kasir: users.full_name
+            nama_kasir: users.full_name,
+            kasir_profile_img: users.profile_img
         })
         .from(penjualan)
     .leftJoin(users, eq(users.id, penjualan.kasir_id));

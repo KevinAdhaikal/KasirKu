@@ -31,7 +31,11 @@ export default async function(req: Request, token: string) {
     const schema = global.schema;
     
     const [row] = await db
-        .select({id: schema.users.id, password_hash: schema.users.password_hash, role_id: schema.users.role_id})
+        .select({
+            id: schema.users.id,
+            password_hash: schema.users.password_hash,
+            role_id: schema.users.role_id
+        })
         .from(schema.users)
         .where(eq(schema.users.username, username))
     .limit(1);
@@ -39,7 +43,7 @@ export default async function(req: Request, token: string) {
     if (!row) return new Response("Forbidden", { status: 403 });
     if (!Bun.password.verifySync(password, global.ph_text + row.password_hash)) return new Response("Forbidden", { status: 403 });
     
-    const session_id = global.user_sessions.add(row.id, row.role_id);
+    const session_id = await global.user_sessions.add(row.id, row.role_id);
     if (!session_id) return new Response("Internal Server Error", { status: 500 });
     
     return new Response(session_id, {

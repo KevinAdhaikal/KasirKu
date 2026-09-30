@@ -18,7 +18,7 @@ import { global } from "../../global";
 import { get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
-    const user_info = global.user_sessions.get(token);
+    const user_info = await global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
     const user_input = new URLSearchParams(await req.text());
@@ -61,10 +61,13 @@ export default async function(req: Request, token: string) {
             .where(eq(users.id, user_info.user_id))
         .execute();
 
-        global.sse_clients.remove_by_user_id(user_info.user_id);
-        global.user_sessions.revoke_all_by_userid(user_info.user_id);
+        for (const token of await global.user_sessions.get_ids_by_userid(user_info.user_id)) {
+            global.sse_clients.remove(token);
+        }
         
-        const token_gen = <string>global.user_sessions.add(user_info.user_id, user_info.role_id);
+        await global.user_sessions.revoke_all_by_userid(user_info.user_id);
+        
+        const token_gen = <string>await global.user_sessions.add(user_info.user_id, user_info.role_id);
         
         return new Response(token_gen, {
             headers: {

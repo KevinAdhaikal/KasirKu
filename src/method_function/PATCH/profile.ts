@@ -18,7 +18,7 @@ import { global } from "../../global";
 import { check_image_type, check_sql_is_duplicate_error } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
-    const user_info = global.user_sessions.get(token);
+    const user_info = await global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
     const user_input = new URLSearchParams(await req.text());
@@ -78,14 +78,19 @@ export default async function(req: Request, token: string) {
         return new Response("Internal Server Error", { status: 500 });
     }
 
-    global.sse_clients.send_to_user(user_info.user_id, JSON.stringify({
-        type: 1,
-        code: "CHANGE_PROFILE"
-    }));
-    global.sse_clients.send_to_role(1, JSON.stringify({
-        type: 1,
-        code: "REFRESH_USERS"
-    }));
+    for (const token of await global.user_sessions.get_ids_by_userid(user_info.user_id)) {
+        global.sse_clients.send(token, JSON.stringify({
+            type: 1,
+            code: "CHANGE_PROFILE"
+        }));
+    }
 
+    for (const token of await global.user_sessions.get_ids_by_roleid(1)) {
+        global.sse_clients.send(token, JSON.stringify({
+            type: 1,
+            code: "REFRESH_USERS"
+        }));
+    }
+    
     return new Response(body_res, {status: 200, headers: header_res});
 }

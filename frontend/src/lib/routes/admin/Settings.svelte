@@ -8,6 +8,7 @@
   import { api } from '../../api/api';
   import { toast } from '../../stores/toast.svelte';
   import { sse } from '../../stores/sse.svelte';
+  import { auth } from '../../stores/auth.svelte';
   import Button from '../../components/ui/Button.svelte';
   import Input from '../../components/ui/Input.svelte';
   import Card from '../../components/ui/Card.svelte';
@@ -17,6 +18,7 @@
   import Modal from '../../components/ui/Modal.svelte';
   import {
     renderReceiptHtml,
+    sanitizeReceiptHtml,
     RECEIPT_PRESETS,
     TEMPLATE_VARIABLES,
     type StoreInfo
@@ -325,7 +327,7 @@
     const doc = iframe.contentWindow?.document;
     if (doc) {
       doc.open();
-      doc.write(renderedPreviewHtml);
+      doc.write(sanitizeReceiptHtml(renderedPreviewHtml));
       doc.close();
       iframe.contentWindow?.focus();
       setTimeout(() => {

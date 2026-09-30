@@ -18,15 +18,15 @@ import { user_session_interface } from "../user_session/user_session";
 export class sse_server {
     private clients = new Map<
         string,
-        Set<{ controller: ReadableStreamDefaultController; user: user_session_interface }>
+        Set<{ controller: ReadableStreamDefaultController }>
     >();
 
     private encoder = new TextEncoder();
-    private ping = this.encoder.encode(":\n\n");
+    private ping = this.encoder.encode(":\n\n"); // ini buat ngirim ping nya
     private ok = this.encoder.encode("data:" + JSON.stringify({
         type: 1,
         code: "OK"
-    }) + "\n\n");
+    }) + "\n\n"); // ini buat ngirim status OK nya
     private interval: NodeJS.Timeout;
 
     constructor(timeout_ms: number) {
@@ -47,6 +47,8 @@ export class sse_server {
     }
 
     add(id: string, req: Request, user: user_session_interface): ReadableStream {
+        let cleanup: (() => void) | undefined;
+
         return new ReadableStream({
             start: (controller) => {
                 let set = this.clients.get(id);
@@ -58,16 +60,13 @@ export class sse_server {
 
                 const client = { controller, user };
                 set.add(client);
-                
 
-                const cleanup = () => {
-                    try {
-                        controller.close();
-                    } catch {}
-
-                    set!.delete(client);
-
-                    if (set!.size === 0) this.clients.delete(id);
+                cleanup = () => {
+                    req.signal?.removeEventListener("abort", cleanup!);
+                    const current = this.clients.get(id);
+                    if (!current) return;
+                    current.delete(client);
+                    if (current.size === 0) this.clients.delete(id);
                 };
 
                 req.signal?.addEventListener("abort", cleanup);
@@ -75,17 +74,7 @@ export class sse_server {
             },
 
             cancel: () => {
-                const set = this.clients.get(id);
-                if (!set) return;
-
-                for (const client of [...set]) {
-                    try {
-                        client.controller.close();
-                    } catch {}
-                    set.delete(client);
-                }
-
-                if (set.size === 0) this.clients.delete(id);
+                cleanup?.();
             }
         });
     }
@@ -101,37 +90,6 @@ export class sse_server {
         }
 
         this.clients.delete(id);
-    }
-
-    remove_by_user_id(user_id: number) {
-        for (const [id, set] of this.clients) {
-            for (const client of [...set]) {
-                if (client.user.user_id !== user_id) continue;
-                try {
-                    client.controller.close();
-                } catch {}
-
-                set.delete(client);
-            }
-
-            if (set.size === 0) this.clients.delete(id);
-        }
-    }
-
-    remove_by_role_id(role_id: number) {
-        for (const [id, set] of this.clients) {
-            for (const client of [...set]) {
-                if (client.user.role_id !== role_id) continue;
-                
-                try {
-                    client.controller.close();
-                } catch {}
-
-                set.delete(client);
-            }
-
-            if (set.size === 0) this.clients.delete(id);
-        }
     }
 
     send(id: string, data: string) {
@@ -150,44 +108,6 @@ export class sse_server {
         }
 
         if (set.size === 0) this.clients.delete(id);
-    }
-
-    send_to_user(user_id: number, data: string) {
-        const payload = this.encoder.encode(`data: ${data}\n\n`);
-
-        for (const [id, set] of this.clients) {
-            for (const client of [...set]) {
-                if (client.user.user_id !== user_id) continue;
-
-                try {
-                    client.controller.enqueue(payload);
-                } catch {
-                    client.controller.close();
-                    set.delete(client);
-                }
-            }
-
-            if (set.size === 0) this.clients.delete(id);
-        }
-    }
-
-    send_to_role(role_id: number, data: string) {
-        const payload = this.encoder.encode(`data: ${data}\n\n`);
-
-        for (const [id, set] of this.clients) {
-            for (const client of [...set]) {
-                if (client.user.role_id !== role_id) continue;
-
-                try {
-                    client.controller.enqueue(payload);
-                } catch {
-                    client.controller.close();
-                    set.delete(client);
-                }
-            }
-
-            if (set.size === 0) this.clients.delete(id);
-        }
     }
 
     broadcast(data: string) {

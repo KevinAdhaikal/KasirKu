@@ -17,7 +17,7 @@ import { and, eq } from "drizzle-orm";
 import { global } from "../../../global";
 
 export default async function(req: Request, token: string) {
-    const user_info = global.user_sessions.get(token);
+    const user_info = await global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
     
     const db = global.database;
@@ -33,7 +33,9 @@ export default async function(req: Request, token: string) {
 
     const { enabled, content } = await req.json();
 
-    if (content !== undefined || content !== null) {
+    if (
+        content !== undefined || content !== null
+    ) {
         await db
             .update(settings)
             .set({
