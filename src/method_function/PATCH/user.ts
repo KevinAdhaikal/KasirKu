@@ -18,7 +18,7 @@ import { global } from "../../global";
 import { check_sql_is_duplicate_error, get_password_hash_only } from "../../utils/utils";
 
 export default async function(req: Request, token: string) {
-    const user_info = global.user_sessions.get(token);
+    const user_info = await global.user_sessions.get(token);
     if (!token || !user_info) return new Response("Unauthorized", {status: 401});
 
     const db = global.database;
@@ -87,21 +87,27 @@ export default async function(req: Request, token: string) {
         return new Response("Internal Server Error", { status: 500 });
     }
 
-    global.sse_clients.send_to_role(1, JSON.stringify({
-        type: 1,
-        code: "REFRESH_USERS"
-    }))
+    for (const token of await global.user_sessions.get_ids_by_roleid(1)) {
+        global.sse_clients.send(token, JSON.stringify({
+            type: 1,
+            code: "REFRESH_USERS"
+        }))
+    }
 
     if (new_password) {
-        global.sse_clients.remove_by_user_id(id);
-        global.user_sessions.revoke_all_by_userid(id);
+        for (const token of await global.user_sessions.get_ids_by_userid(id)) {
+            global.sse_clients.remove(token);
+        }
+        await global.user_sessions.revoke_all_by_userid(id);
     }
     else {
-        if (new_role_id !== res.role_id) global.user_sessions.change_role(id, new_role_id);
-        global.sse_clients.send_to_user(id, JSON.stringify({
-            type: 1,
-            code: "CHANGE_PROFILE"
-        }));
+        if (new_role_id !== res.role_id) await global.user_sessions.change_role(id, new_role_id);
+        for (const token of await global.user_sessions.get_ids_by_userid(id)) {
+            global.sse_clients.send(token, JSON.stringify({
+                type: 1,
+                code: "CHANGE_PROFILE"
+            }));
+        }
     }
 
     return new Response("", {status: 200});

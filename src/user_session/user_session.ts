@@ -14,106 +14,162 @@
 */
 
 import { generate_hex } from "../utils/utils";
+import { global } from "../global";
+import { eq } from "drizzle-orm";
 
+/*
 export interface user_session_interface {
     user_id: number,
     role_id: number,
     is_active: Boolean
+}*/
+
+export interface user_session_interface {
+    user_id: number,
+    role_id: number
 }
 
 export class user_session {
-    private timer_id: NodeJS.Timeout;
+    // private timer_id: NodeJS.Timeout;
     private id_length: number = 0;
-    private session_ids: Map<string, number> = new Map();
-    private timer_wheel: Array<Map<string, user_session_interface>> = [];
-    private current_slot: number = 0;
-    private max_slots: number = 0;
+    private expired_ms: number = 0;
+    private db;
+    private schema;
+    // private session_ids: Map<string, user_session_interface> = new Map();
 
-    constructor(wheel_per_second: number = 1, max_slots: number = 30, id_length: number = 32) {
+    constructor(id_length: number = 32, expired_ms = 24 * 60 * 60 * 1000) {
         this.id_length = id_length % 2 === 0 ? id_length : id_length + 1;
-        this.max_slots = max_slots;
-
-        for (let i = 0; i < max_slots; i++) this.timer_wheel.push(new Map());
-
-        this.timer_id = setInterval(() => {
-            this.current_slot = (this.current_slot + 1) % this.max_slots;
-            const expired_sessions = this.timer_wheel[this.current_slot];
-            for (let session_id of expired_sessions) {
-                if (session_id[1].is_active === false) {
-                    this.session_ids.delete(session_id[0]);
-                    expired_sessions.delete(session_id[0]);
-                } else session_id[1].is_active = false;
-            }
-        }, wheel_per_second * 1000);
+        this.expired_ms = expired_ms;
+        this.db = global.database;
+        this.schema = global.schema;
     }
 
-    add(user_id: number, role_id: number): string | false {
+    async add(user_id: number, role_id: number): Promise<string | false> {
         for (let a = 0; a < 100; a++) { // 100x tries
-            const id = generate_hex(this.id_length);
+            const token = generate_hex(this.id_length);
+            const [row] = await this.db
+                .select({
+                    id: this.schema.user_sessions.id
+                })
+                .from(this.schema.user_sessions)
+                .where(eq(this.schema.user_sessions.token, token))
+            .limit(1);
 
-            if (!this.session_ids.has(id)) {
-                const current_slot = (this.current_slot + 1) % this.max_slots;
+            if (!row) {
+                const now = Date.now();
+                await this.db
+                    .insert(this.schema.user_sessions)
+                    .values({
+                        user_id,
+                        role_id,
+                        token,
+                        created_ms: now,
+                        expired_ms: now + this.expired_ms,
+                        is_active: 1
+                    });
 
-                this.session_ids.set(id, current_slot);
-                this.timer_wheel[current_slot].set(id, {user_id, role_id, is_active: true});
-                return id;
+                return token;
             }
         }
         
         return false; // try again
     }
-    has(session_id: string): Boolean {
-        return this.session_ids.has(session_id);
-    }
-    get(session_id: string): user_session_interface | false {
-        const slot = this.session_ids.get(session_id);
-        if (slot !== undefined) {
-            return this.timer_wheel[slot].get(session_id) ?? false;
-        }
-        return false;
-    }
-    change_role(user_id: number, role_id: number): void {
-        this.timer_wheel.forEach(slot => {
-            for (const [_, data] of slot) {
-                if (data.user_id === user_id) data.role_id = role_id;
-            }
-        })
-    }
-    remove(session_id: string): void {
-        const slot = this.session_ids.get(session_id);
-        if (slot !== undefined) {
-            this.session_ids.delete(session_id);
-            this.timer_wheel[slot].delete(session_id);
-        }
-    }
-    revoke_all_by_userid(user_id: number): void {
-        this.timer_wheel.forEach(slot => {
-            for (const [session_id, data] of slot) {
-                if (data.user_id === user_id) {
-                    slot.delete(session_id);
-                    this.session_ids.delete(session_id);
+
+    async get(token: string): Promise<user_session_interface | false> {
+        const [row] = await this.db
+            .select({
+                user_id: this.schema.user_sessions.user_id,
+                role_id: this.schema.user_sessions.role_id,
+                is_active: this.schema.user_sessions.is_active,
+                expired_ms: this.schema.user_sessions.expired_ms
+            })
+            .from(this.schema.user_sessions)
+            .where(eq(this.schema.user_sessions.token, token))
+        .limit(1);
+
+        if (!row) return false;
+
+        const now = Date.now();
+
+        if (now >= row.expired_ms) {
+            if (!row.is_active) {
+                await this.remove(token);
+                global.sse_clients.remove(token);
+                return false;
+            } else {
+                if (now >= row.expired_ms + this.expired_ms) {
+                    await this.remove(token);
+                    global.sse_clients.remove(token);
+                    return false;
                 }
+                await this.db
+                    .update(this.schema.user_sessions)
+                    .set({
+                        is_active: 1,
+                        expired_ms: now + this.expired_ms
+                    })
+                .where(eq(this.schema.user_sessions.token, token));
             }
-        });
+        }
+        return row ?? false;
     }
-    revoke_all_by_roleid(role_id: number): void {
-        this.timer_wheel.forEach(slot => {
-            for (const [session_id, data] of slot) {
-                if (data.role_id === role_id) {
-                    slot.delete(session_id);
-                    this.session_ids.delete(session_id);
-                }
-            }
-        });
+
+    async get_ids_by_userid(userid: number): Promise<string[]> {
+        const rows = await this.db
+            .select({
+                token: this.schema.user_sessions.token
+            })
+            .from(this.schema.user_sessions)
+        .where(eq(this.schema.user_sessions.user_id, userid));
+
+        return rows.map(row => row.token);
+    }
+
+    async get_ids_by_roleid(roleid: number): Promise<string[]> {
+        const rows = await this.db
+            .select({
+                token: this.schema.user_sessions.token
+            })
+            .from(this.schema.user_sessions)
+        .where(eq(this.schema.user_sessions.role_id, roleid));
+
+        return rows.map(row => row.token);
+    }
+
+    async change_role(user_id: number, role_id: number): Promise<void> {
+        await this.db
+            .update(this.schema.user_sessions)
+            .set({
+                role_id: role_id,
+            })
+        .where(eq(this.schema.user_sessions.user_id, user_id));
+    }
+
+    async remove(token: string): Promise<void> {
+        await this.db
+            .delete(this.schema.user_sessions)
+        .where(eq(this.schema.user_sessions.token, token));
+    }
+
+    async revoke_all_by_userid(user_id: number): Promise<void> {
+        await this.db
+            .delete(this.schema.user_sessions)
+        .where(eq(this.schema.user_sessions.user_id, user_id));
+    }
+
+    async revoke_all_by_roleid(role_id: number): Promise<void> {
+        await this.db
+            .delete(this.schema.user_sessions)
+        .where(eq(this.schema.user_sessions.role_id, role_id));
     }
 
     destroy() {
-        clearInterval(this.timer_id);
-        this.session_ids.clear();
-        for (let slot of this.timer_wheel) slot.clear();
-        this.timer_wheel = [];
-        this.current_slot = 0;
-        this.max_slots = 0;
+        // clearInterval(this.timer_id);
+        // this.session_ids.clear();
+        // for (let slot of this.timer_wheel) slot.clear();
+        // this.timer_wheel = [];
+        // this.current_slot = 0;
+        // this.max_slots = 0;
         this.id_length = 0;
     }
 }

@@ -13,15 +13,10 @@
 ──────────────────────────────────────────────────────────────
 */
 
-import { global } from "../../global";
+import type { DatabaseType, MigrationDb, MigrationSchema } from "../../../src/database/migrate";
 
-export default async function(req: Request, token: string) {
-    if (!token) return new Response("", {status: 200});
-            
-    await global.user_sessions.remove(token);
-    global.sse_clients.remove(token);
-    
-    return new Response("", {status: 200, headers: {
-        "set-cookie": "token=; Path=/; Max-Age=0"
-    }});
+export default async function(db: MigrationDb, dbType: DatabaseType) {
+    const schema = (await import(`../../../src/database/schema/${dbType}`)) as MigrationSchema;
+
+    // write code here.
 }

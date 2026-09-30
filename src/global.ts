@@ -39,7 +39,7 @@ export const global = {
     rate_limit: null as unknown as rate_limit,
 
     // Database (Drizzle instance)
-    database: null as any,
+    database: null as any as MySql2Database,
 
     // Database Schema
     schema: null as any as typeof schemaType,

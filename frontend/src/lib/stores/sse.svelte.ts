@@ -14,6 +14,7 @@ type SseHandler = (event: SseEventData) => void | Promise<void>;
 
 class SseStore {
   status = $state<SseStatus>('offline');
+  isTokenReconnecting = $state(false);
   private eventSource: EventSource | null = null;
   private handlers = new Set<SseHandler>();
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -54,7 +55,9 @@ class SseStore {
     if (typeof window === 'undefined') return false;
 
     if (!auth.token) {
-      this.status = 'offline';
+      if (!this.isTokenReconnecting) {
+        this.status = 'offline';
+      }
       return false;
     }
 
@@ -108,7 +111,9 @@ class SseStore {
         sse.onopen = () => {
           if (this.isManualDisconnect || !auth.token) {
             this.cleanupEventSource();
-            this.status = 'offline';
+            if (!this.isTokenReconnecting) {
+              this.status = 'offline';
+            }
             settle(false);
             return;
           }
@@ -118,6 +123,11 @@ class SseStore {
 
         sse.onerror = () => {
           if (this.isManualDisconnect || this.isHandlingUnauthorized) {
+            settle(false);
+            return;
+          }
+
+          if (this.isTokenReconnecting) {
             settle(false);
             return;
           }
@@ -144,33 +154,20 @@ class SseStore {
                   settle(true);
                   break;
                 case 'CHANGE_PROFILE':
+                case 'REFRESH_RP':
                   this.status = 'online';
                   settle(true);
                   await auth.fetchProfile();
                   break;
                 case 'UNAUTHORIZED':
+                  if (this.isTokenReconnecting) {
+                    settle(false);
+                    return;
+                  }
                   this.status = 'offline';
                   settle(false);
                   this.connectPromise = null;
                   this.cleanupEventSource();
-
-                  if (auth.hasSavedCredentials() && !this.isHandlingUnauthorized) {
-                    this.isHandlingUnauthorized = true;
-                    try {
-                      const relogged = await auth.reloginWithSavedCredentials();
-                      if (relogged) {
-                        this.isHandlingUnauthorized = false;
-                        this.lastConnectAttempt = 0;
-                        await this.connect();
-                        return;
-                      }
-                    } catch (err) {
-                      console.warn('Auto relogin after unauthorized failed:', err);
-                    } finally {
-                      this.isHandlingUnauthorized = false;
-                    }
-                  }
-
                   this.disconnect();
                   await auth.logout();
                   router.navigate('/login', true);
@@ -198,7 +195,9 @@ class SseStore {
           }
         };
       } catch {
-        this.status = 'offline';
+        if (!this.isTokenReconnecting) {
+          this.status = 'offline';
+        }
         settle(false);
         this.scheduleReconnect(100);
       }
@@ -209,9 +208,36 @@ class SseStore {
     return this.connectPromise;
   }
 
+  beginTokenSwitch() {
+    this.isTokenReconnecting = true;
+    this.status = 'online';
+    this.clearRetryTimer();
+    this.cleanupEventSource();
+  }
+
+  cancelTokenSwitch() {
+    this.isTokenReconnecting = false;
+    if (auth.token && this.status !== 'online') {
+      this.connect();
+    }
+  }
+
+  async completeTokenSwitch(newToken: string): Promise<boolean> {
+    auth.updateToken(newToken);
+    this.lastConnectAttempt = 0;
+    this.clearRetryTimer();
+    this.cleanupEventSource();
+    try {
+      return await this.connect();
+    } finally {
+      this.isTokenReconnecting = false;
+    }
+  }
+
   disconnect() {
     this.isManualDisconnect = true;
     this.isHandlingUnauthorized = false;
+    this.isTokenReconnecting = false;
     this.clearRetryTimer();
     this.cleanupEventSource();
     this.status = 'offline';

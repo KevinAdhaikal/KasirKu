@@ -15,6 +15,7 @@
   import Skeleton from '../../components/ui/Skeleton.svelte';
   import DatePicker from '../../components/ui/DatePicker.svelte';
   import TablePagination from '../../components/ui/TablePagination.svelte';
+  import Avatar from '../../components/ui/Avatar.svelte';
   import {
     formatRupiah,
     formatNumber,
@@ -61,6 +62,7 @@
     created_ms: number;
     modified_ms: number;
     nama_kasir: string | null;
+    kasir_profile_img?: string | null;
   }
 
   export interface PenjualanItemDetail {
@@ -572,10 +574,12 @@
 
                 <!-- Kasir -->
                 <td class="px-4 py-3">
-                  <div class="flex items-center gap-1.5">
-                    <div class="w-5 h-5 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-neutral-600 dark:text-neutral-300">
-                      {item.nama_kasir ? item.nama_kasir.charAt(0).toUpperCase() : 'K'}
-                    </div>
+                  <div class="flex items-center gap-2">
+                    <Avatar
+                      src={item.kasir_profile_img}
+                      name={item.nama_kasir || 'Kasir'}
+                      size="xs"
+                    />
                     <span class="text-neutral-800 dark:text-neutral-200 text-xs">
                       {item.nama_kasir || 'Kasir'}
                     </span>
@@ -666,9 +670,16 @@
         </div>
         <div>
           <span class="text-neutral-500 block">Kasir Penanggung Jawab:</span>
-          <span class="font-medium text-neutral-800 dark:text-neutral-200 mt-0.5 block">
-            {selectedPenjualan.nama_kasir || 'Kasir'}
-          </span>
+          <div class="flex items-center gap-2 mt-1">
+            <Avatar
+              src={selectedPenjualan.kasir_profile_img}
+              name={selectedPenjualan.nama_kasir || 'Kasir'}
+              size="xs"
+            />
+            <span class="font-medium text-neutral-800 dark:text-neutral-200">
+              {selectedPenjualan.nama_kasir || 'Kasir'}
+            </span>
+          </div>
         </div>
         <div>
           <span class="text-neutral-500 block">Total Kuantitas:</span>

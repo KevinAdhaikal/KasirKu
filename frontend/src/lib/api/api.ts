@@ -45,8 +45,13 @@ export async function request<T = any>(
 
   if (res.status === 403) {
     let errorText = await res.text();
-    if (errorText === "0") throw new ApiError(403, "Anda tidak memiliki akses untuk melakukan ini.")
-    else return <T>errorText
+    if (errorText === "0") {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:forbidden'));
+      }
+      throw new ApiError(403, "Anda tidak memiliki akses untuk melakukan ini.");
+    }
+    else return <T>errorText;
   }
 
   if (!res.ok) {

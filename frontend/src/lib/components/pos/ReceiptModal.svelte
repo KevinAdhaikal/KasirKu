@@ -89,7 +89,7 @@
   }
 
   const storeInfo = $derived<StoreInfo>({
-    name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'KASIRKU POS',
+    name: auth.publicInfo?.name?.trim() || auth.publicInfo?.store_name?.trim() || 'EXAMPLE MART',
     desc: auth.publicInfo?.desc?.trim() || auth.publicInfo?.description?.trim() || auth.publicInfo?.store_desc?.trim() || '',
     address: auth.publicInfo?.address?.trim() || auth.publicInfo?.store_address?.trim() || '',
     phone_num: auth.publicInfo?.phone_num?.trim() || auth.publicInfo?.no_phone?.trim() || auth.publicInfo?.store_phone_num?.trim() || '',

@@ -18,7 +18,7 @@ export interface TemplateVariable {
 
 export const TEMPLATE_VARIABLES: TemplateVariable[] = [
   // Toko
-  { key: '{{nama_toko}}', label: 'Nama Toko / Usaha', example: 'EXMAPLE MART', category: 'toko' },
+  { key: '{{nama_toko}}', label: 'Nama Toko / Usaha', example: 'EXAMPLE MART', category: 'toko' },
   { key: '{{deskripsi_toko}}', label: 'Deskripsi / Slogan', example: 'Sahabat Belanja Hemat', category: 'toko' },
   { key: '{{alamat_toko}}', label: 'Alamat Lengkap Toko', example: 'Jl. Example No. 1, Jakarta', category: 'toko' },
   { key: '{{telepon_toko}}', label: 'Nomor Telepon / WA', example: '0812-3456-7890', category: 'toko' },
@@ -500,7 +500,7 @@ export function renderReceiptHtml(
 ): string {
   let content = template && template.trim() ? template : RECEIPT_PRESETS[0].template;
 
-  const namaToko = escapeHtml(storeInfo?.name?.trim() || 'KASIRKU POS');
+  const namaToko = escapeHtml(storeInfo?.name?.trim() || 'EXAMPLE MART');
   const descToko = escapeHtml(storeInfo?.desc?.trim() || '');
   const alamatToko = escapeHtml(storeInfo?.address?.trim() || '');
   const telpToko = escapeHtml(storeInfo?.phone_num?.trim() || '');
